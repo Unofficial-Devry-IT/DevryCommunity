@@ -1,8 +1,0 @@
-﻿version: "3.8"
-
-services:
-     dotnet-service-bot:
-          environment:
-               TZ: "America/New_York"
-          image: "dotnet-devry-service-bot"
-          restart: always
