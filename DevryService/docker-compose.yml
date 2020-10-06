@@ -1,0 +1,8 @@
+﻿version: "3.8"
+
+services:
+     devery-services:
+          environment:
+               TZ: "America/New_York"
+          image: "devry-services"
+          restart: "always"

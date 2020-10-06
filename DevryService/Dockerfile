@@ -14,6 +14,8 @@ RUN dotnet build "DevryService.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "DevryService.csproj" -c Release -o /app/publish
 
+COPY ["DevryService/DevryCommunity.db", "/app/publish"]
+
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
