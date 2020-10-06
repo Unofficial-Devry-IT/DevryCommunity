@@ -113,7 +113,7 @@ namespace DevryService.Core.Util
         /// <returns></returns>
         public static List<string> GetSnippetCategories()
         {
-            return Directory.GetDirectories("snippets")
+            return Directory.GetDirectories("Snippets")
                 .Select(x => new DirectoryInfo(x).Name)
                 .ToList();
         }
@@ -125,7 +125,7 @@ namespace DevryService.Core.Util
         /// <returns></returns>
         public static List<FileInfo> GetFilesInCategory(string directory)
         {
-            string path = $"{Directory.GetCurrentDirectory()}/snippets/{directory}";
+            string path = $"{Directory.GetCurrentDirectory()}/Snippets/{directory}";
             return Directory.GetFiles(path).Select(x => new FileInfo(x)).ToList();
         }
 
