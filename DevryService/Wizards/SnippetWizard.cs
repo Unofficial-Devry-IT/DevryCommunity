@@ -107,6 +107,13 @@ namespace DevryService.Wizards
             WizardMessage = await WizardReply(context, categoryMenu, true);
             DiscordMessage reply = await GetUserReply();
 
+            // Prevent execution to go further if user attempted to halt wizard
+            if(reply == null || reply.Content == null)
+            {
+                await Cleanup();
+                return;
+            }
+
             string category = GetCategory(reply.Content);
 
             if(string.IsNullOrEmpty(category))
