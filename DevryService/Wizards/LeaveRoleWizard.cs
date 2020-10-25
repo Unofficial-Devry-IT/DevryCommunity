@@ -44,8 +44,18 @@ namespace DevryService.Wizards
 
             await WizardReply(context, message, true);
             DiscordMessage reply = await GetUserReply();
+            string[] parameters = null;
 
-            var parameters = reply.Content.Replace(",", " ").Split(" ");
+            try
+            {
+                parameters = reply.Content.Replace(",", " ").Split(" ");
+            }
+            catch
+            {
+                await Cleanup();
+                return;
+            }
+
             List<string> removed = new List<string>();
 
             foreach(var selection in parameters)

@@ -13,6 +13,7 @@ namespace DevryService.Commands
     [Core.Util.Description(":classical_building:", "Join/Leave a class at your leisure!")]
     public class RoleCommands : IDiscordCommand, IAddRemoveCommand
     {
+        [DSharpPlus.CommandsNext.Attributes.Command("join")]
         [WizardCommandInfo(Description="Join your fellow minions! Select from our vast array of inner circles!",
             Name ="Sorting Hat",
             WizardType = typeof(JoinRoleWizard))]
@@ -34,6 +35,7 @@ namespace DevryService.Commands
             }
         }
 
+        [DSharpPlus.CommandsNext.Attributes.Command("leave")]
         [WizardCommandInfo(Description = "Aye, the time has come... ",
             Name = "Bouncer Hat",
             WizardType = typeof(LeaveRoleWizard))]

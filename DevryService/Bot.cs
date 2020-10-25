@@ -49,10 +49,12 @@ namespace DevryService
             Commands.RegisterCommands<EventCommands>();
             Commands.RegisterCommands<HelpCommand>();
             Commands.RegisterCommands<SnippetCommands>();
+            Commands.RegisterCommands<RoleCommands>();
+            Commands.RegisterCommands<CreateClassCommand>();
 
             // Welcome message that gets dispatched to newcomers
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;                       
-
+            
             await Discord.ConnectAsync();
             await Discord.UpdateStatusAsync(new DiscordGame()
             {                

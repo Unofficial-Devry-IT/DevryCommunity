@@ -40,7 +40,18 @@ namespace DevryService.Wizards
 
             DiscordMessage userReply = await GetUserReply();
 
-            var parameters = userReply.Content.Replace(",", " ").Split(" ");
+            string[] parameters = null;
+
+            try
+            {
+                parameters = userReply.Content.Replace(",", " ").Split(" ");
+            }
+            catch
+            {
+                await Cleanup();
+                return;
+            }
+            
             Dictionary<string, List<DiscordRole>> selectedGroups = new Dictionary<string, List<DiscordRole>>();
             Dictionary<int, DiscordRole> roleMap = new Dictionary<int, DiscordRole>();
 
@@ -74,7 +85,17 @@ namespace DevryService.Wizards
             }
 
             userReply = await GetUserReply();
-            parameters = userReply.Content.Replace(",", " ").Split(" ");
+
+            try
+            {
+                parameters = userReply.Content.Replace(",", " ").Split(" ");
+            }
+            catch
+            {
+                await Cleanup();
+                return;
+            }
+
             List<string> appliedRoles = new List<string>();
 
             DiscordMember member = await context.Guild.GetMemberAsync(OriginalUserId);

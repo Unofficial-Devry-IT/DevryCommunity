@@ -107,13 +107,28 @@ namespace DevryService.Core.Util
                 return extension.Replace(".", "");
         }
 
+        private static string SnippetsBasePath()
+        {
+            if (Directory.Exists("Snippets"))
+                return "Snippets";
+            else if (Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Snippets")))
+                return Path.Combine(Directory.GetCurrentDirectory(), "Snippets");
+            else
+            {
+                Console.WriteLine($"Unable to find Snippets directory");
+                throw new DirectoryNotFoundException("Unable to locate Snippets directory");
+            }
+        }
+
         /// <summary>
         /// Retrieve all folders under /snippets
         /// </summary>
         /// <returns></returns>
         public static List<string> GetSnippetCategories()
         {
-            return Directory.GetDirectories("Snippets")
+            string basePath = SnippetsBasePath();
+
+            return Directory.GetDirectories(basePath)
                 .Select(x => new DirectoryInfo(x).Name)
                 .ToList();
         }
@@ -125,7 +140,7 @@ namespace DevryService.Core.Util
         /// <returns></returns>
         public static List<FileInfo> GetFilesInCategory(string directory)
         {
-            string path = $"{Directory.GetCurrentDirectory()}/Snippets/{directory}";
+            string path = Path.Combine(SnippetsBasePath(), directory);
             return Directory.GetFiles(path).Select(x => new FileInfo(x)).ToList();
         }
 
