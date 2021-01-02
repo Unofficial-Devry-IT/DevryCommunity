@@ -16,6 +16,7 @@ namespace DevryService.Commands
     public class HelpCommand : IDiscordCommand, IMiscCommand
     {
         [Command("view-welcome")]
+        [WizardCommandInfo(Description = "View the message that gets sent to newcomers when they join!")]
         public async Task ViewWelcome(CommandContext context)
         {
             await context.Member.SendMessageAsync(embed: Bot.GenerateWelcomeMessage());
@@ -42,6 +43,7 @@ namespace DevryService.Commands
         }
 
         [Command("stats")]
+        [WizardCommandInfo(Description = "Not fully implemented yet")]
         public async Task ViewStats(CommandContext context)
         {
             using (DevryDbContext database = new DevryDbContext())
@@ -63,6 +65,7 @@ namespace DevryService.Commands
         }
 
         [Command("help")]
+        [WizardCommandInfo(Description = "A wizard shall appear and guide you along")]
         public async Task Help(CommandContext context)
         {
             HelpWizard wizard = new HelpWizard(context.Member.Id, context.Channel);

@@ -3,17 +3,14 @@ using DevryService.Core.Util;
 using DevryService.Wizards;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace DevryService.Commands
 {
     public class CreateClassCommand : IDiscordCommand
-    {
+    {   
         [Command("create-class")]
-        [WizardCommandInfo(Description = "Join your fellow minions! Select from our vast array of inner circles!",
+        [WizardCommandInfo(Description = "Expand our inner-kingdom! Allow our knowledge seeking minons to diverge onto their requested path(s).",
             Name = "Admin Hat",
             WizardType = typeof(CreateClassWizard))]
         public async Task Create(CommandContext context)

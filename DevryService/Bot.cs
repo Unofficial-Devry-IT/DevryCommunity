@@ -3,10 +3,11 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DevryService
@@ -16,18 +17,22 @@ namespace DevryService
         public static DiscordClient Discord { get; private set; }
         public static CommandsNextModule Commands { get; private set; }
         public static InteractivityModule Interactivity { get; private set; }
+        
         public static string Prefix = "!";
+        public static List<string> BlackListedRoles = new List<string>();
 
-        public Bot(string token)
+        public Bot(IConfiguration config)
         {
+            Prefix = config.GetValue<string>("prefix");
             Discord = new DiscordClient(new DiscordConfiguration
             {
-                Token = token,
+                Token = config.GetValue<string>("token"),
                 TokenType = TokenType.Bot,
                 UseInternalLogHandler = false,
-                LogLevel = LogLevel.Warning | LogLevel.Error,
+                LogLevel = LogLevel.Debug,
                 AutoReconnect = true
             });
+
         }
 
         public async Task StartAsync()
@@ -51,6 +56,8 @@ namespace DevryService
             Commands.RegisterCommands<SnippetCommands>();
             Commands.RegisterCommands<RoleCommands>();
             Commands.RegisterCommands<CreateClassCommand>();
+            Commands.RegisterCommands<ViewCommandsCommand>();
+            //Commands.RegisterCommands<ViewMembersCommand>();
 
             // Welcome message that gets dispatched to newcomers
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;                       

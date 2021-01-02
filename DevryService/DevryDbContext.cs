@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace DevryService
 {
@@ -202,6 +203,7 @@ namespace DevryService
         public DbSet<Reminder> Reminders { get; set; }
         public DbSet<Questionaire> Questions { get; set; }
         public DbSet<MemberStats> Stats { get; set; }
+        public DbSet<MemberClassInfo> ClassInfo { get; set; }
 
     }
 }

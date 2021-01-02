@@ -20,5 +20,10 @@ namespace DevryService.Core.Schedule
         {
             return NextRunTime < currentTime && LastRunTime != NextRunTime;
         }
+
+        /// <summary>
+        /// Will this instance ever run again?
+        /// </summary>
+        public bool WillNeverRunAgain => LastRunTime == NextRunTime;
     }
 }

@@ -45,7 +45,8 @@ namespace DevryService.Core
             "Devry Test Bot",
             "MathBot",
             "See-All-Channels",
-            "Devry"
+            "Devry",
+            "tutor"
         };
 
         public bool NotBlacklisted(string name) => !BlacklistedRoles.Any(x => x.ToLower().Trim().Contains(name.ToLower().Trim()));

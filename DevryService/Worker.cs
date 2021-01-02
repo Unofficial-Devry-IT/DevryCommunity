@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -12,25 +9,19 @@ namespace DevryService
     public class Worker : BackgroundService
     {
         public readonly ILogger<Worker> Logger;
-        private readonly string _token;
-
         public static Worker Instance;
-        
+        public static IConfiguration Configuration;
 
         public Worker(ILogger<Worker> logger, IConfiguration configuration)
         {
             Logger = logger;
-            _token = configuration.GetValue<string>("token");
-
+            Configuration = configuration;
             Instance = this;
-
-            if (string.IsNullOrEmpty(_token))
-                throw new ArgumentNullException(nameof(_token));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Bot bot = new Bot(_token);
+            Bot bot = new Bot(Configuration);
             await bot.StartAsync();
 
             while (!stoppingToken.IsCancellationRequested)
