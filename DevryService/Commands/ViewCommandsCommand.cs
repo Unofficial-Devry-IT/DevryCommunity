@@ -16,9 +16,9 @@ namespace DevryService.Commands
         /// <summary>
         /// Retrieve all commands within this assembly which utilize <see cref="IDiscordCommand"/>
         /// </summary>
-        /// <param name="includeAdmin">Should the algorithm include commands denoted with <see cref="RequireRolesAttributeAttribute"/>?</param>
+        /// <param name="excludeAdmin">Should the algorithm include commands denoted with <see cref="RequireRolesAttributeAttribute"/>?</param>
         /// <returns>Dictionary of commands based on criteria. Key: <see cref="string"/> - command name. Value: <see cref="string"/> - description of command</returns>
-        Dictionary<string, string> getCommandMatrix(bool includeAdmin)
+        Dictionary<string, string> getCommandMatrix(bool excludeAdmin)
         {
             Dictionary<string, string> matrix = new Dictionary<string, string>();
 
@@ -50,7 +50,7 @@ namespace DevryService.Commands
                         continue;
 
                     // If we are not including administrative stuff and we are requiring a role... just skip
-                    if (!includeAdmin && require != null)
+                    if (excludeAdmin && require != null)
                         continue;
 
                     string name = command.Name;
@@ -77,13 +77,8 @@ namespace DevryService.Commands
                 .WithColor(DiscordColor.Purple)
                 .WithAuthor(name: "Knowledge Hat", icon_url: null);
 
-            Console.WriteLine($"You are trying to output a message with: {commands.Count} commands");
-
             foreach(var pair in commands)
-            {
-                Console.WriteLine($"Key: {pair.Key}\nDescription: {pair.Value}");
                 builder.AddField(pair.Key, pair.Value == string.Empty ? "No Description available" : pair.Value, true);
-            }
 
             await context.Channel.SendMessageAsync(embed: builder.Build());
         }
@@ -100,13 +95,13 @@ namespace DevryService.Commands
 
             var member = await context.Guild.GetMemberAsync(userId);
 
-            bool showAll = false;
+            bool excludeAdmin = true;
 
             // Member must be a moderator or admin in order to view all the commands
-            if (!member.Roles.Any(x => x.Name.ToLower() == "moderator" || x.Name.ToLower() == "admin"))
-                showAll = true;
+            if (member.Roles.Any(x => x.Name.ToLower() == "moderator" || x.Name.ToLower() == "admin"))
+                excludeAdmin = false;
 
-            var commands = getCommandMatrix(showAll);
+            var commands = getCommandMatrix(excludeAdmin);
             await showCommands(context, commands);
         }
     }

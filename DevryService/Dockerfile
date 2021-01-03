@@ -14,7 +14,7 @@ RUN dotnet build "DevryService.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "DevryService.csproj" -c Release -o /app/publish
 
-COPY ["DevryService/DevryCommunity.db", "/app/publish/db"]
+COPY ["DevryService/DevryCommunity.db", "/app/publish"]
 ADD DevryService/Snippets /app/publish
 
 RUN chmod -R 777 /app/publish
