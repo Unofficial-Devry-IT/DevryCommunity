@@ -1,9 +1,12 @@
 ﻿using DevryService.Commands;
+using DevryService.Core;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,62 +18,61 @@ namespace DevryService
     public class Bot
     {
         public static DiscordClient Discord { get; private set; }
-        public static CommandsNextModule Commands { get; private set; }
-        public static InteractivityModule Interactivity { get; private set; }
+        public static CommandsNextExtension Commands { get; private set; }
+        public static InteractivityExtension Interactivity { get; private set; }
         
         public static string Prefix = "!";
         public static List<string> BlackListedRoles = new List<string>();
+        public static Bot Instance;
+        public IConfiguration Configuration { get; private set; }
+        public ILogger<Bot> Logger { get; private set; }
+        public DiscordService DiscordService { get; private set; }
 
-        public Bot(IConfiguration config)
+        public Bot(IConfiguration config, ILogger<Bot> logger, DiscordService discordService)
         {
+            Instance = this;
+
+            this.Logger = logger;
+            this.DiscordService = discordService;
+
             Prefix = config.GetValue<string>("prefix");
             Discord = new DiscordClient(new DiscordConfiguration
             {
                 Token = config.GetValue<string>("token"),
                 TokenType = TokenType.Bot,
-                UseInternalLogHandler = false,
-                LogLevel = LogLevel.Debug,
+                MinimumLogLevel = LogLevel.Debug,
                 AutoReconnect = true
             });
 
+            // Shall be used across our bot stuff
+            Configuration = config;
         }
 
         public async Task StartAsync()
         {
             Commands = Discord.UseCommandsNext(new CommandsNextConfiguration
             {
-                StringPrefix = Prefix,
+                StringPrefixes = new string[] { Prefix },
                 EnableDms = true,
                 EnableDefaultHelp = false
             });
 
             Interactivity = Discord.UseInteractivity(new InteractivityConfiguration
             {
-                PaginationBehaviour = TimeoutBehaviour.Ignore,
-                PaginationTimeout = TimeSpan.FromMinutes(5),
+                PaginationBehaviour =  DSharpPlus.Interactivity.Enums.PaginationBehaviour.Ignore,
                 Timeout = TimeSpan.FromMinutes(2)
             });
 
-            Commands.RegisterCommands<EventCommands>();
-            Commands.RegisterCommands<HelpCommand>();
-            Commands.RegisterCommands<SnippetCommands>();
-            Commands.RegisterCommands<RoleCommands>();
-            Commands.RegisterCommands<CreateClassCommand>();
-            Commands.RegisterCommands<ViewCommandsCommand>();
-            //Commands.RegisterCommands<ViewMembersCommand>();
+            Commands.RegisterCommands(typeof(Bot).Assembly);
 
             // Welcome message that gets dispatched to newcomers
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;                       
             
             await Discord.ConnectAsync();
-            await Discord.UpdateStatusAsync(new DiscordGame()
-            {                
-                Name = $"Ask for help: {Bot.Prefix}help"
-            }, UserStatus.Online);
 
         }
 
-        private async Task Discord_GuildMemberAdded(DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
+        private async Task Discord_GuildMemberAdded(DiscordClient client, DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
         {
             await e.Member.SendMessageAsync(embed: GenerateWelcomeMessage());
         }
@@ -79,7 +81,8 @@ namespace DevryService
         {
             DiscordChannel welcomeChannel = Bot.Discord.Guilds
                 .First().Value.Channels
-                .FirstOrDefault(x => x.Name.ToLower().Contains("welcome"));
+                .FirstOrDefault(x => x.Value.Name.ToLower().Contains("welcome"))
+                .Value;
 
             string welcomeMessage = $"Welcome to Devry IT! A community built to foster professional and educational growth! Please, introduce yourself here {welcomeChannel.Mention}.\n\n" +
                                     $"Our custom bot has a variety of features. From joining/leaving a class, viewing of code snippets, to creating channel-wide reminders! " +

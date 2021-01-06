@@ -20,7 +20,7 @@ namespace DevryService.Commands
                             Emoji = "",
                             IgnoreHelpWizard = false,
                             Name = "Create Event")]
-        [RequireRolesAttribute("Moderator","Admin")]
+        [RequireRolesAttribute(RoleCheckMode.Any, "Moderator","Admin")]
         public async Task Create(CommandContext context)
         {
             CreateEventWizard wizard = new CreateEventWizard(context.Member.Id, context.Channel);
@@ -46,7 +46,7 @@ namespace DevryService.Commands
                             Emoji = "",
                             IgnoreHelpWizard = false,
                             Name = "Remove Event")]
-        [RequireRolesAttribute("Moderator", "Admin")]
+        [RequireRolesAttribute(RoleCheckMode.Any, "Moderator", "Admin")]
         public async Task Delete(CommandContext context)
         {
             DeleteEventWizard wizard = new DeleteEventWizard(context.Member.Id, context.Channel);

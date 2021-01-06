@@ -107,9 +107,9 @@ namespace DevryService.Core
                 builder = builder.WithFooter($"{CancelWizardMessage}\n--{context.Message.Author.Username}");
 
             if (!string.IsNullOrEmpty(AuthorName))
-                builder = builder.WithAuthor(AuthorName, icon_url: !string.IsNullOrEmpty(AuthorIcon) ? AuthorIcon : null);
+                builder = builder.WithAuthor(AuthorName, iconUrl: !string.IsNullOrEmpty(AuthorIcon) ? AuthorIcon : null);
             else if (!string.IsNullOrEmpty(AuthorIcon))
-                builder = builder.WithAuthor(icon_url: AuthorIcon);
+                builder = builder.WithAuthor(iconUrl: AuthorIcon);
 
             builder.Title = this.Title;
             builder.Description = text;
@@ -145,8 +145,8 @@ namespace DevryService.Core
 
         public async Task<DiscordMessage> GetUserReply()
         {
-            MessageContext messageContext = await Bot.Interactivity.WaitForMessageAsync(ResponsePredicate);
-
+            var messageContext = await Bot.Interactivity.WaitForMessageAsync(ResponsePredicate);
+            
             try
             {
                 if (messageContext.Message.Content.StartsWith(Bot.Prefix))

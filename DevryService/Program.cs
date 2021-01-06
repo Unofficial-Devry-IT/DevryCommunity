@@ -23,6 +23,8 @@ namespace DevryService
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, builder)=>
                 {
+                    builder.AddJsonFile("bot-settings.json", optional: false, reloadOnChange: true);
+
                     builder.AddUserSecrets<Program>();
                 })
                 .ConfigureServices((hostContext, services) =>

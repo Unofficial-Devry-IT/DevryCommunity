@@ -30,7 +30,7 @@ namespace DevryService.Commands
         public async Task InviteLink(CommandContext context)
         {
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                .WithAuthor("Recruiter Hat", icon_url: "")
+                .WithAuthor("Recruiter Hat", iconUrl: "")
                 .WithTitle("Invitation")
                 .WithColor(DiscordColor.Cyan)
                 .WithDescription("Spread the word, our trusted scout! Spread the word " +
@@ -51,7 +51,7 @@ namespace DevryService.Commands
                 var stats = await database.Stats.FindAsync(context.Member.Id);
 
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                    .WithAuthor("Stats Hat", icon_url: "https://alifeofproductivity.com/wp-content/uploads/2013/06/stat.001.jpg")
+                    .WithAuthor("Stats Hat", iconUrl: "https://alifeofproductivity.com/wp-content/uploads/2013/06/stat.001.jpg")
                     .WithColor(DiscordColor.Gray)
                     .WithTitle($"{context.Member.Username} Stats");
 

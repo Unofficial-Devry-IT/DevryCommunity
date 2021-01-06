@@ -10,6 +10,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.EventArgs;
 
 using DescriptionAttribute = DevryService.Core.Util.DescriptionAttribute;
 
@@ -33,10 +36,15 @@ namespace DevryService.Wizards
         public Action<CommandContext> Command { get; set; }
     }
 
+    public class HelpWizardConfig : WizardConfig
+    {
+
+    }
+
     [WizardInfo(Name = "Helper Hat",
                 Description = "Gives guidance",
                 IconUrl = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png")]
-    public class HelpWizard : Wizard
+    public class HelpWizard : WizardBase<HelpWizardConfig>
     {
         const string Headline = "Devry Help Wizard. Please react to the appropriate emoji and we'll get you started!\n\n";
         const string POSITIVE_EMOJI = ":white_check_mark:";
@@ -51,11 +59,11 @@ namespace DevryService.Wizards
             Wizards = new Dictionary<string, SubPage>()
         };
 
-        public HelpWizard(ulong userId, DiscordChannel channel) : base(userId, channel)
+        public HelpWizard(CommandContext commandContext) : base(commandContext)
         {
         }
 
-        bool HasAuth(DiscordMember member, RequireRolesAttributeAttribute attribute)
+        bool HasAuth(DiscordMember member, RequireRolesAttribute attribute)
         {
             return member.Roles.Select(x => x.Name).Intersect(attribute.RoleNames).Count() > 0;
         }
@@ -65,8 +73,8 @@ namespace DevryService.Wizards
             foreach(var type in Assembly.GetExecutingAssembly().GetTypes().Where(x=>x.GetInterfaces().Contains(typeof(IMiscCommand))))
             {
                 // Class level authorization
-                if (type.GetCustomAttribute<RequireRolesAttributeAttribute>() != null)
-                    if (!(await type.GetCustomAttribute<RequireRolesAttributeAttribute>().CanExecute(context, false)))
+                if (type.GetCustomAttribute<RequireRolesAttribute>() != null)
+                    if (!(await type.GetCustomAttribute<RequireRolesAttribute>().ExecuteCheckAsync(context, false)))
                         continue;
 
                 foreach(var methodInfo in type.GetMethods().Where(x=>x.GetCustomAttribute<WizardCommandInfo>() != null))
@@ -77,8 +85,8 @@ namespace DevryService.Wizards
                     if (info.IgnoreHelpWizard)
                         continue;
 
-                    if (methodInfo.GetCustomAttribute<RequireRolesAttributeAttribute>() != null)
-                        if (!(await methodInfo.GetCustomAttribute<RequireRolesAttributeAttribute>().CanExecute(context, false)))
+                    if (methodInfo.GetCustomAttribute<RequireRolesAttribute>() != null)
+                        if (!(await methodInfo.GetCustomAttribute<RequireRolesAttribute>().ExecuteCheckAsync(context, false)))
                             continue;
 
                     PageEntry entry = new PageEntry()
@@ -112,16 +120,16 @@ namespace DevryService.Wizards
                      canDelete = true;
 
                 // RequireRolesAttribute will be utilized on methods to restrict the users who can access things
-                if (createMethod.GetCustomAttribute<RequireRolesAttributeAttribute>() != null)
+                if (createMethod.GetCustomAttribute<RequireRolesAttribute>() != null)
                 {
-                    var requirements = createMethod.GetCustomAttribute<RequireRolesAttributeAttribute>();
+                    var requirements = createMethod.GetCustomAttribute<RequireRolesAttribute>();
                     if (!HasAuth(context.Member, requirements))
                         canAdd = false;
                 }
 
-                if (deleteMethod.GetCustomAttribute<RequireRolesAttributeAttribute>() != null)
+                if (deleteMethod.GetCustomAttribute<RequireRolesAttribute>() != null)
                 {
-                    var requirements = deleteMethod.GetCustomAttribute<RequireRolesAttributeAttribute>();
+                    var requirements = deleteMethod.GetCustomAttribute<RequireRolesAttribute>();
                     if (!HasAuth(context.Member, requirements))
                         canDelete = false;
                 }
@@ -164,31 +172,38 @@ namespace DevryService.Wizards
             var menuMessage = string.Join("\n\n", MainMenu.Wizards.Select(x => $"{x.Key} - {x.Value.Description}")) + "\n\n";
             menuMessage += string.Join("\n\n", MainMenu.Misc.Options.Select(x => $"{x.Key} - {x.Value.Description}"));
 
-            if(menuMessage.Length == 0)
+            if (menuMessage.Length == 0)
             {
                 menuMessage = "It appears you don't have sufficient permissions. Please contact a moderator to get squared away!";
-                this.WizardMessage = await WizardReply(context, menuMessage);
+                await SimpleReply(context, menuMessage, false, false);
                 return null;
             }
             else
-                this.WizardMessage = await WizardReply(context, menuMessage);
+                _recentMessage = await SimpleReply(context, menuMessage, true, true);
 
             foreach (var reactionName in MainMenu.Wizards.Select(x=>x.Key))
             {
                 await Task.Delay(500);
-                await WizardMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
+                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
             }
 
             foreach(var reactionName in MainMenu.Misc.Options.Select(x=>x.Key))
             {
                 await Task.Delay(500);
-                await WizardMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
+                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
             }
 
-            var reaction = await GetUserReactionTo(WizardMessage);
-            await WizardMessage.DeleteAllReactionsAsync();
+            InteractivityResult<MessageReactionAddEventArgs> reactionResult =  await _recentMessage.WaitForReactionAsync(_originalMember);
 
-            return reaction;
+            if (reactionResult.TimedOut)
+            {
+                await SimpleReply(context, $"{_options.Name} Wizard has timed out...", false, false);
+                throw new StopWizardException(_options.Name);
+            }
+
+            await _recentMessage.DeleteAllReactionsAsync();
+
+            return reactionResult.Result.Emoji;
         }
 
         async Task DisplaySubMenu(CommandContext context, DiscordEmoji emoji)
@@ -200,7 +215,7 @@ namespace DevryService.Wizards
                 optionsMenu = MainMenu.Wizards.FirstOrDefault(x => name.Equals(x.Key, StringComparison.OrdinalIgnoreCase)).Value.Options;
             else if (MainMenu.Misc.Options.ContainsKey(name))
             {
-                await Cleanup();
+                await CleanupAsync();
                 optionsMenu = MainMenu.Misc.Options;
                 optionsMenu[name].Command(context);
                 return;
@@ -209,17 +224,24 @@ namespace DevryService.Wizards
                 return;
 
             string options = string.Join("\n\n", optionsMenu.Select(x => $"{x.Key} - {x.Value.Description}"));
-            WizardMessage = await WizardReplyEdit(WizardMessage, options, false);
+            _recentMessage = await ReplyEdit(_recentMessage, options, false, true);
 
             foreach(var icon in optionsMenu.Keys)
             {
                 await Task.Delay(500);
-                await WizardMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, icon));
+                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, icon));
             }
 
-            var reaction = await GetUserReactionTo(WizardMessage);
+            InteractivityResult<MessageReactionAddEventArgs> reactionResult = await _recentMessage.WaitForReactionAsync(_originalMember);
 
-            await Cleanup();
+            if (reactionResult.TimedOut)
+            {
+                await SimpleReply(context, $"{_options.Name} Wizard has timed out...", false, false);
+                throw new StopWizardException(_options.Name);
+            }
+
+            var reaction = reactionResult.Result.Emoji;
+            await CleanupAsync();
 
             if (optionsMenu.ContainsKey(reaction.GetDiscordName()))
             {
@@ -229,7 +251,7 @@ namespace DevryService.Wizards
             else
             {
                 await context.RespondAsync(embed: new DiscordEmbedBuilder()
-                    .WithAuthor(AuthorName, null, AuthorIcon)
+                    .WithAuthor(this._options.Name, null, this._options.Icon)
                     .WithTitle("Error")
                     .WithDescription("An error occurred with this wizard")
                     .WithColor(DiscordColor.IndianRed)
@@ -238,20 +260,28 @@ namespace DevryService.Wizards
             }            
         }
 
-        public override async Task StartWizard(CommandContext context)
+        protected override async Task ExecuteAsync(CommandContext context)
         {
             await GetIAddRemoveWizards(context);
             await GetIMiscCommands(context);
 
             var reaction = await MainWindow(context);
-            
-            if (reaction == null)
-            {
-                await Cleanup();
-                return;
-            }
 
             await DisplaySubMenu(context, reaction);
+        }
+
+        public override HelpWizardConfig DefaultSettings()
+        {
+            HelpWizardConfig config = new HelpWizardConfig();
+
+            config.Name = "Helper Hat";
+            config.Description = "Gives guidance";
+            config.Icon = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png";
+
+            config.AcceptAnyUser = false;
+            config.MessageRequireMention = false;
+
+            return config;
         }
     }
 }
