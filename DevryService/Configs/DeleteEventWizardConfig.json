@@ -1,0 +1,1 @@
+{"DeleteEventWizardConfig":{"AllowedToUse":["Moderator","Tutor","Professor"],"TimeoutOverride":null,"AcceptAnyUser":false,"MessageRequireMention":false,"Name":"Procrastination Hat","Icon":"","Title":"Let's cancel that event!","Description":"Allows user to delete an event","ReactionEmoji":null}}

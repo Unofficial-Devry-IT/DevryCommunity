@@ -12,56 +12,47 @@ using Description = DevryService.Core.Util.DescriptionAttribute;
 
 namespace DevryService.Commands
 {
+    using Wizards.Admin;
+
     [Description(":date:", "Need an event? Want to cancel an event?")]
-    public class EventCommands : IDiscordCommand, IAddRemoveCommand
+    public class EventCommands : BaseCommandModule, IDiscordCommand, IAddRemoveCommand
     {
         [Command("create-event")]
-        [WizardCommandInfo( Description = "Need an event? You've come to the right place!",
-                            Emoji = "",
-                            IgnoreHelpWizard = false,
-                            Name = "Create Event")]
-        [RequireRolesAttribute(RoleCheckMode.Any, "Moderator","Admin")]
+        [Settings("createEventConfig")]
+        [RequireRoles(RoleCheckMode.Any, "Moderator","Admin")]
         public async Task Create(CommandContext context)
         {
-            CreateEventWizard wizard = new CreateEventWizard(context.Member.Id, context.Channel);
+            CreateEventWizard wizard = new CreateEventWizard(context);
 
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch(StopWizardException ex)
+            finally
             {
-                await wizard.Cleanup();
-            }
-            catch
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
 
-            await wizard.Cleanup();
         }
 
         [Command("delete-event")]
+        [Settings("deleteEventConfig")]
         [WizardCommandInfo( Description = "Did you make an oopsie? Need to get rid of an existing event?",
                             Emoji = "",
                             IgnoreHelpWizard = false,
                             Name = "Remove Event")]
-        [RequireRolesAttribute(RoleCheckMode.Any, "Moderator", "Admin")]
+        [RequireRoles(RoleCheckMode.Any, "Moderator", "Admin")]
         public async Task Delete(CommandContext context)
         {
-            DeleteEventWizard wizard = new DeleteEventWizard(context.Member.Id, context.Channel);
+            DeleteEventWizard wizard = new DeleteEventWizard(context);
 
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch(StopWizardException ex)
+            finally
             {
-                await wizard.Cleanup();
-            }
-            catch
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
         }
     }

@@ -10,6 +10,7 @@ namespace DevryService.Core
         where TOptions : WizardConfig
     {
         TOptions DefaultSettings();
+        CommandConfig DefaultCommandConfig();
         void LoadSettings(TOptions options);
     }
 }

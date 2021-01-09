@@ -6,52 +6,65 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Description = DevryService.Core.Util.DescriptionAttribute;
 
 namespace DevryService.Commands
 {
-
-    public class HelpCommand : IDiscordCommand, IMiscCommand
+    
+    public class HelpCommand : BaseCommandModule, IDiscordCommand, IMiscCommand
     {
         [Command("view-welcome")]
-        [WizardCommandInfo(Description = "View the message that gets sent to newcomers when they join!")]
+        [Settings("viewWelcomeConfig")]
         public async Task ViewWelcome(CommandContext context)
         {
-            await context.Member.SendMessageAsync(embed: Bot.GenerateWelcomeMessage());
+            DiscordChannel test = Bot.Discord.Guilds
+               .FirstOrDefault(x=>x.Value.Name.ToLower().Contains("devry")).Value.Channels
+               .FirstOrDefault(x => x.Value.Name.ToLower().Contains("bot-test"))
+               .Value;
+
+            await test.SendMessageAsync(embed: Bot.GenerateWelcomeMessage(context.Member));
         }
 
         [Command("invite")]
-        [WizardCommandInfo(Description = "Spread the word! Get your fellow classmates to join us!",
-            Emoji = ":email:",
-            IgnoreHelpWizard = false,
-            Name = "Invitation Link")]
+        [Settings("inviteLinkConfig")]
         public async Task InviteLink(CommandContext context)
         {
+            EmbedConfig config = CommandSettingsUtil.InviteLinkConfig();
+
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                .WithAuthor("Recruiter Hat", iconUrl: "")
-                .WithTitle("Invitation")
+                .WithAuthor(config.Name, iconUrl: "")
+                .WithTitle(config.Title)
                 .WithColor(DiscordColor.Cyan)
-                .WithDescription("Spread the word, our trusted scout! Spread the word " +
-                "of our kingdom! Amass an army of knowledge seeking minions! Lay " +
-                "waste to the legions of doubt and uncertainty!!")
-                .AddField("Invite", "https://discord.gg/P5BDakb")
-                .WithFooter("Minions of knowledge! Assembblleeeee!");
+                .WithDescription(config.Contents)                
+                .WithFooter(config.Footer);
+
+            foreach(var field in config.Fields)
+            {
+                string[] split = field.Split("|");
+
+                if (split.Length != 2) continue;
+
+                builder.AddField(split[0], split[1]);
+            }
 
             await context.RespondAsync(embed: builder.Build());
         }
 
         [Command("stats")]
-        [WizardCommandInfo(Description = "Not fully implemented yet")]
+        [Settings("viewStatsConfig")]
         public async Task ViewStats(CommandContext context)
         {
+            CommandConfig config = CommandSettingsUtil.ViewStatsConfig();
+
             using (DevryDbContext database = new DevryDbContext())
             {
                 var stats = await database.Stats.FindAsync(context.Member.Id);
 
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                    .WithAuthor("Stats Hat", iconUrl: "https://alifeofproductivity.com/wp-content/uploads/2013/06/stat.001.jpg")
+                    .WithAuthor(config.Name, iconUrl: config.Icon)
                     .WithColor(DiscordColor.Gray)
                     .WithTitle($"{context.Member.Username} Stats");
 
@@ -65,21 +78,19 @@ namespace DevryService.Commands
         }
 
         [Command("help")]
+        [Settings("helpCommandConfig")]
         [WizardCommandInfo(Description = "A wizard shall appear and guide you along")]
         public async Task Help(CommandContext context)
         {
-            HelpWizard wizard = new HelpWizard(context.Member.Id, context.Channel);
+            HelpWizard wizard = new HelpWizard(context);
+
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch(StopWizardException ex)
+            catch(Exception)
             {
-                await wizard.Cleanup();
-            }
-            catch(Exception ex)
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
         }
     }

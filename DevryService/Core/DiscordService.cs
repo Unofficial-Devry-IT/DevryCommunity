@@ -16,9 +16,9 @@ namespace DevryService.Core
         public const int NOT_FOUND = 404;
         public const int SERVER_ERROR = 500;
 
-        public DiscordService(DevryDbContext context)
+        public DiscordService()
         {
-            _context = context;
+            _context = new DevryDbContext();
         }
 
         /// <summary>

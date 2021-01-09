@@ -270,6 +270,19 @@ namespace DevryService.Wizards
             await DisplaySubMenu(context, reaction);
         }
 
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var config = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = config.Name,
+                Description = config.Description,
+                IgnoreHelpWizard = false,
+                Emoji = config.ReactionEmoji
+            };
+        }
+
         public override HelpWizardConfig DefaultSettings()
         {
             HelpWizardConfig config = new HelpWizardConfig();

@@ -11,17 +11,93 @@ using System.Threading.Tasks;
 
 namespace DevryService.Wizards
 {
+    [System.Serializable]
+    public struct CodeInfo
+    {
+        public string HumanReadableName { get; set; }
+        public string Extension { get; set; }
+        public DiscordColor Color { get; set; }
+        public string DiscordCodeBlockLanguage { get; set; }
+    }
+
+    public class SnippetWizardConfig : WizardConfig
+    {
+        public string RootCodePath { get; set; } = Directory.GetCurrentDirectory();
+        public List<CodeInfo> CodeBlocks { get; set; } = new List<CodeInfo>();
+    }
+
     [WizardInfo(Name = "Programming Hat",
         Description = "Provides a variety of code snippets for various topics and in multiple languages",
         Emoji = ":desktop:",
         Title = "Snippets")]
-    public class SnippetWizard : Wizard
+    public class SnippetWizard : WizardBase<SnippetWizardConfig>
     {
-        List<string> Categories = LoadFile.GetSnippetCategories();
-        const string Basic = "Snippet - Wizard. Please following the instructions below\n";
-        DiscordMessage WizardMessage;
+        public override SnippetWizardConfig DefaultSettings()
+        {
+            SnippetWizardConfig config = new SnippetWizardConfig();
 
-        public SnippetWizard(ulong userId, DiscordChannel channel) : base(userId, channel)
+            config.Name = "Programming Hat";
+            config.Description = "Provides a variety of code snippets for various topics and in multiple languages";
+            config.ReactionEmoji = ":desktop:";
+            config.Title = "Snippets";
+            config.AcceptAnyUser = false;
+            config.MessageRequireMention = false;
+
+            config.CodeBlocks = new List<CodeInfo>()
+            {
+                new CodeInfo
+                {
+                    Color = DiscordColor.SpringGreen,
+                    HumanReadableName = "C#",
+                    Extension = ".cs",
+                    DiscordCodeBlockLanguage ="csharp"
+                },
+
+                new CodeInfo
+                {
+                    Color = DiscordColor.CornflowerBlue,
+                    HumanReadableName = "Python",
+                    Extension = ".py",
+                    DiscordCodeBlockLanguage = "python"
+                },
+
+                new CodeInfo
+                {
+                    Color = DiscordColor.Purple,
+                    HumanReadableName = "C++",
+                    Extension = ".cpp",
+                    DiscordCodeBlockLanguage = "cpp"
+                },
+
+                new CodeInfo
+                {
+                    Color = DiscordColor.SpringGreen,
+                    HumanReadableName = "SQL",
+                    Extension = ".sql",
+                    DiscordCodeBlockLanguage = "sql"
+                }
+            };
+
+            return config;
+        }
+
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var config = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = config.Name,
+                Description = config.Description,
+                Emoji = config.ReactionEmoji,
+                IgnoreHelpWizard = false
+            };
+        }
+
+        List<string> Categories = new List<string>();
+        const string Basic = "Snippet - Wizard. Please follow the instructions below\n";
+
+        public SnippetWizard(CommandContext commandContext) : base(commandContext)
         {
         }
 
@@ -42,7 +118,7 @@ namespace DevryService.Wizards
 
         async Task SelectLanguage(string selectedCategory)
         {
-            var files = LoadFile.GetFilesInCategory(selectedCategory);
+            var files = GetFilesInCategory(selectedCategory);
             var extensions = files.Select(x => x.Extension)
                 .Distinct()
                 .ToList();
@@ -52,17 +128,18 @@ namespace DevryService.Wizards
 
             List<string> options = new List<string>();
             foreach (var ext in extensions)
-                options.Add(LoadFile.ExtensionToName(ext));
+                options.Add(ExtensionToName(ext));
 
             string languageMenu = Basic + "Select the corresponding number(s) to select a language, or languages\n\n";
             for (int i = 0; i < options.Count; i++)
                 languageMenu += $"[{i + 1}] - {options[i]}\n";
 
-            WizardMessage = await WizardReplyEdit(WizardMessage, languageMenu, false);
-            DiscordMessage reply = await GetUserReply();
+            string reply = string.Empty;
+
+            _recentMessage = await ReplyEditWithReply(_recentMessage, languageMenu, false, true, (context) => reply = context.Result.Content);
 
             List<string> selectedLanguages = new List<string>();
-            foreach(var parameter in reply.Content.Replace(","," ").Split(" "))
+            foreach(var parameter in reply.Replace(","," ").Split(" "))
             {
                 if(int.TryParse(parameter, out int index))
                 {
@@ -74,10 +151,10 @@ namespace DevryService.Wizards
                 }
             }
 
-            await Cleanup();
+            await CleanupAsync();
 
             foreach (var lang in selectedLanguages)
-                await DisplayCode(lang, groups[LoadFile.NameToExtension(lang)]);
+                await DisplayCode(lang, groups[NameToExtension(lang)]);
         }
 
         async Task DisplayCode(string lang, List<FileInfo> files)
@@ -85,42 +162,43 @@ namespace DevryService.Wizards
             foreach(var file in files)
             {
                 await Task.Delay(2500);
-                string block = await LoadFile.CreateCodeBlock(file);
+                string block = await CreateCodeBlock(file);
 
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                    .WithAuthor(AuthorName, null, AuthorIcon)
+                    .WithAuthor(_options.Name, null, _options.Icon)
                     .WithTitle(lang)
                     .WithDescription(block)
-                    .WithColor(LoadFile.GetColor(lang));
+                    .WithColor(GetColor(lang));
 
-                await Channel.SendMessageAsync(embed: builder.Build());
+                await _channel.SendMessageAsync(embed: builder.Build());
             }
         }
 
-        public override async Task StartWizard(CommandContext context)
+        protected override async Task ExecuteAsync(CommandContext context)
         {
+            Categories = GetSnippetCategories();
+
             string categoryMenu = Basic + "Select the corresponding number to selct a category\n\n";
 
             for (int i = 0; i < Categories.Count; i++)
                 categoryMenu += $"[{i + 1}] - {Categories[i]}\n";
 
-            WizardMessage = await WizardReply(context, categoryMenu, true);
-            DiscordMessage reply = await GetUserReply();
+            string reply = string.Empty;
+            _recentMessage = await WithReply(context, categoryMenu, (context)=>reply=context.Result.Content, true);
 
-            // Prevent execution to go further if user attempted to halt wizard
-            if(reply == null || reply.Content == null)
+            if(string.IsNullOrEmpty(reply))
             {
-                await Cleanup();
+                await CleanupAsync();
                 return;
             }
 
-            string category = GetCategory(reply.Content);
+            string category = GetCategory(reply.Trim());
 
             if(string.IsNullOrEmpty(category))
             {
-                await Cleanup();
+                await CleanupAsync();
                 await context.RespondAsync(embed: new DiscordEmbedBuilder()
-                    .WithAuthor(AuthorName, null, AuthorIcon)
+                    .WithAuthor(_options.Name, null, _options.Icon)
                     .WithTitle("Invalid Input")
                     .WithDescription($"Expected value between 1 - {Categories.Count}")
                     .WithColor(DiscordColor.IndianRed)
@@ -129,6 +207,90 @@ namespace DevryService.Wizards
             }
 
             await SelectLanguage(category);
+        }        
+
+        /// <summary>
+        /// Get color that shall be used in <see cref="DiscordEmbed"/>
+        /// </summary>
+        /// <param name="name">Language name that you want the color for</param>
+        /// <returns><see cref="DiscordColor"/></returns>
+        DiscordColor GetColor(string name)
+        {
+            if (_options.CodeBlocks.Any(x => x.HumanReadableName.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                return _options.CodeBlocks.FirstOrDefault(x => x.HumanReadableName.Equals(name, StringComparison.OrdinalIgnoreCase)).Color;
+            else
+                return DiscordColor.Cyan;
+        }
+
+        /// <summary>
+        /// Get the associated language for the <paramref name="info"/>
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns>Language to use in code block</returns>
+        string CodeBlockLanguage(FileInfo info)
+        {
+            if (_options.CodeBlocks.Any(x => x.Extension.Equals(info.Extension, StringComparison.OrdinalIgnoreCase)))
+                return _options.CodeBlocks.FirstOrDefault(x => x.Extension.Equals(info.Extension, StringComparison.OrdinalIgnoreCase)).DiscordCodeBlockLanguage;
+            else
+                return info.Extension.Replace(".", " ");
+        }
+
+        /// <summary>
+        /// Looks for the associated <see cref="CodeInfo"/> based on extension
+        /// </summary>
+        /// <param name="extension">Extension to get name from</param>
+        /// <returns>Name for <paramref name="extension"/></returns>
+        string ExtensionToName(string extension)
+        {
+            if (_options.CodeBlocks.Any(x => x.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)))
+                return _options.CodeBlocks.FirstOrDefault(x => x.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)).HumanReadableName;
+            else
+                return extension.Replace(".", "");
+        }
+
+        string NameToExtension(string name)
+        {
+            if (_options.CodeBlocks.Any(x => x.HumanReadableName.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                return _options.CodeBlocks.FirstOrDefault(x => x.HumanReadableName.Equals(name, StringComparison.OrdinalIgnoreCase)).Extension;
+
+            return $".{name}";
+        }
+
+        /// <summary>
+        /// Get all folders located at <see cref="SnippetWizardConfig.RootCodePath"/>
+        /// </summary>
+        /// <returns>List of folders within <see cref="SnippetWizardConfig.RootCodePath"/></returns>
+        List<string> GetSnippetCategories()
+        {
+            string basePath = _options.RootCodePath;
+
+            return Directory.GetDirectories(basePath)
+                .Select(x => new DirectoryInfo(x).Name)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Grab all files within specified directory
+        /// </summary>
+        /// <param name="directory">Path to directory</param>
+        /// <returns>List of <see cref="FileInfo"/> for files in <paramref name="directory"/></returns>
+        List<FileInfo> GetFilesInCategory(string directory)
+        {
+            string path = Path.Combine(_options.RootCodePath, directory);
+            return Directory.GetFiles(path).Select(x => new FileInfo(x)).ToList();
+        }
+
+        /// <summary>
+        /// Generate code block from provided file
+        /// </summary>
+        /// <param name="info">File to load and output as code block</param>
+        /// <returns>Formatted string (in code block format)</returns>
+        async Task<string> CreateCodeBlock(FileInfo info)
+        {
+            string contents = await File.ReadAllTextAsync(info.FullName);
+            string lang = CodeBlockLanguage(info);
+
+            return $"```{lang}\n{contents}\n```";
         }
     }
 }

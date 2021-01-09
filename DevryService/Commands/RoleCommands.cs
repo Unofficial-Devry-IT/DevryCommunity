@@ -2,6 +2,7 @@
 using DevryService.Core.Util;
 using DevryService.Wizards;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,49 +12,37 @@ namespace DevryService.Commands
 {
 
     [Core.Util.Description(":classical_building:", "Join/Leave a class at your leisure!")]
-    public class RoleCommands : IDiscordCommand, IAddRemoveCommand
+    public class RoleCommands : BaseCommandModule, IDiscordCommand, IAddRemoveCommand
     {
-        [DSharpPlus.CommandsNext.Attributes.Command("join")]
-        [WizardCommandInfo(Description="Join your fellow minions! Select from our vast array of inner circles!",
-            Name ="Sorting Hat",
-            WizardType = typeof(JoinRoleWizard))]
+        [Command("join")]
+        [Settings("joinCommandConfig")]
         public async Task Create(CommandContext context)
         {
-            JoinRoleWizard wizard = new JoinRoleWizard(context.Member.Id, context.Channel);
+            JoinRoleWizard wizard = new JoinRoleWizard(context);
 
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch(StopWizardException ex)
+            finally
             {
-                await wizard.Cleanup();
-            }
-            catch
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
         }
 
-        [DSharpPlus.CommandsNext.Attributes.Command("leave")]
-        [WizardCommandInfo(Description = "Aye, the time has come... ",
-            Name = "Bouncer Hat",
-            WizardType = typeof(LeaveRoleWizard))]
+        [Command("leave")]
+        [Settings("leaveCommandConfig")]
         public async Task Delete(CommandContext context)
         {
-            LeaveRoleWizard wizard = new LeaveRoleWizard(context.Member.Id, context.Channel);
+            LeaveRoleWizard wizard = new LeaveRoleWizard(context);
 
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch(StopWizardException ex)
+            finally
             {
-                await wizard.Cleanup();
-            }
-            catch
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
         }
     }

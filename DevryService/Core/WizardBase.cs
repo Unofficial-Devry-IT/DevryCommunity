@@ -32,6 +32,9 @@ namespace DevryService.Core
 
         public WizardBase(CommandContext commandContext)
         {
+            if (commandContext == null)
+                return;
+
             _channel = commandContext.Channel;
             _originalMember = commandContext.Member;
             
@@ -51,7 +54,7 @@ namespace DevryService.Core
 
             try
             {
-                Bot.Instance.Configuration.GetSection(typeof(TOptions).Name).Bind(_options);
+                Worker.Configuration.GetSection(typeof(TOptions).Name).Bind(_options);
                 LoadSettings(_options);
             }
             catch(Exception ex)
@@ -94,9 +97,10 @@ namespace DevryService.Core
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        protected virtual Task<bool> ResponsePredicate(DiscordMessage message)
+        protected virtual bool ResponsePredicate(DiscordMessage message)
         {
             bool valid = true;
+            _messages.Add(message);
             if(message.Content.StartsWith(Bot.Prefix))
             {
                 _ = Task.Run(async () => await message.RespondAsync($"You can't use bot commands within {_options.Name} Wizard"));
@@ -108,7 +112,7 @@ namespace DevryService.Core
                 throw new StopWizardException(_options.Name);
             }
 
-            return Task.FromResult(valid);
+            return valid;
         }
 
         /// <summary>
@@ -164,8 +168,11 @@ namespace DevryService.Core
                                                          Action<InteractivityResult<DiscordMessage>> replyHandler,
                                                          bool isCancellable = false,
                                                          Func<DiscordMessage,bool> replyPredicate = null)
-        {
+        {            
             _recentMessage = await SimpleReply(context, text, isCancellable);
+
+            if (replyPredicate == null)
+                replyPredicate = ResponsePredicate;
 
             if(!_options.AcceptAnyUser)
             {
@@ -197,6 +204,9 @@ namespace DevryService.Core
                                                             Func<MessageReactionAddEventArgs, bool> reactionPredicate = null)
         {
             _recentMessage = await SimpleReply(context, text, isCancellable);
+
+            if (reactionPredicate == null)
+                reactionPredicate = ReactionPredicate;
 
             if(!_options.AcceptAnyUser)
             {
@@ -248,6 +258,9 @@ namespace DevryService.Core
         {
             _recentMessage = await ReplyEdit(message, text, add: add, isCancellable: isCancellable);
 
+            if (replyPredicate == null)
+                replyPredicate = ResponsePredicate;
+
             if(!_options.AcceptAnyUser)
             {
                 var result = await _recentMessage.GetNextMessageAsync(predicate: replyPredicate);
@@ -275,6 +288,9 @@ namespace DevryService.Core
         {
             _recentMessage = await ReplyEdit(message, text, add, isCancellable);
 
+            if (reactionPredicate == null)
+                reactionPredicate = ReactionPredicate;
+
             if(!_options.AcceptAnyUser)
             {
                 var result = await _recentMessage.WaitForReactionAsync(_originalMember);
@@ -299,6 +315,7 @@ namespace DevryService.Core
         }
 
         public abstract TOptions DefaultSettings();
+        public abstract CommandConfig DefaultCommandConfig();
 
         public virtual void LoadSettings(TOptions options)
         {

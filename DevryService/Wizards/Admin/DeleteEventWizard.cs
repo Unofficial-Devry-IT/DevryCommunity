@@ -21,6 +21,19 @@ namespace DevryService.Wizards.Admin
         {
         }
 
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var config = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = config.Name,
+                Description = config.Description,
+                Emoji = config.ReactionEmoji,
+                IgnoreHelpWizard = true
+            };
+        }
+     
         public override DeleteEventWizardConfig DefaultSettings()
         {
             DeleteEventWizardConfig config = new DeleteEventWizardConfig();
@@ -42,7 +55,7 @@ namespace DevryService.Wizards.Admin
 
         protected override async Task ExecuteAsync(CommandContext context)
         {
-            List<Reminder> reminders = await Bot.Instance.DiscordService.GetReminders((x) => x.ChannelId == context.Channel.Id);
+            List<Reminder> reminders = await Worker.Instance.DiscordService.GetReminders((x) => x.ChannelId == context.Channel.Id);
 
             if(reminders.Count == 0)
             {
@@ -75,7 +88,7 @@ namespace DevryService.Wizards.Admin
                     }
 
                     SchedulerBackgroundService.Instance.RemoveTask(reminders[index].Id);
-                    await Bot.Instance.DiscordService.DeleteReminder(reminders[index].Id);
+                    await Worker.Instance.DiscordService.DeleteReminder(reminders[index].Id);
                     removed.Add($"{reminders[index].Name} with Id {reminders[index].Id}");
                 }
             }

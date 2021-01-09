@@ -7,27 +7,23 @@ using System.Threading.Tasks;
 
 namespace DevryService.Commands
 {
-    public class CreateClassCommand : IDiscordCommand
+    using Wizards.Admin;
+
+    public class CreateClassCommand : BaseCommandModule, IDiscordCommand
     {   
         [Command("create-class")]
-        [WizardCommandInfo(Description = "Expand our inner-kingdom! Allow our knowledge seeking minons to diverge onto their requested path(s).",
-            Name = "Admin Hat",
-            WizardType = typeof(CreateClassWizard))]
+        [Settings("createClassConfig")]
         public async Task Create(CommandContext context)
-        {
-            CreateClassWizard wizard = new CreateClassWizard(context.Member.Id, context.Channel);
+        {            
+            CreateClassWizard wizard = new CreateClassWizard(context);
 
             try
             {
-                await wizard.StartWizard(context);
+                wizard.Run(context);
             }
-            catch (StopWizardException ex)
+            finally
             {
-                await wizard.Cleanup();
-            }
-            catch
-            {
-                await wizard.Cleanup();
+                await wizard.CleanupAsync();
             }
         }
     }

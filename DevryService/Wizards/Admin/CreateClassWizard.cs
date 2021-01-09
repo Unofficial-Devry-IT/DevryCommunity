@@ -220,6 +220,20 @@ namespace DevryService.Wizards.Admin
 
         }
 
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var wizardConfig = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = wizardConfig.Name,
+                Description = wizardConfig.Description,
+                Emoji = wizardConfig.ReactionEmoji,
+                IgnoreHelpWizard = true,
+                RestrictedRoles = new List<string>() { "Moderator", "Admin" }
+            };
+        }
+
         public override CreateClassWizardConfig DefaultSettings()
         {
             CreateClassWizardConfig config = new CreateClassWizardConfig();

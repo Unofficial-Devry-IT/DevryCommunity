@@ -34,9 +34,9 @@ namespace DevryService.Wizards.Admin
         {
         }
 
-        protected override async Task<bool> ResponsePredicate(DiscordMessage message)
+        protected override bool ResponsePredicate(DiscordMessage message)
         {
-            var member = await message.Channel.Guild.GetMemberAsync(message.Author.Id);
+            var member = message.Channel.Guild.GetMemberAsync(message.Author.Id).GetAwaiter().GetResult();
 
             var memberRoles = member.Roles.Select(x => x.Name.ToLower()).ToList();
             
@@ -45,6 +45,20 @@ namespace DevryService.Wizards.Admin
                 return true;
 
             return false;
+        }
+
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var config = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = config.Name,
+                Description = config.Description,
+                IgnoreHelpWizard = false,
+                Emoji = config.ReactionEmoji,
+                RestrictedRoles = config.AllowedToUse
+            };
         }
 
         public override CreateEventWizardConfig DefaultSettings()
@@ -148,7 +162,7 @@ namespace DevryService.Wizards.Admin
 
         protected override async Task ExecuteAsync(CommandContext context)
         {
-            if (!await ResponsePredicate(context.Message))
+            if (!ResponsePredicate(context.Message))
             {
                 logger.LogWarning($"{context.Message.Author.Username} - attempted to use a command they don't have access to");
                 return;
@@ -188,7 +202,7 @@ namespace DevryService.Wizards.Admin
                 NextRunTime = NCrontab.CrontabSchedule.Parse(cronString).GetNextOccurrence(DateTime.Now)
             };
 
-            int statusCode = await Bot.Instance.DiscordService.CreateReminder(reminder);
+            int statusCode = await Worker.Instance.DiscordService.CreateReminder(reminder);
 
             if(statusCode != DiscordService.OK)
             {

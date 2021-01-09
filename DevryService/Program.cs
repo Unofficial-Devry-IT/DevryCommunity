@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DevryService.Core;
 using DevryService.Core.Schedule;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,7 +24,10 @@ namespace DevryService
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, builder)=>
                 {
-                    builder.AddJsonFile("bot-settings.json", optional: false, reloadOnChange: true);
+                    var configFiles = Commands.CommandSettingsUtil.InitializeSettings();
+
+                    foreach (var file in configFiles)
+                        builder.AddJsonFile(file, optional: false, reloadOnChange: true);
 
                     builder.AddUserSecrets<Program>();
                 })
@@ -32,6 +36,7 @@ namespace DevryService
                     services.AddDbContext<DevryDbContext>();
                     services.AddHostedService<SchedulerBackgroundService>();
                     services.AddHostedService<Worker>();
+                    services.AddTransient<DiscordService>();
                 });
     }
 }

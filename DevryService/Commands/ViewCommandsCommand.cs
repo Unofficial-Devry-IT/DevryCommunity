@@ -11,7 +11,7 @@ using DSharpPlus.Entities;
 
 namespace DevryService.Commands
 {
-    public class ViewCommandsCommand : IDiscordCommand
+    public class ViewCommandsCommand : BaseCommandModule, IDiscordCommand
     {
         /// <summary>
         /// Retrieve all commands within this assembly which utilize <see cref="IDiscordCommand"/>
@@ -43,7 +43,7 @@ namespace DevryService.Commands
                 {
                     CommandAttribute command = method.GetCustomAttribute<CommandAttribute>();
                     WizardCommandInfo info = method.GetCustomAttribute<WizardCommandInfo>();
-                    RequireRolesAttributeAttribute require = method.GetCustomAttribute<RequireRolesAttributeAttribute>();
+                    RequireRolesAttribute require = method.GetCustomAttribute<RequireRolesAttribute>();
 
                     // If the method doesn't have a command attribute... well it isn't used for commands
                     if (command == null)
@@ -75,7 +75,7 @@ namespace DevryService.Commands
                 .WithTitle("Available Commands")
                 .WithDescription("You're currently viewing a list of generated commands")
                 .WithColor(DiscordColor.Purple)
-                .WithAuthor(name: "Knowledge Hat", icon_url: null);
+                .WithAuthor(name: "Knowledge Hat", iconUrl: null);
 
             foreach(var pair in commands)
                 builder.AddField(pair.Key, pair.Value == string.Empty ? "No Description available" : pair.Value, true);

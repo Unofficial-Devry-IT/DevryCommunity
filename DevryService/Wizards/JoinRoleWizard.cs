@@ -39,6 +39,19 @@ namespace DevryService.Wizards
             return config;
         }
 
+        public override CommandConfig DefaultCommandConfig()
+        {
+            var config = DefaultSettings();
+
+            return new CommandConfig
+            {
+                Name = config.Name,
+                Description = config.Description,
+                Emoji = config.ReactionEmoji,
+                IgnoreHelpWizard = false
+            };
+        }
+
         public JoinRoleWizard(CommandContext commandContext) : base(commandContext)
         {
         }

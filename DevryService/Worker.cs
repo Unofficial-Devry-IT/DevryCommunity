@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using DevryService.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,17 +12,24 @@ namespace DevryService
         public readonly ILogger<Worker> Logger;
         public static Worker Instance;
         public static IConfiguration Configuration;
+        public DiscordService DiscordService;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration)
+        Bot bot;
+
+        public Worker(ILogger<Worker> logger, IConfiguration configuration, ILogger<Bot> botLogger, DiscordService discordService)
         {
             Logger = logger;
             Configuration = configuration;
+            DiscordService = discordService;
+
             Instance = this;
+
+            bot = new Bot(configuration, botLogger, discordService);
+            
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Bot bot = new Bot(Configuration);
             await bot.StartAsync();
 
             while (!stoppingToken.IsCancellationRequested)
