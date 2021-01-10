@@ -10,6 +10,7 @@ using DSharpPlus.Interactivity;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Collections;
 
 namespace DevryService.Core
 {    
@@ -26,6 +27,8 @@ namespace DevryService.Core
 
         protected DiscordMember _originalMember;
         protected DiscordMessage _recentMessage;
+
+        protected bool userStopped = false;
 
         protected const string CANCEL_MESSAGE = "Type `stop` to cancel the wizard";
         protected ILogger<WizardBase<TOptions>> logger;
@@ -86,11 +89,11 @@ namespace DevryService.Core
                 Worker.Configuration.GetSection(typeof(TOptions).Name.Replace("Config","")).Bind(_options);            
                 
                 foreach(var property in typeof(TOptions).GetProperties())
-                    if(property.PropertyType == typeof(List<string>) || property.PropertyType == typeof(string[]))
-                        property.SetValue(_options, section.GetSection(property.Name).Get(property.PropertyType));
+                    if(typeof(IList).IsAssignableFrom(property.PropertyType) || typeof(IEnumerable).IsAssignableFrom(property.PropertyType))
+                        property.SetValue(_options, section.GetSection(property.Name).Get(property.PropertyType));                
 
                 foreach (var field in typeof(TOptions).GetFields())
-                    if (field.FieldType == typeof(List<string>) || field.FieldType == typeof(string[]))
+                    if (typeof(IList).IsAssignableFrom(field.FieldType) || typeof(IEnumerable).IsAssignableFrom(field.FieldType))
                         field.SetValue(_options, section.GetSection(field.Name).Get(field.FieldType));
 
                 LoadSettings(_options);
@@ -114,7 +117,8 @@ namespace DevryService.Core
                     try
                     {
                         await ExecuteAsync(context);
-                    }                    
+                    }
+                    catch { }
                     finally
                     {
                         await CleanupAsync();
@@ -137,6 +141,9 @@ namespace DevryService.Core
         /// <returns></returns>
         protected virtual bool ResponsePredicate(DiscordMessage message)
         {
+            if (message.Author.IsBot)
+                return false;
+
             bool valid = true;
             _messages.Add(message);
             if(message.Content.StartsWith(Bot.Prefix))
@@ -147,7 +154,7 @@ namespace DevryService.Core
             else if(message.Content.ToLower().Trim() == "stop")
             {
                 _ = Task.Run(async () => await message.RespondAsync($"{_options.AuthorName} Wizard stopped"));
-                throw new StopWizardException(_options.AuthorName);
+                userStopped = true;
             }
 
             return valid;
@@ -237,7 +244,7 @@ namespace DevryService.Core
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await _recentMessage.GetNextMessageAsync(predicate: replyPredicate, timeoutOverride: _options.TimeoutOverride);
+                var result = await context.Message.GetNextMessageAsync(predicate: replyPredicate, timeoutOverride: _options.TimeoutOverride);
                 replyHandler.Invoke(result);
             }
             else
@@ -245,6 +252,9 @@ namespace DevryService.Core
                 var result = await Bot.Interactivity.WaitForMessageAsync(replyPredicate);
                 replyHandler.Invoke(result);
             }
+
+            if (userStopped)
+                throw new StopWizardException(_options.AuthorName);
 
             return _recentMessage;
         }
@@ -260,7 +270,7 @@ namespace DevryService.Core
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await _recentMessage.GetNextMessageAsync(predicate: replyPredicate);
+                var result = await context.Message.GetNextMessageAsync(predicate: replyPredicate);
                 replyHandler.Invoke(result);
             }
             else
@@ -294,7 +304,7 @@ namespace DevryService.Core
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await _recentMessage.WaitForReactionAsync(_originalMember);
+                var result = await context.Message.WaitForReactionAsync(_originalMember);
                 reactionHandler.Invoke(result);
             }
             else
@@ -336,6 +346,87 @@ namespace DevryService.Core
             return _recentMessage;
         }
 
+        public async Task<DiscordMessage> ReplyEdit(DiscordMessage message, DiscordEmbed embed)
+        {
+            return await message.ModifyAsync(embed);
+        }
+
+        public async Task<DiscordMessage> ReplyEditWithReply(DiscordMessage message, DiscordEmbed embed, Action<InteractivityResult<DiscordMessage>> replyHandler = null,
+            Func<DiscordMessage, bool> replyPredicate = null)
+        {
+            _recentMessage = await ReplyEdit(message, embed);
+
+            if (replyPredicate == null)
+                replyPredicate = ResponsePredicate;
+
+            if(!_options.AcceptAnyUser)
+            {
+                var result = await Bot.Interactivity.WaitForMessageAsync((msg) => _originalMember.Id == msg.Author.Id);
+                
+                if(result.TimedOut)
+                {
+                    await message.RespondAsync($"{_options.AuthorName} Wizard Timed Out...");
+                    throw new StopWizardException(GetType().Name);
+                }
+
+                replyHandler.Invoke(result);
+            }
+            else
+            {
+                var result = await Bot.Interactivity.WaitForMessageAsync(replyPredicate);
+                if(result.TimedOut)
+                {
+                    await message.RespondAsync($"{_options.AuthorName} Wizard Timed Out...");
+                }
+
+                _messages.Add(result.Result);
+                replyHandler.Invoke(result);
+            }
+
+            return _recentMessage;
+        }
+
+        public async Task<T> ReplyEditWithReply<T>(CommandContext context, DiscordMessage message, DiscordEmbed embed, Func<DiscordMessage,bool> replyPredicate = null)
+        {
+            if (replyPredicate == null)
+                replyPredicate = ResponsePredicate;
+
+            await message.ModifyAsync(embed: embed);
+
+            T value = default(T);
+
+            if(!_options.AcceptAnyUser)
+            {
+                var result = await context.Message.GetNextMessageAsync();
+
+                if(result.TimedOut)
+                {
+                    await SimpleReply(context, $"{_options.AuthorName} Wizard Timed Out...", false, false);
+                    throw new StopWizardException(_options.AuthorName);
+                }
+
+                if (!_messages.Any(x => x.Id == result.Result.Id))
+                    _messages.Add(result.Result);
+
+                string text = result.Result.Content.Trim();
+
+                try
+                {
+                    value = (T)Convert.ChangeType(text, typeof(T));
+                    return value;
+                }
+                catch
+                {
+                    await SimpleReply(context, embed: EmbedBuilder().WithDescription("Invalid Input").WithColor(DiscordColor.Red).Build(), false,false);
+                    throw new StopWizardException(_options.AuthorName);
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public async Task<DiscordMessage> ReplyEditWithReply(DiscordMessage message, string text, bool add=false, bool isCancellable=false,
             Action<InteractivityResult<DiscordMessage>> replyHandler = null,
             Func<DiscordMessage, bool> replyPredicate = null)
@@ -347,7 +438,7 @@ namespace DevryService.Core
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await _recentMessage.GetNextMessageAsync(predicate: replyPredicate);
+                var result = await message.GetNextMessageAsync(predicate: replyPredicate);
                 _messages.Add(result.Result);
                 _recentMessage = result.Result;
                 replyHandler.Invoke(result);
@@ -395,7 +486,7 @@ namespace DevryService.Core
                 return;
 
             if (_channel.Type == DSharpPlus.ChannelType.Text)
-                await _channel.DeleteMessagesAsync(_messages);
+                await _channel.DeleteMessagesAsync(_messages.Where(x=>x != null));
         }
 
         public abstract TOptions DefaultSettings();

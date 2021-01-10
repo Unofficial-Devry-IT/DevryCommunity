@@ -65,7 +65,9 @@ namespace DevryService.Wizards.Admin
 
         protected override async Task ExecuteAsync(CommandContext context)
         {
-            List<Reminder> reminders = await Worker.Instance.DiscordService.GetReminders((x) => x.ChannelId == context.Channel.Id);
+            // TODO: Why is the predicate overload not working the way it should
+            List<Reminder> reminders = await Worker.Instance.DiscordService.GetReminders();
+            reminders = reminders.Where(x => x.ChannelId == context.Channel.Id).ToList();
 
             if(reminders.Count == 0)
             {
@@ -75,12 +77,16 @@ namespace DevryService.Wizards.Admin
 
             string baseMessage = "Please select the corresponding number(s) to delete a reminder\n";
 
+            var embed = EmbedBuilder()
+                .WithDescription(baseMessage);
+
             for (int i = 0; i < reminders.Count; i++)
-                baseMessage += $"[{i + 1}] - {reminders[i].Name}\t{CronExpressionDescriptor.ExpressionDescriptor.GetDescription(reminders[i].Schedule)}";
+                embed.AddField((i + 1).ToString(),
+                    $"{reminders[i].Name}\t{CronExpressionDescriptor.ExpressionDescriptor.GetDescription(reminders[i].Schedule)}", true);
 
             string reply = string.Empty;
-            
-            _recentMessage = await WithReply(context, baseMessage, (context) => reply = context.Result.Content, true);
+
+            _recentMessage = await WithReply(context, embed.Build(), (context) => ReplyHandlerAction(context, ref reply), true);
 
             string[] parameters = reply.Replace(",", " ").Split(" ");
             List<string> removed = new List<string>();

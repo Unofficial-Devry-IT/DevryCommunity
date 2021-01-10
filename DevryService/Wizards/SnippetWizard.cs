@@ -2,6 +2,7 @@
 using DevryService.Core.Util;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +23,7 @@ namespace DevryService.Wizards
 
     public class SnippetWizardConfig : WizardConfig
     {
-        public string RootCodePath { get; set; } = Directory.GetCurrentDirectory();
+        public string RootCodePath { get; set; } = Path.Combine(Directory.GetCurrentDirectory(), "Snippets");
         public List<CodeInfo> CodeBlocks { get; set; } = new List<CodeInfo>();
     }
 
@@ -121,7 +122,7 @@ namespace DevryService.Wizards
             return null;
         }
 
-        async Task SelectLanguage(string selectedCategory)
+        async Task SelectLanguage(CommandContext context, string selectedCategory)
         {
             var files = GetFilesInCategory(selectedCategory);
             var extensions = files.Select(x => x.Extension)
@@ -135,13 +136,14 @@ namespace DevryService.Wizards
             foreach (var ext in extensions)
                 options.Add(ExtensionToName(ext));
 
-            string languageMenu = Basic + "Select the corresponding number(s) to select a language, or languages\n\n";
+            var embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription(Basic + "Select the corresponding number(s) to select a language, or languages\n\n");
+
             for (int i = 0; i < options.Count; i++)
-                languageMenu += $"[{i + 1}] - {options[i]}\n";
+                embed.AddField((i + 1).ToString(), options[i], true);
 
             string reply = string.Empty;
 
-            _recentMessage = await ReplyEditWithReply(_recentMessage, languageMenu, false, true, (context) => reply = context.Result.Content);
+            _recentMessage = await ReplyEditWithReply(_recentMessage, embed.Build(), (context) => ReplyHandlerAction(context, ref reply));
 
             List<string> selectedLanguages = new List<string>();
             foreach(var parameter in reply.Replace(","," ").Split(" "))
@@ -189,7 +191,7 @@ namespace DevryService.Wizards
                 categoryMenu += $"[{i + 1}] - {Categories[i]}\n";
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(context, categoryMenu, (context)=>reply=context.Result.Content, true);
+            _recentMessage = await WithReply(context, categoryMenu, (context)=>ReplyHandlerAction(context, ref reply), true);
 
             if(string.IsNullOrEmpty(reply))
             {
@@ -211,7 +213,57 @@ namespace DevryService.Wizards
                 return;
             }
 
-            await SelectLanguage(category);
+            var files = GetFilesInCategory(category);
+            var extensions = files.Select(x => x.Extension)
+                .Distinct()
+                .ToList();
+
+            var groups = files.GroupBy(x => x.Extension)
+                .ToDictionary(x => x.Key, x => x.ToList());
+
+            List<string> options = new List<string>();
+            foreach (var ext in extensions)
+                options.Add(ExtensionToName(ext));
+
+            var embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription(Basic + "Select the corresponding number(s) to select a language, or languages\n\n");
+
+            for (int i = 0; i < options.Count; i++)
+                embed.AddField((i + 1).ToString(), options[i], true);
+
+            /*
+                TODO: Fix Reply Edit With Message/Reaction
+             */
+
+            _recentMessage = await ReplyEdit(_recentMessage, embed.Build());
+
+            var response = await context.Message.GetNextMessageAsync();
+            if(response.TimedOut)
+            {
+                await SimpleReply(context, $"{_options.AuthorName} Wizard Timed Out...", false, false);
+                throw new StopWizardException(_options.AuthorName);
+            }
+
+
+            reply = response.Result.Content.Trim();
+            List<string> selectedLanguages = new List<string>();
+
+            foreach(var parameter in reply.Replace(",", " ").Split(" "))
+            {
+                if(int.TryParse(parameter, out int index))
+                {
+                    index -= 1;
+
+                    if (index < 0 || index > options.Count)
+                        continue;
+                    else 
+                        selectedLanguages.Add(options[index]);
+                }
+            }
+
+            await CleanupAsync();
+
+            foreach (var lang in selectedLanguages)
+                await DisplayCode(lang, groups[NameToExtension(lang)]);
         }        
 
         /// <summary>

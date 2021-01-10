@@ -53,6 +53,8 @@ namespace DevryService.Core
         /// </summary>
         public int Page { get; set; }
 
+        public List<string> RestrictedRoles { get; set; } = new List<string>();
+
         /// <summary>
         /// Determines if this option is a yes/no 
         /// </summary>
@@ -61,14 +63,24 @@ namespace DevryService.Core
         /// <summary>
         /// Command/Wizard that shall be ran
         /// </summary>
-        public string LinkTo { get; set; } = null;
+        public RunCommandConfig RunCommand { get; set; } = null;
+    }
+
+    [Serializable]
+    public class RunCommandConfig
+    {
+        public string CommandName { get; set; }
+        public string Emoji { get; set; }
     }
 
     [Serializable]
     public class YesNoOptionConfig
     {
-        public string MenuEmoji { get; set; }
+        public string Emoji { get; set; }
+        public string Description { get; set; } = string.Empty;
         public string Yes { get; set; }
+        public string YesEmoji { get; set; } = ":white_check_mark:";
         public string No { get; set; }
+        public string NoEmoji { get; set; } = ":negative_squared_cross_mark:";
     }
 }

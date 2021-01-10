@@ -111,8 +111,6 @@ namespace DevryService.Wizards
             {
                 if(int.TryParse(selection, out int index))
                 {
-                    index -= 1;
-
                     if (index < 0 || index > courseTypes.Count)
                     {
                         Console.WriteLine($"Invalid input");
@@ -129,16 +127,16 @@ namespace DevryService.Wizards
                 
                 foreach(var item in selectedGroups[key])
                 {
-                    embed.AddField((current + 1).ToString(), item.Name);
+                    embed.AddField((current + 1).ToString(), item.Name, true);
                     roleMap.Add(current, item);
                     current++;
                 }
 
-                await SimpleReply(context, embed.Build(), true, true);
+                _recentMessage = await SimpleReply(context, embed.Build(), true, true);
             }
 
             reply = string.Empty;
-            var response = await _recentMessage.GetNextMessageAsync();
+            var response = await context.Message.GetNextMessageAsync();
 
             if (response.TimedOut)
             {
@@ -162,7 +160,7 @@ namespace DevryService.Wizards
 
             List<string> appliedRoles = new List<string>();
 
-            DiscordMember member = await context.Guild.GetMemberAsync(_originalMember.Id);
+            DiscordMember member = context.Member;
 
             foreach (var selection in parameters)
             {

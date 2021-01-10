@@ -1,1 +1,68 @@
-{"HelpWizard":{"AcceptAnyUser":false,"MessageRequireMention":false,"Headline":null,"UsesCommand":{"DiscordCommand":"help","CommandConfig":{"RestrictedRoles":[],"IgnoreHelpWizard":false,"TimeoutOverride":null,"AuthorName":"Helper Hat","AuthorIcon":null,"Description":"Gives Guidance","ReactionEmoji":""}},"TimeoutOverride":null,"AuthorName":"Helper Hat","AuthorIcon":"https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png","Description":"Gives Guidance","ReactionEmoji":null}}
+{
+  "HelpWizard": {
+    "AcceptAnyUser": false,
+    "MessageRequireMention": false,
+    "Headline": null,
+    "UsesCommand": {
+      "DiscordCommand": "help",
+      "CommandConfig": {
+        "RestrictedRoles": [],
+        "IgnoreHelpWizard": false,
+        "TimeoutOverride": null,
+        "AuthorName": "Helper Hat",
+        "AuthorIcon": null,
+        "Description": "Gives Guidance",
+        "ReactionEmoji": ""
+      }
+    },
+    "Options": [
+      {
+        "Page": 0,
+        "RunCommand": {
+          "Emoji": ":e_mail:",
+          "CommandName": "invite"
+        }
+      },
+      {
+        "Page": 0,
+        "YesNoBetween": {
+          "Emoji": ":classical_building:",
+          "Description": "Join your fellow knowledge seeking minions! Or.. maybe you've completed a class and need to leave!\n\nNote, you don't HAVE to leave if you don't want! Feel free to stick around previous classes and help newcomers! Perhaps become a tutor!",
+          "Yes": "join",
+          "No": "leave",
+          "YesEmoji": ":white_check_mark:",
+          "NoEmoji": ":negative_squared_cross_mark:"
+        }
+      },
+      {
+        "Page": 0,
+        "RunCommand": {
+          "Emoji": ":desktop:",
+          "CommandName": "code"
+        }
+      },
+      {
+        "Page": 0,
+        "YesNoBetween": {
+          "Emoji": ":date:",
+          "Description": "Create a reminder for any purpose... a lecture, group huddle. Or delete one! Note: Reminders are channel based. So to create/delete a reminder you must be in the channel in question!",
+          "Yes": "create-event",
+          "No": "delete-event",
+          "YesEmoji": ":white_check_mark:",
+          "NoEmoji": ":negative_squared_cross_mark:"
+        },
+        "RestrictedRoles": [
+          "Moderator",
+          "Admin",
+          "Professor",
+          "Tutor"
+        ]
+      }
+    ],
+    "TimeoutOverride": null,
+    "AuthorName": "Helper Hat",
+    "AuthorIcon": "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png",
+    "Description": "Gives Guidance",
+    "ReactionEmoji": null
+  }
+}

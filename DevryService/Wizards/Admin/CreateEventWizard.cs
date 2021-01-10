@@ -125,16 +125,18 @@ namespace DevryService.Wizards.Admin
         async Task<string> GetDayOfWeekAsync()
         {
             string display = baseMessage + "Day of Week Interval\n" + cronUsageMenu + "\n\n";
+            var embed = EmbedBuilder()
+                .WithDescription(display);
 
             for (int i = 0; i < daysOfWeek.Length; i++)
-                display += $"[{i}] - {daysOfWeek[i]}\n";
+                embed.AddField(i.ToString(), daysOfWeek[i], true);
 
-            string value = string.Empty;
-            await ReplyEditWithReply(_recentMessage, display, false, true, (context) => value = context.Result.Content);
+            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
 
             while(!ValidCron(value.Trim(), 0, 6))
             {
-                await ReplyEditWithReply(_recentMessage, ":exclamation: - " + invalidInputMessage, true, true, (context) => value = context.Result.Content);
+                embed.Description += $"\n:exclamation: Invalid Input. Expected a value between 0 - {daysOfWeek.Length - 1}";
+                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
             }
 
             return value;
@@ -143,16 +145,18 @@ namespace DevryService.Wizards.Admin
         async Task<string> GetMonth()
         {
             string display = baseMessage + "Month Interval\n" + cronUsageMenu + "Valid Range: 1-12\n";
+            var embed = EmbedBuilder()
+                .WithDescription(display);
 
             for (int i = 0; i < months.Length; i++)
-                display += $"[{i + 1}] - {months[i]}\n";
+                embed.AddField((i + 1).ToString(), months[i], true);
 
-            string value = string.Empty;
-            await ReplyEditWithReply(_recentMessage, display, false, true, (context) => value = context.Result.Content);
+            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
 
             while (!ValidCron(value.Trim(), 1, 12))
             {
-                await ReplyEditWithReply(_recentMessage, ":exclamation: - " + invalidInputMessage, true, true, (context) => value = context.Result.Content);
+                embed.Description += $"\n:exclamation: Invalid Input. Expected a value between 1 - {months.Length}";
+                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
             }
 
             return value;
@@ -161,19 +165,24 @@ namespace DevryService.Wizards.Admin
         async Task<string> GetRange(string customMessage, int min, int max)
         {
             string display = baseMessage + customMessage + "\n" + cronUsageMenu + $"Valid Range: {min} - {max}\n";
-            string value = string.Empty;
+            var embed = EmbedBuilder().WithDescription(display);
 
-            await ReplyEditWithReply(_recentMessage, display, false, true, (context) => value = context.Result.Content);
+            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+            
             while(!ValidCron(value.Trim(), min, max))
             {
-                await ReplyEditWithReply(_recentMessage, ":exclamation: - " + invalidInputMessage, true, true, (context) => value = context.Result.Content);
+                display += $"\n:exclamation: - {invalidInputMessage}";
+                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
             }
 
             return value;
         }
 
+        CommandContext _context;
         protected override async Task ExecuteAsync(CommandContext context)
         {
+            _context = context;
+
             if (!ResponsePredicate(context.Message))
             {
                 logger.LogWarning($"{context.Message.Author.Username} - attempted to use a command they don't have access to");
@@ -191,9 +200,10 @@ namespace DevryService.Wizards.Admin
             _recentMessage = await WithReply(context, "What should the headline be?",
                 (context) => headline = context.Result.Content,
                 true);
-
-            _recentMessage = await ReplyEditWithReply(_recentMessage, "What should the contents of this message be?", false, true,
-                (context) => description = context.Result.Content);
+            
+            description = await ReplyEditWithReply<string>(context, _recentMessage,
+                EmbedBuilder()
+                .WithDescription("What should the contents of this message be?").Build());
 
             daysOfWeek = await GetDayOfWeekAsync();
             month = await GetMonth();

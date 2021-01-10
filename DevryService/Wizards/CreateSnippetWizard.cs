@@ -5,6 +5,7 @@ using DSharpPlus.Interactivity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -42,7 +43,18 @@ namespace DevryService.Wizards
 
             try
             {
+                _snippetConfig = new SnippetWizardConfig();
+
+                IConfigurationSection section = Worker.Configuration.GetSection(typeof(SnippetWizardConfig).Name.Replace("Config", ""));
                 Worker.Configuration.GetSection(typeof(SnippetWizardConfig).Name).Bind(_snippetConfig);
+
+                foreach (var property in _snippetConfig.GetType().GetProperties())
+                    if (typeof(IList).IsAssignableFrom(property.PropertyType) || typeof(IEnumerable).IsAssignableFrom(property.PropertyType))
+                        property.SetValue(_snippetConfig, section.GetSection(property.Name).Get(property.PropertyType));
+
+                foreach (var field in _snippetConfig.GetType().GetFields())
+                    if (typeof(IList).IsAssignableFrom(field.FieldType) || typeof(IEnumerable).IsAssignableFrom(field.FieldType))
+                        field.SetValue(_snippetConfig, section.GetSection(field.Name).Get(field.FieldType));
             }
             catch(Exception ex)
             {
@@ -102,31 +114,19 @@ namespace DevryService.Wizards
                 (context) => ReplyHandlerAction(context, ref _topic),
                 true);
 
-            // Retrieve EXTENSION
-            _recentMessage = await ReplyEditWithReply(_recentMessage,
-                "What's the file extension of this particular language? (csv, json, without the period)",
-                false,
-                true,
-                (context) => ReplyHandlerAction(context, ref _extension));
-
-            // Retrieve FILENAME
-            _recentMessage = await ReplyEditWithReply(_recentMessage,
-                $"What should the name of this file be? For easier reference... no extension as {_extension} will be automatically applied",
-                false,
-                true,
-                (context) => ReplyHandlerAction(context, ref _filename));
+            _extension = await ReplyEditWithReply<string>(context, _recentMessage, EmbedBuilder().WithDescription("What's the file extension of this particular language? (csv, json, without the period)").Build());
+            _filename = await ReplyEditWithReply<string>(context, _recentMessage, EmbedBuilder().WithDescription($"What should the name of this file be? For easier reference... no extension as {_extension} will automatically be applied").Build());
+                
 
             // We must ensure that our config contains information about this 'language' so we can allow users to select it
             if (!_snippetConfig.CodeBlocks.Any(x => x.Extension.Equals(_extension, StringComparison.OrdinalIgnoreCase)))
             {
                 // Need to acquire the 'human readable' version for our code block. This will appear in menus when selecting a snippet
                 string readableName = string.Empty;
-
-                _recentMessage = await ReplyEditWithReply(_recentMessage,
-                    $"Looks like a new type of language is being used... What is the 'human readable' text for this language. For instance C#, C++, YAML, etc",
-                    false,
-                    true,
-                    (context) => ReplyHandlerAction(context, ref readableName));
+                readableName = await ReplyEditWithReply<string>(context, _recentMessage,
+                    EmbedBuilder()
+                    .WithDescription($"Looks like a new type of language is being used... What is the 'human readable' text for this language? For instance, C#, C++, YAML, etc")
+                    .Build());
 
                 // Apply all of our info to this point
                 _snippetConfig.CodeBlocks.Add(new CodeInfo
@@ -149,10 +149,8 @@ namespace DevryService.Wizards
             }
 
             // Retrieve CODE BLOCK
-            string codeBlock = string.Empty;
-
-            _recentMessage = await ReplyEditWithReply(_recentMessage, "Provide the content you wish to share (in discord's code-block format)", false, false,
-                replyHandler: (context) => ReplyHandlerAction(context, ref codeBlock));
+            string codeBlock = await ReplyEditWithReply<string>(context, _recentMessage,
+                EmbedBuilder().WithDescription("Provide the content you wish to share (in discord's code-block format)").Build());
 
             string snippetBasePath = _snippetConfig.RootCodePath;
             string directoryPath = Path.Combine(snippetBasePath, _topic);

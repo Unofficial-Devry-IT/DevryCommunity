@@ -23,7 +23,7 @@ namespace DevryService.Commands.Events
 
             DeleteEventWizard wizard = new DeleteEventWizard(context);
 
-            try { wizard.Run(context); } finally { await wizard.CleanupAsync(); }
+            try { wizard.Run(context); } catch { } finally { await wizard.CleanupAsync(); }
         }
     }
 }

@@ -14,6 +14,7 @@ namespace DevryService.Core.Util
     using Commands;
     using DSharpPlus.CommandsNext.Attributes;
     using Microsoft.Extensions.Logging;
+    using System.Collections;
 
     public static class ConfigHandler
     {
@@ -47,9 +48,12 @@ namespace DevryService.Core.Util
 
         public static string[] InitializeSettings()
         {
-            CommandConfigs.Add("invite", InviteLinkConfig());
-            CommandConfigs.Add("view-welcome", ViewWelcomeConfig());
-            CommandConfigs.Add("view-stats", ViewStatsConfig());
+            if (!CommandConfigs.ContainsKey("invite")) 
+                CommandConfigs.Add("invite", InviteLinkConfig());
+            if(!CommandConfigs.ContainsKey("view-welcome"))
+                CommandConfigs.Add("view-welcome", ViewWelcomeConfig());
+            if(!CommandConfigs.ContainsKey("view-stats"))
+                CommandConfigs.Add("view-stats", ViewStatsConfig());
 
             // Shall track the current config files tracked by the system
             List<string> configFiles = new List<string>();
@@ -93,10 +97,35 @@ namespace DevryService.Core.Util
 
                     if(Worker.Configuration != null)
                     {
+                        IConfigurationSection section = Worker.Configuration.GetSection(wizard.Name);
                         WizardConfig config = Activator.CreateInstance(info.ReturnType) as WizardConfig;
-                        Worker.Configuration.GetSection(wizard.Name).Bind(config);
+                        section.Bind(config);
 
-                        WizardConfigs.Add(wizard.Name, config);
+                        IConfigurationSection usesCommandSection = section.GetSection("UsesCommand");
+                        IConfigurationSection commandConfigSection = usesCommandSection.GetSection("CommandConfig");
+                        
+                        foreach(var prop in typeof(CommandConfig).GetProperties())
+                            if (typeof(IEnumerable).IsAssignableFrom(prop.PropertyType) || typeof(IList).IsAssignableFrom(prop.PropertyType))
+                                prop.SetValue(config.UsesCommand.CommandConfig, commandConfigSection.GetSection(prop.Name).Get(prop.PropertyType));
+
+                        foreach (var field in typeof(CommandConfig).GetFields())
+                            if (typeof(IEnumerable).IsAssignableFrom(field.FieldType) || typeof(IList).IsAssignableFrom(field.FieldType))
+                                field.SetValue(config.UsesCommand.CommandConfig, commandConfigSection.GetSection(field.Name).Get(field.FieldType));
+
+                        if(config.UsesCommand != null && config.UsesCommand.CommandConfig != null)
+                            CommandConfigs.Add(config.UsesCommand.DiscordCommand, config.UsesCommand.CommandConfig);
+
+                        if (typeof(HelpWizardConfig).IsAssignableTo(config.GetType()))
+                        {
+                            HelpWizardConfig helpConfig = (HelpWizardConfig)config;
+
+                            IConfigurationSection optionsSection = section.GetSection("Options");
+                            helpConfig.Options = optionsSection.Get<List<OptionsBaseConfig>>();
+
+                            WizardConfigs.Add(wizard.Name, helpConfig);
+                        }
+                        else
+                            WizardConfigs.Add(wizard.Name, config);
                     }
 
                     continue;

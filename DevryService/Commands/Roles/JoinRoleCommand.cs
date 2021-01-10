@@ -18,7 +18,7 @@ namespace DevryService.Commands.Roles
         {
             JoinRoleWizard wizard = new JoinRoleWizard(context);
 
-            try { wizard.Run(context); } finally { await wizard.CleanupAsync(); }
+            try { wizard.Run(context); } catch { } finally { await wizard.CleanupAsync(); }
         }
     }
 }

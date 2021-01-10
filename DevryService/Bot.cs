@@ -44,6 +44,9 @@ namespace DevryService
 
             // Shall be used across our bot stuff
             Configuration = config;
+
+            // Ensure our stuff gets loaded
+            Core.Util.ConfigHandler.InitializeSettings();
         }
 
         public async Task StartAsync()

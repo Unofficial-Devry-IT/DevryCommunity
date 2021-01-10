@@ -18,6 +18,9 @@ using DescriptionAttribute = DevryService.Core.Util.DescriptionAttribute;
 
 namespace DevryService.Wizards
 {
+    using Core.Util;
+    using Microsoft.Extensions.Logging;
+
     public struct MainPage
     {
         public Dictionary<string, SubPage> Wizards { get; set; }
@@ -38,17 +41,21 @@ namespace DevryService.Wizards
 
     public class HelpWizardConfig : WizardConfig
     {
-
+        public List<OptionsBaseConfig> Options { get; set; } = new List<OptionsBaseConfig>();
     }
 
-    [WizardInfo(Name = "Helper Hat",
-                Description = "Gives guidance",
-                IconUrl = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png")]
     public class HelpWizard : WizardBase<HelpWizardConfig>
     {
         const string Headline = "Devry Help Wizard. Please react to the appropriate emoji and we'll get you started!\n\n";
         const string POSITIVE_EMOJI = ":white_check_mark:";
         const string NEGATIVE_EMOJI = ":negative_squared_cross_mark:";
+
+        const string AUTHOR_NAME = "Helper Hat";
+        const string AUTHOR_ICON = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png";
+        const string DESCRIPTION = "Gives Guidance";
+        const string REACTION_EMOJI = "";
+
+        Dictionary<string, (Type, MethodInfo)> commandsToMethods = new Dictionary<string, (Type,MethodInfo)>();
 
         MainPage MainMenu = new MainPage()
         {
@@ -63,217 +70,192 @@ namespace DevryService.Wizards
         {
         }
 
-        bool HasAuth(DiscordMember member, RequireRolesAttribute attribute)
+        protected override void Initialize()
         {
-            return member.Roles.Select(x => x.Name).Intersect(attribute.RoleNames).Count() > 0;
+            base.Initialize();
+            initializeCommandsToMethods();
         }
 
-        async Task GetIMiscCommands(CommandContext context)
+
+        void initializeCommandsToMethods()
         {
-            foreach(var type in Assembly.GetExecutingAssembly().GetTypes().Where(x=>x.GetInterfaces().Contains(typeof(IMiscCommand))))
+            Type[] types = Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(x => !x.IsAbstract && !x.IsInterface && x.Name.ToLower().EndsWith("command"))
+                .ToArray();
+
+            foreach(Type type in types)
             {
-                // Class level authorization
-                if (type.GetCustomAttribute<RequireRolesAttribute>() != null)
-                    if (!(await type.GetCustomAttribute<RequireRolesAttribute>().ExecuteCheckAsync(context, false)))
-                        continue;
+                MethodInfo info = type.GetMethods().FirstOrDefault(x => x.GetCustomAttribute<CommandAttribute>() != null);
 
-                foreach(var methodInfo in type.GetMethods().Where(x=>x.GetCustomAttribute<WizardCommandInfo>() != null))
-                {
-                    WizardCommandInfo info = methodInfo.GetCustomAttribute<WizardCommandInfo>();
-
-                    // Shouldn't appear in the help wizard
-                    if (info.IgnoreHelpWizard)
-                        continue;
-
-                    if (methodInfo.GetCustomAttribute<RequireRolesAttribute>() != null)
-                        if (!(await methodInfo.GetCustomAttribute<RequireRolesAttribute>().ExecuteCheckAsync(context, false)))
-                            continue;
-
-                    PageEntry entry = new PageEntry()
-                    {
-                        Description = info.Description,
-                        Command = (context) =>
-                        {
-                            var temp = Activator.CreateInstance(type);
-                            methodInfo.Invoke(temp, new object[] { context });
-                        }
-                    };
-
-                    MainMenu.Misc.Options.Add(info.Emoji, entry);
-                }
+                if (info != null)
+                    commandsToMethods.Add(info.GetCustomAttribute<CommandAttribute>().Name, (type, info));
             }
-        }
-
-        async Task GetIAddRemoveWizards(CommandContext context)
-        {
-            foreach (var type in Assembly.GetExecutingAssembly().GetTypes().Where(x => x.GetInterfaces().Contains(typeof(IAddRemoveCommand))))
-            {
-                DescriptionAttribute classDescription = type.GetCustomAttribute<DescriptionAttribute>();
-
-                SubPage page = new SubPage() { Options = new Dictionary<string, PageEntry>(), Description = classDescription.Text};
-
-                // Grab the methods we need from IAddRemoveCommand
-                MethodInfo createMethod = type.GetMethods().FirstOrDefault(x => x.Name.Equals("create", StringComparison.OrdinalIgnoreCase));
-                MethodInfo deleteMethod = type.GetMethods().FirstOrDefault(x => x.Name.Equals("delete", StringComparison.OrdinalIgnoreCase));
-
-                bool canAdd = true,
-                     canDelete = true;
-
-                // RequireRolesAttribute will be utilized on methods to restrict the users who can access things
-                if (createMethod.GetCustomAttribute<RequireRolesAttribute>() != null)
-                {
-                    var requirements = createMethod.GetCustomAttribute<RequireRolesAttribute>();
-                    if (!HasAuth(context.Member, requirements))
-                        canAdd = false;
-                }
-
-                if (deleteMethod.GetCustomAttribute<RequireRolesAttribute>() != null)
-                {
-                    var requirements = deleteMethod.GetCustomAttribute<RequireRolesAttribute>();
-                    if (!HasAuth(context.Member, requirements))
-                        canDelete = false;
-                }
-
-                // Attributes which contain information about the method
-                WizardCommandInfo positiveInfo = createMethod.GetCustomAttribute<WizardCommandInfo>();
-                WizardCommandInfo negativeInfo = deleteMethod.GetCustomAttribute<WizardCommandInfo>();
-
-                if (canAdd)
-                    page.Options.Add(POSITIVE_EMOJI, new PageEntry
-                    {
-                        Description = positiveInfo.Description,
-                        Command = (context) =>
-                        {
-                            var temp = Activator.CreateInstance(type);
-                            createMethod.Invoke(temp, new object[] { context });
-                        }
-                    });
-
-                if(canDelete)
-                    page.Options.Add(NEGATIVE_EMOJI, new PageEntry
-                    {
-                        Description = negativeInfo.Description,
-                        Command = (context) =>
-                        {
-                            var temp = Activator.CreateInstance(type);
-                            deleteMethod.Invoke(temp, new object[] { context });
-                        }
-                    });
-
-                // Only add to menu if there were options available to the current member in context
-                if(page.Options.Count > 0)
-                    MainMenu.Wizards.Add(classDescription.Icon, page);
-            }
-        }
-
-        async Task<DiscordEmoji> MainWindow(CommandContext context)
-        {
-            
-            var menuMessage = string.Join("\n\n", MainMenu.Wizards.Select(x => $"{x.Key} - {x.Value.Description}")) + "\n\n";
-            menuMessage += string.Join("\n\n", MainMenu.Misc.Options.Select(x => $"{x.Key} - {x.Value.Description}"));
-
-            if (menuMessage.Length == 0)
-            {
-                menuMessage = "It appears you don't have sufficient permissions. Please contact a moderator to get squared away!";
-                await SimpleReply(context, menuMessage, false, false);
-                return null;
-            }
-            else
-                _recentMessage = await SimpleReply(context, menuMessage, true, true);
-
-            foreach (var reactionName in MainMenu.Wizards.Select(x=>x.Key))
-            {
-                await Task.Delay(500);
-                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
-            }
-
-            foreach(var reactionName in MainMenu.Misc.Options.Select(x=>x.Key))
-            {
-                await Task.Delay(500);
-                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, reactionName));
-            }
-
-            InteractivityResult<MessageReactionAddEventArgs> reactionResult =  await _recentMessage.WaitForReactionAsync(_originalMember);
-
-            if (reactionResult.TimedOut)
-            {
-                await SimpleReply(context, $"{_options.AuthorName} Wizard has timed out...", false, false);
-                throw new StopWizardException(_options.AuthorName);
-            }
-
-            await _recentMessage.DeleteAllReactionsAsync();
-
-            return reactionResult.Result.Emoji;
-        }
-
-        async Task DisplaySubMenu(CommandContext context, DiscordEmoji emoji)
-        {
-            string name = emoji.GetDiscordName();
-            Dictionary<string, PageEntry> optionsMenu;
-
-            if (MainMenu.Wizards.Any(x => name.Equals(x.Key, StringComparison.OrdinalIgnoreCase)))
-                optionsMenu = MainMenu.Wizards.FirstOrDefault(x => name.Equals(x.Key, StringComparison.OrdinalIgnoreCase)).Value.Options;
-            else if (MainMenu.Misc.Options.ContainsKey(name))
-            {
-                await CleanupAsync();
-                optionsMenu = MainMenu.Misc.Options;
-                optionsMenu[name].Command(context);
-                return;
-            }
-            else
-                return;
-
-            string options = string.Join("\n\n", optionsMenu.Select(x => $"{x.Key} - {x.Value.Description}"));
-            _recentMessage = await ReplyEdit(_recentMessage, options, false, true);
-
-            foreach(var icon in optionsMenu.Keys)
-            {
-                await Task.Delay(500);
-                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, icon));
-            }
-
-            InteractivityResult<MessageReactionAddEventArgs> reactionResult = await _recentMessage.WaitForReactionAsync(_originalMember);
-
-            if (reactionResult.TimedOut)
-            {
-                await SimpleReply(context, $"{_options.AuthorName} Wizard has timed out...", false, false);
-                throw new StopWizardException(_options.AuthorName);
-            }
-
-            var reaction = reactionResult.Result.Emoji;
-            await CleanupAsync();
-
-            if (optionsMenu.ContainsKey(reaction.GetDiscordName()))
-            {
-                var entry = optionsMenu[reaction.GetDiscordName()];
-                entry.Command(context);
-            }
-            else
-            {
-                await context.RespondAsync(embed: new DiscordEmbedBuilder()
-                    .WithAuthor(this._options.AuthorName, null, this._options.AuthorIcon)
-                    .WithTitle("Error")
-                    .WithDescription("An error occurred with this wizard")
-                    .WithColor(DiscordColor.IndianRed)
-                    .WithFooter("Badger will look into it")
-                    .Build());
-            }            
         }
 
         protected override async Task ExecuteAsync(CommandContext context)
         {
-            await GetIAddRemoveWizards(context);
-            await GetIMiscCommands(context);
+            var embed = EmbedBuilder();
 
-            var reaction = await MainWindow(context);
+            List<string> currentEmojis = new List<string>();
 
-            await DisplaySubMenu(context, reaction);
+            // This is to create our first main window
+            foreach(var option in _options.Options)
+            {
+                string description = string.Empty;
+                
+                if(option.RunCommand != null)
+                {
+                    if(!ConfigHandler.CommandConfigs.ContainsKey(option.RunCommand.CommandName))
+                    {
+                        Worker.Instance.Logger?.LogError($"Could not locate CommandConfig for '{option.RunCommand.CommandName}'");
+                        continue;
+                    }
+
+                    CommandConfig config = ConfigHandler.CommandConfigs[option.RunCommand.CommandName];
+
+                    // If this command has restrictions on roles -- take that into consideration
+                    if(config.RestrictedRoles != null && config.RestrictedRoles.Count > 0)
+                        // We want to see if the roles on the member match anything within the restricted roles array
+                        if (!context.Member.Roles.Any(x => config.RestrictedRoles.Contains(x.Name)))
+                            continue;
+
+                    // Option will become the following
+                    embed.AddField(option.RunCommand.Emoji, ConfigHandler.CommandConfigs[option.RunCommand.CommandName].Description+"\n\n", true);
+                    currentEmojis.Add(option.RunCommand.Emoji);
+                }
+                else if(option.YesNoBetween != null)
+                {
+                    CommandConfig yesConfig = null, noConfig = null;
+
+                    if(!ConfigHandler.CommandConfigs.ContainsKey(option.YesNoBetween.Yes))
+                    {
+                        Worker.Instance.Logger?.LogError($"Could not locate CommandConfig for '{option.YesNoBetween.Yes}'");
+                        continue;
+                    }
+
+                    if(!ConfigHandler.CommandConfigs.ContainsKey(option.YesNoBetween.No))
+                    {
+                        Worker.Instance.Logger?.LogError($"Could not locate CommandConfig for '{option.YesNoBetween.No}'");
+                        continue;
+                    }
+
+                    yesConfig = ConfigHandler.CommandConfigs[option.YesNoBetween.Yes];
+                    noConfig = ConfigHandler.CommandConfigs[option.YesNoBetween.No];
+
+                    bool addYes = true, addNo = true;
+                    if (yesConfig.RestrictedRoles != null && yesConfig.RestrictedRoles.Count > 0)
+                        if (!context.Member.Roles.Any(x => yesConfig.RestrictedRoles.Contains(x.Name)))
+                            addYes = false;
+
+                    if (noConfig.RestrictedRoles != null && noConfig.RestrictedRoles.Count > 0)
+                        if (!context.Member.Roles.Any(x => noConfig.RestrictedRoles.Contains(x.Name)))
+                            addNo = false;
+
+                    // At this point we can finally 'ADD' the menu emoji to the help menu because the user has permission to use AT LEAST one of the sub-commands
+                    if(addYes || addNo)
+                    {
+                        embed.AddField(option.YesNoBetween.Emoji, option.YesNoBetween.Description + "\n\n", true);
+                        currentEmojis.Add(option.YesNoBetween.Emoji);
+                    }
+                }
+            }
+
+            _recentMessage = await SimpleReply(context, embed.Build(), true, true);
+
+            // Add emojis from above
+            foreach (var emoji in currentEmojis)
+            {
+                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, emoji));
+                await Task.Delay(250);
+            }
+
+            var interactivityResult = await _recentMessage.WaitForReactionAsync(context.Member);
+
+            // Did the client timeout?
+            if(interactivityResult.TimedOut)
+            {
+                await SimpleReply(context, EmbedBuilder()
+                                            .WithColor(DiscordColor.Red)
+                                            .WithDescription(_options.AuthorName + " Wizard timed out...")
+                                            .Build(),
+                                  false,false);
+                throw new StopWizardException(_options.AuthorName);
+            }
+
+            string userEmoji = interactivityResult.Result.Emoji;
+            userEmoji = DiscordEmoji.FromUnicode(Bot.Discord, userEmoji).GetDiscordName();
+
+            // Did the user interact using the appropriate emoji?
+            if (!currentEmojis.Contains(userEmoji))
+                return;
+
+            foreach(var option in _options.Options)
+            {
+                if(option.RunCommand != null)
+                {
+                    if (option.RunCommand.Emoji.Equals(userEmoji, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Cleanup these messages -> because -> we're going to be transitioning into another wizard
+                        await CleanupAsync();
+
+                        var data = commandsToMethods[option.RunCommand.CommandName];
+                        object instance = Activator.CreateInstance(data.Item1);
+                        data.Item2.Invoke(instance, new object[] { context });
+                        break;
+                    }
+                }
+                else if(option.YesNoBetween != null)
+                {
+                    if(option.YesNoBetween.Emoji.Equals(userEmoji, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // We have established the fact this menu was selected. No we need a submenu to select yes/no
+                        embed = EmbedBuilder().WithDescription(option.YesNoBetween.Description)
+                            .AddField(option.YesNoBetween.YesEmoji, ConfigHandler.CommandConfigs[option.YesNoBetween.Yes].Description)
+                            .AddField(option.YesNoBetween.NoEmoji, ConfigHandler.CommandConfigs[option.YesNoBetween.No].Description)
+                            .WithColor(DiscordColor.PhthaloGreen);
+
+                        await _recentMessage.ModifyAsync(embed: embed.Build());
+                        await _recentMessage.DeleteAllReactionsAsync();
+
+                        await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, option.YesNoBetween.YesEmoji));
+                        await Task.Delay(250);
+                        await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, option.YesNoBetween.NoEmoji));
+                        await Task.Delay(250);
+
+                        interactivityResult = await _recentMessage.WaitForReactionAsync(context.Member);
+
+                        if(interactivityResult.TimedOut)
+                        {
+                            await CleanupAsync();
+                            await SimpleReply(context, EmbedBuilder().WithColor(DiscordColor.Red).WithDescription(_options.AuthorName + " Wizard Timed Out"),false,false);
+                            break;
+                        }
+
+                        // Finally get the name
+                        userEmoji = DiscordEmoji.FromUnicode(Bot.Discord, interactivityResult.Result.Emoji).GetDiscordName();
+                        
+                        // Can finally cleanup as we're about to enter the next wizard
+                        await CleanupAsync();
+
+                        if(option.YesNoBetween.YesEmoji.Equals(userEmoji))
+                        {
+                            var data = commandsToMethods[option.YesNoBetween.Yes];
+                            object instance = Activator.CreateInstance(data.Item1);
+                            data.Item2.Invoke(instance, new object[] { context });
+                        }
+                        else if(option.YesNoBetween.NoEmoji.Equals(userEmoji))
+                        {
+                            var data = commandsToMethods[option.YesNoBetween.No];
+                            object instance = Activator.CreateInstance(data.Item1);
+                            data.Item2.Invoke(instance, new object[] { context });
+                        }
+
+                        break;
+                    }
+                }                
+            }
         }
-
-        const string AUTHOR_NAME = "Helper Hat";
-        const string AUTHOR_ICON = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png";
-        const string DESCRIPTION = "Gives Guidance";
-        const string REACTION_EMOJI = "";
 
         public override CommandConfig DefaultCommandConfig()
         {
@@ -303,6 +285,59 @@ namespace DevryService.Wizards
             {
                 DiscordCommand = "help",
                 CommandConfig = DefaultCommandConfig()
+            };
+
+            config.Options = new List<OptionsBaseConfig>()
+            {
+                new OptionsBaseConfig
+                {
+                    Page = 0,
+                    RunCommand = new RunCommandConfig
+                    {
+                        Emoji = ":e_email:",
+                        CommandName = "invite"
+                    }
+                },
+
+                new OptionsBaseConfig
+                {
+                    Page = 0,
+                    YesNoBetween = new YesNoOptionConfig
+                    {
+                        Emoji = ":classical_building:",
+                        Yes = "join",
+                        No = "leave",
+                        YesEmoji = POSITIVE_EMOJI,
+                        NoEmoji = NEGATIVE_EMOJI
+                    }
+                },
+
+                new OptionsBaseConfig
+                {
+                    Page = 0,
+                    RunCommand = new RunCommandConfig
+                    {
+                        Emoji = ":desktop:",
+                        CommandName = "code"
+                    }
+                },
+
+                new OptionsBaseConfig
+                {
+                    Page = 0,
+                    YesNoBetween = new YesNoOptionConfig
+                    {
+                        Emoji = ":date:",
+                        Yes = "create-event",
+                        No = "delete-event",
+                        YesEmoji = POSITIVE_EMOJI,
+                        NoEmoji = NEGATIVE_EMOJI
+                    },
+                    RestrictedRoles = new List<string>()
+                    {
+                        "Moderator","Tutor","Professor","Admin"
+                    }
+                }
             };
 
             return config;

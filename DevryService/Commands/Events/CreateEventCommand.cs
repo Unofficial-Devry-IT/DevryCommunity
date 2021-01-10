@@ -18,7 +18,7 @@ namespace DevryService.Commands.Events
         {
             CreateEventWizard wizard = new CreateEventWizard(context);
 
-            try { wizard.Run(context); } finally { await wizard.CleanupAsync(); }
+            try { wizard.Run(context); } catch { } finally { await wizard.CleanupAsync(); }
         }
     }
 }
