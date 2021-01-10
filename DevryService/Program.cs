@@ -22,21 +22,22 @@ namespace DevryService
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostContext, builder)=>
-                {
-                    var configFiles = Commands.CommandSettingsUtil.InitializeSettings();
-
-                    foreach (var file in configFiles)
-                        builder.AddJsonFile(file, optional: false, reloadOnChange: true);
-
-                    builder.AddUserSecrets<Program>();
-                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddDbContext<DevryDbContext>();
                     services.AddHostedService<SchedulerBackgroundService>();
                     services.AddHostedService<Worker>();
                     services.AddTransient<DiscordService>();
+                })
+                .ConfigureAppConfiguration((hostContext, builder) =>
+                {
+                    // Acquire/Build out necessary configuration files
+                    var configFiles = Core.Util.ConfigHandler.InitializeSettings();
+                    // Add each configuration file
+                    foreach (var file in configFiles)
+                        builder.AddJsonFile(file, optional: false, reloadOnChange: true);
+
+                    builder.AddUserSecrets<Program>();
                 });
     }
 }

@@ -45,6 +45,34 @@ namespace DevryService.Core
         }
 
         /// <summary>
+        /// Handles timout, and updates specified variable if successful
+        /// </summary>
+        /// <param name="context">Interactivity Results</param>
+        /// <param name="variable">Variable that should be updated so long as the response doesn't timeout</param>
+        protected void ReplyHandlerAction(InteractivityResult<DiscordMessage> context, ref string variable)
+        {
+            if (context.TimedOut)
+                throw new StopWizardException(GetType().Name);
+
+            variable = context.Result.Content;
+        }
+
+        /// <summary>
+        /// Sends an error message to the channel in which this wizard originated on
+        /// </summary>
+        /// <param name="errorMessage">Text to appear</param>
+        protected virtual async Task SendErrorMessage(string errorMessage)
+        {
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+                .WithAuthor("Hall Monitor")
+                .WithTitle("Error")
+                .WithColor(DiscordColor.IndianRed)
+                .WithDescription(errorMessage);
+
+            await _channel.SendMessageAsync(embed: builder.Build());
+        }
+
+        /// <summary>
         /// Initialization effort --> Load settings via json
         /// </summary>
         protected virtual void Initialize()
@@ -54,7 +82,17 @@ namespace DevryService.Core
 
             try
             {
-                Worker.Configuration.GetSection(typeof(TOptions).Name).Bind(_options);
+                IConfigurationSection section = Worker.Configuration.GetSection(typeof(TOptions).Name.Replace("Config", ""));
+                Worker.Configuration.GetSection(typeof(TOptions).Name.Replace("Config","")).Bind(_options);            
+                
+                foreach(var property in typeof(TOptions).GetProperties())
+                    if(property.PropertyType == typeof(List<string>) || property.PropertyType == typeof(string[]))
+                        property.SetValue(_options, section.GetSection(property.Name).Get(property.PropertyType));
+
+                foreach (var field in typeof(TOptions).GetFields())
+                    if (field.FieldType == typeof(List<string>) || field.FieldType == typeof(string[]))
+                        field.SetValue(_options, section.GetSection(field.Name).Get(field.FieldType));
+
                 LoadSettings(_options);
             }
             catch(Exception ex)
@@ -103,13 +141,13 @@ namespace DevryService.Core
             _messages.Add(message);
             if(message.Content.StartsWith(Bot.Prefix))
             {
-                _ = Task.Run(async () => await message.RespondAsync($"You can't use bot commands within {_options.Name} Wizard"));
+                _ = Task.Run(async () => await message.RespondAsync($"You can't use bot commands within {_options.AuthorName} Wizard"));
                 valid = false;
             }
             else if(message.Content.ToLower().Trim() == "stop")
             {
-                _ = Task.Run(async () => await message.RespondAsync($"{_options.Name} Wizard stopped"));
-                throw new StopWizardException(_options.Name);
+                _ = Task.Run(async () => await message.RespondAsync($"{_options.AuthorName} Wizard stopped"));
+                throw new StopWizardException(_options.AuthorName);
             }
 
             return valid;
@@ -125,6 +163,16 @@ namespace DevryService.Core
             return true;
         }
 
+        protected DiscordEmbedBuilder EmbedBuilder()
+        {
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+                .WithAuthor(_options.AuthorName, iconUrl: _options.AuthorIcon)
+                .WithTitle(_options.Headline)
+                .WithColor(DiscordColor.Cyan);
+
+            return builder;
+        }
+
         /// <summary>
         /// Basic message creation 
         /// </summary>
@@ -136,12 +184,12 @@ namespace DevryService.Core
         {
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
 
-            if (!string.IsNullOrEmpty(_options.Name))
-                builder = builder.WithAuthor(name: _options.Name, iconUrl: !string.IsNullOrEmpty(_options.Icon) ? _options.Icon : "");
-            else if (!string.IsNullOrEmpty(_options.Icon))
-                builder = builder.WithAuthor(iconUrl: _options.Icon);
+            if (!string.IsNullOrEmpty(_options.AuthorName))
+                builder = builder.WithAuthor(name: _options.AuthorName, iconUrl: !string.IsNullOrEmpty(_options.AuthorIcon) ? _options.AuthorIcon : "");
+            else if (!string.IsNullOrEmpty(_options.AuthorIcon))
+                builder = builder.WithAuthor(iconUrl: _options.AuthorIcon);
 
-            builder.Title = _options.Title;
+            builder.Title = _options.Headline;
             builder.Description = text;
             builder.Color = DiscordColor.Cyan;
 
@@ -149,6 +197,19 @@ namespace DevryService.Core
 
             // If tracked --> the message will be 'cleaned up' at the end of the wizard
             if(trackMessage)
+                _messages.Add(_recentMessage);
+
+            if (isCancellable)
+                builder = builder.WithFooter(CANCEL_MESSAGE);
+
+            return _recentMessage;
+        }
+
+        public async Task<DiscordMessage> SimpleReply(CommandContext context, DiscordEmbed embed, bool isCancellable = false, bool trackMessage = true)
+        {
+            _recentMessage = await context.RespondAsync(embed: embed);
+
+            if (trackMessage)
                 _messages.Add(_recentMessage);
 
             return _recentMessage;
@@ -170,6 +231,29 @@ namespace DevryService.Core
                                                          Func<DiscordMessage,bool> replyPredicate = null)
         {            
             _recentMessage = await SimpleReply(context, text, isCancellable);
+
+            if (replyPredicate == null)
+                replyPredicate = ResponsePredicate;
+
+            if(!_options.AcceptAnyUser)
+            {
+                var result = await _recentMessage.GetNextMessageAsync(predicate: replyPredicate, timeoutOverride: _options.TimeoutOverride);
+                replyHandler.Invoke(result);
+            }
+            else
+            {
+                var result = await Bot.Interactivity.WaitForMessageAsync(replyPredicate);
+                replyHandler.Invoke(result);
+            }
+
+            return _recentMessage;
+        }
+
+        public async Task<DiscordMessage> WithReply(CommandContext context, DiscordEmbed embed, Action<InteractivityResult<DiscordMessage>> replyHandler,
+            bool isCancellable = false,
+            Func<DiscordMessage, bool> replyPredicate = null)
+        {
+            _recentMessage = await SimpleReply(context, embed, isCancellable);
 
             if (replyPredicate == null)
                 replyPredicate = ResponsePredicate;
@@ -238,12 +322,12 @@ namespace DevryService.Core
                 text = message.Embeds[0].Description + text;
 
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                .WithAuthor(name: _options.Name, iconUrl: _options.Icon);
+                .WithAuthor(name: _options.AuthorName, iconUrl: _options.AuthorIcon);
 
             if (isCancellable)
                 builder = builder.WithFooter(CANCEL_MESSAGE + _originalMember != null ? $"\n--{_originalMember.Username}" : "");
 
-            builder.Title = _options.Title;
+            builder.Title = _options.Headline;
             builder.Description = text;
             builder.Color = DiscordColor.Cyan;
 

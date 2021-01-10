@@ -220,17 +220,24 @@ namespace DevryService.Wizards.Admin
 
         }
 
+        const string AUTHOR_NAME = "Admin Hat";
+        const string DESCRIPTION = "Expand our inner-kingdom! Allow our knowledge seeking minions to diverge onto their requested path(s).";
+        const string AUTHOR_ICON = "";
+        const string REACTION_EMOJI = "";
+
         public override CommandConfig DefaultCommandConfig()
         {
-            var wizardConfig = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = wizardConfig.Name,
-                Description = wizardConfig.Description,
-                Emoji = wizardConfig.ReactionEmoji,
-                IgnoreHelpWizard = true,
-                RestrictedRoles = new List<string>() { "Moderator", "Admin" }
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
+                IgnoreHelpWizard = false,
+                RestrictedRoles = new List<string>() 
+                { 
+                    "Moderator", 
+                    "Admin" 
+                }
             };
         }
 
@@ -254,11 +261,17 @@ namespace DevryService.Wizards.Admin
             
             config.NumberOfVoiceChannels = 3;
 
-            config.Name = "Admin Hat";
-            config.Icon = "";
-            config.Description = "Expand our inner-kingdom! Allow our knowledge seeking minions to diverge onto their requested path(s).";
+            config.AuthorName = AUTHOR_NAME;
+            config.AuthorIcon = AUTHOR_ICON;
+            config.Description = DESCRIPTION;
 
             config.TimeoutOverride = null;
+
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "create-class",
+                CommandConfig = DefaultCommandConfig()
+            };
 
             return config;
         }

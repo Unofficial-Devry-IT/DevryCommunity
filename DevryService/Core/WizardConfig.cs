@@ -7,13 +7,25 @@ using System.Threading.Tasks;
 namespace DevryService.Core
 {
     [Serializable]
-    public abstract class WizardConfig
+    public abstract class CommonConfig
     {
-        /// <summary>
-        /// Will we override the default timeout of 2 minutes?
-        /// </summary>
         public TimeSpan? TimeoutOverride { get; set; } = null;
+        public string AuthorName { get; set; }
+        public string AuthorIcon { get; set; }
+        public string Description { get; set; }
+        public string ReactionEmoji { get; set; }
+    }
 
+    [Serializable]
+    public class WizardToCommandLink
+    {
+        public string DiscordCommand { get; set; }
+        public CommandConfig CommandConfig { get; set; }
+    }
+
+    [Serializable]
+    public abstract class WizardConfig : CommonConfig
+    {
         /// <summary>
         /// Does this wizard allow 'any' user to respond/use it?
         /// </summary>
@@ -25,28 +37,38 @@ namespace DevryService.Core
         public bool MessageRequireMention { get; set; }  = false;
 
         /// <summary>
-        /// Name of the wizard. I.E Sorting Hat
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// URL/Icon to use as the author
-        /// </summary>
-        public string Icon { get; set; }
-
-        /// <summary>
         /// Text that appears next to the name
         /// </summary>
-        public string Title { get; set; }
+        public string Headline { get; set; }
+
+        public WizardToCommandLink UsesCommand { get; set; }
+
+    }
+
+    [Serializable]
+    public class OptionsBaseConfig
+    {
+        /// <summary>
+        /// Represents the page (not implemented)
+        /// </summary>
+        public int Page { get; set; }
 
         /// <summary>
-        /// Description of wizard
+        /// Determines if this option is a yes/no 
         /// </summary>
-        public string Description { get; set; }
+        public YesNoOptionConfig YesNoBetween { get; set; } = null;
 
         /// <summary>
-        /// Emoji which represents this action in wizard menus
+        /// Command/Wizard that shall be ran
         /// </summary>
-        public string ReactionEmoji { get; set; }
+        public string LinkTo { get; set; } = null;
+    }
+
+    [Serializable]
+    public class YesNoOptionConfig
+    {
+        public string MenuEmoji { get; set; }
+        public string Yes { get; set; }
+        public string No { get; set; }
     }
 }

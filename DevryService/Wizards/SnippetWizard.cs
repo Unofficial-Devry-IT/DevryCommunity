@@ -26,22 +26,23 @@ namespace DevryService.Wizards
         public List<CodeInfo> CodeBlocks { get; set; } = new List<CodeInfo>();
     }
 
-    [WizardInfo(Name = "Programming Hat",
-        Description = "Provides a variety of code snippets for various topics and in multiple languages",
-        Emoji = ":desktop:",
-        Title = "Snippets")]
     public class SnippetWizard : WizardBase<SnippetWizardConfig>
     {
+        const string AUTHOR_NAME = "Programming Hat";
+        const string DESCRIPTION = "Provides a variety of code snippets for various topics and in multiple languages";
+        const string REACTION_EMOJI = ":desktop:";
+        const string AUTHOR_ICON = "";
         public override SnippetWizardConfig DefaultSettings()
         {
             SnippetWizardConfig config = new SnippetWizardConfig();
 
-            config.Name = "Programming Hat";
-            config.Description = "Provides a variety of code snippets for various topics and in multiple languages";
-            config.ReactionEmoji = ":desktop:";
-            config.Title = "Snippets";
+            config.AuthorName = AUTHOR_NAME;
+            config.Description = DESCRIPTION;
+            config.ReactionEmoji = REACTION_EMOJI;
+            config.Headline = "Snippets";
             config.AcceptAnyUser = false;
             config.MessageRequireMention = false;
+            config.AuthorIcon = AUTHOR_ICON;
 
             config.CodeBlocks = new List<CodeInfo>()
             {
@@ -78,18 +79,22 @@ namespace DevryService.Wizards
                 }
             };
 
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "code",
+                CommandConfig = DefaultCommandConfig()
+            };
+
             return config;
         }
 
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
-                Emoji = config.ReactionEmoji,
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
                 IgnoreHelpWizard = false
             };
         }
@@ -165,7 +170,7 @@ namespace DevryService.Wizards
                 string block = await CreateCodeBlock(file);
 
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                    .WithAuthor(_options.Name, null, _options.Icon)
+                    .WithAuthor(_options.AuthorName, null, _options.AuthorIcon)
                     .WithTitle(lang)
                     .WithDescription(block)
                     .WithColor(GetColor(lang));
@@ -198,7 +203,7 @@ namespace DevryService.Wizards
             {
                 await CleanupAsync();
                 await context.RespondAsync(embed: new DiscordEmbedBuilder()
-                    .WithAuthor(_options.Name, null, _options.Icon)
+                    .WithAuthor(_options.AuthorName, null, _options.AuthorIcon)
                     .WithTitle("Invalid Input")
                     .WithDescription($"Expected value between 1 - {Categories.Count}")
                     .WithColor(DiscordColor.IndianRed)

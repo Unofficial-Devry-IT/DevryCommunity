@@ -38,7 +38,7 @@ namespace DevryService
             {
                 Token = config.GetValue<string>("token"),
                 TokenType = TokenType.Bot,
-                MinimumLogLevel = LogLevel.Debug,
+                MinimumLogLevel = LogLevel.Information,
                 AutoReconnect = true
             });
 
@@ -90,7 +90,7 @@ namespace DevryService
 
         public static DiscordEmbed GenerateWelcomeMessage(DiscordMember newMember)
         {
-            MessageConfig config = CommandSettingsUtil.ViewWelcomeConfig();
+            MessageConfig config = Core.Util.ConfigHandler.ViewWelcomeConfig();
             DiscordGuild guild = Bot.Discord.Guilds.FirstOrDefault(x => x.Value.Name.ToLower().Contains("devry")).Value;
             DiscordChannel welcomeChannel = guild.Channels
                                                     .FirstOrDefault(x => x.Value.Name.ToLower().Contains("welcome"))

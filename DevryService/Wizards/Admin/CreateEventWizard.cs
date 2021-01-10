@@ -19,6 +19,18 @@ namespace DevryService.Wizards.Admin
 
     public class CreateEventWizard : WizardBase<CreateEventWizardConfig>
     {
+        const string AUTHOR_NAME = "Planner Hat";
+        const string DESCRIPTION = "Add/Remove Events/Reminders";
+        const string REACTION_EMOJI = ":date:";
+        const string AUTHOR_ICON = "";
+
+        readonly List<string> ALLOWED_TO_USE = new List<string>()
+        {
+            "Moderator",
+            "Professor",
+            "Tutor"
+        };
+
         const string cronUsageMenu = "* | any value\n" +
             ", | value list separator\n" +
             "- | range of values\n" +
@@ -49,15 +61,14 @@ namespace DevryService.Wizards.Admin
 
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
                 IgnoreHelpWizard = false,
-                Emoji = config.ReactionEmoji,
-                RestrictedRoles = config.AllowedToUse
+                ReactionEmoji = REACTION_EMOJI,
+                RestrictedRoles = ALLOWED_TO_USE,
+                AuthorIcon = AUTHOR_ICON
             };
         }
 
@@ -65,21 +76,22 @@ namespace DevryService.Wizards.Admin
         {
             CreateEventWizardConfig config = new CreateEventWizardConfig();
 
-            config.Name = "Planner Hat";
-            config.Description = "Add/Remove Events/Reminders";
-            config.Icon = "";
-            config.ReactionEmoji = ":date:";
-            config.Title = "Need a reminder/event?";
+            config.AuthorName = AUTHOR_NAME;
+            config.Description = DESCRIPTION;
+            config.AuthorIcon = AUTHOR_ICON;
+            config.ReactionEmoji = REACTION_EMOJI;
+            config.Headline = "Need a reminder/event?";
 
-            config.AllowedToUse = new List<string>()
-            {
-                "Moderator",
-                "Professor",
-                "Tutor"
-            };
+            config.AllowedToUse = ALLOWED_TO_USE;
 
             config.MessageRequireMention = false;
             config.AcceptAnyUser = false;
+
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "create-event",
+                CommandConfig = DefaultCommandConfig()
+            };
 
             return config;
         }

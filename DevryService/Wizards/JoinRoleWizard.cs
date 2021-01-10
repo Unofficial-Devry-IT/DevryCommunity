@@ -15,25 +15,50 @@ namespace DevryService.Wizards
 {
     public class JoinRoleWizardConfig : WizardConfig
     {
-        public List<string> BlacklistedRoles = new List<string>()
-        {
-
-        };
+        public string[] BlacklistedRoles = new string[0];
     }
 
     public class JoinRoleWizard : WizardBase<JoinRoleWizardConfig>
     {
+        const string AUTHOR_NAME = "Sorting Hat";
+        const string AUTHOR_ICON = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849";
+        const string REACTION_EMOJI = "";
+        const string DESCRIPTION = "Allows a user to join their fellow classmates";
+
         public override JoinRoleWizardConfig DefaultSettings()
         {
             JoinRoleWizardConfig config = new JoinRoleWizardConfig();
 
-            config.Icon = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849";
-            config.Name = "Sorting Hat";
-            config.Title = "Let's get you settled";
+            config.AuthorIcon = AUTHOR_ICON;
+            config.AuthorName = AUTHOR_NAME;
+            config.Headline = "Let's get you settled";
+            config.Description = DESCRIPTION;
 
-            config.BlacklistedRoles = new List<string>()
+            config.BlacklistedRoles = new string[]
             {
+                "Moderator",
+                "Admin",
+                "Hardware",
+                "Networking",
+                "Programmer",
+                "Professor",
+                "Database",
+                "Pollmaster",
+                "See-All-Channels",
+                "Motivator",
+                "Server Booster",
+                "Devry Test Bot",
+                "Devry-Challenge-Bot",
+                "Devry-Service-Bot",
+                "DeVry-SortingHat",
+                "announcement permissions",
+                "@everyone"
+            };
 
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "join",
+                CommandConfig = DefaultCommandConfig()
             };
 
             return config;
@@ -41,13 +66,11 @@ namespace DevryService.Wizards
 
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
-                Emoji = config.ReactionEmoji,
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
                 IgnoreHelpWizard = false
             };
         }
@@ -58,8 +81,10 @@ namespace DevryService.Wizards
 
         protected override async Task ExecuteAsync(CommandContext context)
         {
+            var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
+
             var roles = context.Guild.Roles
-                .Where(x => !_options.BlacklistedRoles.Contains(x.Value.Name))
+                .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
                 .ToList();
@@ -68,13 +93,15 @@ namespace DevryService.Wizards
                 .Distinct()
                 .ToList();
 
-            string message = $"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n";
+            var embed = EmbedBuilder()
+                .WithFooter(CANCEL_MESSAGE)
+                .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
 
             for (int i = 0; i < courseTypes.Count; i++)
-                message += $"[{i + 1}] - {courseTypes[i]}\n";
+                embed.AddField(i.ToString(), courseTypes[i], true);
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(context, message, (context) => reply = context.Result.Content, true);
+            _recentMessage = await WithReply(context, embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
             string[] parameters = reply.Replace(",", " ").Split(" ");
 
             Dictionary<string, List<DiscordRole>> selectedGroups = new Dictionary<string, List<DiscordRole>>();
@@ -98,15 +125,16 @@ namespace DevryService.Wizards
             int current = 0;
             foreach(var key in selectedGroups.Keys)
             {
-                message = $"Select the number associated with the class(es) you wish to join\n\n{key}:\n";
+                embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n");
+                
                 foreach(var item in selectedGroups[key])
                 {
-                    message += $"[{current + 1}] - {item.Name}\n";
+                    embed.AddField((current + 1).ToString(), item.Name);
                     roleMap.Add(current, item);
                     current++;
                 }
 
-                await SimpleReply(context, message, true, true);
+                await SimpleReply(context, embed.Build(), true, true);
             }
 
             reply = string.Empty;
@@ -114,8 +142,8 @@ namespace DevryService.Wizards
 
             if (response.TimedOut)
             {
-                await SimpleReply(context, $"{_options.Name} Wizard timed out...", false, false);
-                throw new StopWizardException(_options.Name);
+                await SimpleReply(context, $"{_options.AuthorName} Wizard timed out...", false, false);
+                throw new StopWizardException(_options.AuthorName);
             }
 
             _messages.Add(response.Result);

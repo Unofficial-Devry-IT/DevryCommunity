@@ -21,16 +21,26 @@ namespace DevryService.Wizards.Admin
         {
         }
 
+        const string AUTHOR_NAME = "Procrastination Hat";
+        const string DESCRIPTION = "Allows user to delete an event";
+        const string REACTION_EMOJI = "";
+        const string AUTHOR_ICON = "";
+        readonly List<string> RESTRICTED_ROLES = new List<string>()
+        {
+            "Moderator",
+            "Tutor",
+            "Professor"
+        };
+
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
-                Emoji = config.ReactionEmoji,
-                IgnoreHelpWizard = true
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
+                IgnoreHelpWizard = true,
+                RestrictedRoles = RESTRICTED_ROLES
             };
         }
      
@@ -38,16 +48,16 @@ namespace DevryService.Wizards.Admin
         {
             DeleteEventWizardConfig config = new DeleteEventWizardConfig();
 
-            config.Name = "Procrastination Hat";
-            config.Title = "Let's cancel that event!";
-            config.Icon = "";
-            config.Description = "Allows user to delete an event";
+            config.AuthorName = AUTHOR_NAME;
+            config.Headline = "Let's cancel that event!";
+            config.AuthorIcon = AUTHOR_ICON;
+            config.Description = DESCRIPTION;
+            config.AllowedToUse = RESTRICTED_ROLES;
 
-            config.AllowedToUse = new List<string>()
+            config.UsesCommand = new WizardToCommandLink
             {
-                "Moderator",
-                "Tutor",
-                "Professor"
+                CommandConfig = DefaultCommandConfig(),
+                DiscordCommand = "delete-event"
             };
 
             return config;

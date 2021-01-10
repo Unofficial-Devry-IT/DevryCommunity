@@ -197,8 +197,8 @@ namespace DevryService.Wizards
 
             if (reactionResult.TimedOut)
             {
-                await SimpleReply(context, $"{_options.Name} Wizard has timed out...", false, false);
-                throw new StopWizardException(_options.Name);
+                await SimpleReply(context, $"{_options.AuthorName} Wizard has timed out...", false, false);
+                throw new StopWizardException(_options.AuthorName);
             }
 
             await _recentMessage.DeleteAllReactionsAsync();
@@ -236,8 +236,8 @@ namespace DevryService.Wizards
 
             if (reactionResult.TimedOut)
             {
-                await SimpleReply(context, $"{_options.Name} Wizard has timed out...", false, false);
-                throw new StopWizardException(_options.Name);
+                await SimpleReply(context, $"{_options.AuthorName} Wizard has timed out...", false, false);
+                throw new StopWizardException(_options.AuthorName);
             }
 
             var reaction = reactionResult.Result.Emoji;
@@ -251,7 +251,7 @@ namespace DevryService.Wizards
             else
             {
                 await context.RespondAsync(embed: new DiscordEmbedBuilder()
-                    .WithAuthor(this._options.Name, null, this._options.Icon)
+                    .WithAuthor(this._options.AuthorName, null, this._options.AuthorIcon)
                     .WithTitle("Error")
                     .WithDescription("An error occurred with this wizard")
                     .WithColor(DiscordColor.IndianRed)
@@ -270,16 +270,21 @@ namespace DevryService.Wizards
             await DisplaySubMenu(context, reaction);
         }
 
+        const string AUTHOR_NAME = "Helper Hat";
+        const string AUTHOR_ICON = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png";
+        const string DESCRIPTION = "Gives Guidance";
+        const string REACTION_EMOJI = "";
+
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
+            var config = ConfigHandler.FindConfig<CommandConfig>("help");
 
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
                 IgnoreHelpWizard = false,
-                Emoji = config.ReactionEmoji
+                ReactionEmoji = REACTION_EMOJI
             };
         }
 
@@ -287,12 +292,18 @@ namespace DevryService.Wizards
         {
             HelpWizardConfig config = new HelpWizardConfig();
 
-            config.Name = "Helper Hat";
-            config.Description = "Gives guidance";
-            config.Icon = "https://www.iconfinder.com/data/icons/millionaire-habits-filledoutline/64/HELP_OTHERS_SUCCEED-bussiness-people-finance-marketing-milionaire_habits-512.png";
+            config.AuthorName = AUTHOR_NAME;
+            config.Description = DESCRIPTION;
+            config.AuthorIcon = AUTHOR_ICON;
 
             config.AcceptAnyUser = false;
             config.MessageRequireMention = false;
+
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "help",
+                CommandConfig = DefaultCommandConfig()
+            };
 
             return config;
         }

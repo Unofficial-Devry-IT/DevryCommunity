@@ -17,7 +17,7 @@ namespace DevryService.Wizards
 
     [WizardInfo(Name ="Bouncer Hat",
         Title = "Leave Class(es)",
-        IconUrl = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849",
+        IconUrl = "",
         Description = "Select the corresponding number(s) to leave a class")]
     public class LeaveRoleWizard : WizardBase<LeaveRoleWizardConfig>
     {
@@ -30,15 +30,19 @@ namespace DevryService.Wizards
             base.Initialize();
         }
 
+        const string AUTHOR_NAME = "Bouncer Hat";
+        const string DESCRIPTION = "Select the corresponding number(s) to leave a class";
+        const string REACTION_EMOJI = "";
+        const string AUTHOR_ICON = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849";
+
         public override CommandConfig DefaultCommandConfig()
         {
-            var config = DefaultSettings();
-
             return new CommandConfig
             {
-                Name = config.Name,
-                Description = config.Description,
-                Emoji = config.ReactionEmoji,
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
+                AuthorIcon = AUTHOR_ICON,
                 IgnoreHelpWizard = false
             };
         }
@@ -47,16 +51,22 @@ namespace DevryService.Wizards
         {
             LeaveRoleWizardConfig config = new LeaveRoleWizardConfig();
 
-            config.Name = "Bouncer Hat";
-            config.Title = "Leave Class(es)";
-            config.Description = "Select the corresponding number(s) to leave a class";
-            config.Icon = "";
+            config.AuthorName = AUTHOR_NAME;
+            config.Headline = "Leave Class(es)";
+            config.Description = DESCRIPTION;
+            config.AuthorIcon = AUTHOR_ICON;
 
             config.MessageRequireMention = false;
             config.AcceptAnyUser = false;
-            config.BlacklistedRoles = new List<string>()
+            config.BlacklistedRoles = new string[]
             {
                 "Moderator", "Admin"
+            };
+
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "leave",
+                CommandConfig = DefaultCommandConfig()
             };
 
             return config;
