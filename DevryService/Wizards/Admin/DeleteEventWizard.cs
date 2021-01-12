@@ -63,15 +63,15 @@ namespace DevryService.Wizards.Admin
             return config;
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             // TODO: Why is the predicate overload not working the way it should
             List<Reminder> reminders = await Worker.Instance.DiscordService.GetReminders();
-            reminders = reminders.Where(x => x.ChannelId == context.Channel.Id).ToList();
+            reminders = reminders.Where(x => x.ChannelId == _context.Channel.Id).ToList();
 
             if(reminders.Count == 0)
             {
-                await SimpleReply(context, "No reminders are set for this channel...", false, false);
+                await SimpleReply("No reminders are set for this channel...", false, false);
                 return;
             }
 
@@ -86,7 +86,7 @@ namespace DevryService.Wizards.Admin
 
             string reply = string.Empty;
 
-            _recentMessage = await WithReply(context, embed.Build(), (context) => ReplyHandlerAction(context, ref reply), true);
+            _recentMessage = await WithReply(embed.Build(), (context) => ReplyHandlerAction(context, ref reply), true);
 
             string[] parameters = reply.Replace(",", " ").Split(" ");
             List<string> removed = new List<string>();
@@ -110,9 +110,9 @@ namespace DevryService.Wizards.Admin
             }
 
             if (removed.Count > 0)
-                await SimpleReply(context, $"Following events were removed: {string.Join("\n", removed)}", false, false);
+                await SimpleReply($"Following events were removed: {string.Join("\n", removed)}", false, false);
             else
-                await SimpleReply(context, $"No changes were made...", false, false);
+                await SimpleReply($"No changes were made...", false, false);
         }
     }
 }

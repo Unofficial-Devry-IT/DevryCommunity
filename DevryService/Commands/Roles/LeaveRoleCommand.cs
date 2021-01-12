@@ -18,7 +18,7 @@ namespace DevryService.Commands.Roles
         {
             LeaveRoleWizard wizard = new LeaveRoleWizard(context);
 
-            try { wizard.Run(context); } catch { } finally { await wizard.CleanupAsync(); }
+            try { wizard.Run(); } catch { } finally { await wizard.CleanupAsync(); }
         }
     }
 }

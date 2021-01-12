@@ -106,16 +106,15 @@ namespace DevryService.Wizards
             };
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             // Retrieve TOPIC
-            _recentMessage = await WithReply(context,
-                "What's the topic of this code snippet? (i.e Arrays, Classes, etc)",
+            _recentMessage = await WithReply("What's the topic of this code snippet? (i.e Arrays, Classes, etc)",
                 (context) => ReplyHandlerAction(context, ref _topic),
                 true);
 
-            _extension = await ReplyEditWithReply<string>(context, _recentMessage, EmbedBuilder().WithDescription("What's the file extension of this particular language? (csv, json, without the period)").Build());
-            _filename = await ReplyEditWithReply<string>(context, _recentMessage, EmbedBuilder().WithDescription($"What should the name of this file be? For easier reference... no extension as {_extension} will automatically be applied").Build());
+            _extension = await ReplyEditWithReply<string>(_recentMessage, EmbedBuilder().WithDescription("What's the file extension of this particular language? (csv, json, without the period)").Build());
+            _filename = await ReplyEditWithReply<string>(_recentMessage, EmbedBuilder().WithDescription($"What should the name of this file be? For easier reference... no extension as {_extension} will automatically be applied").Build());
                 
 
             // We must ensure that our config contains information about this 'language' so we can allow users to select it
@@ -123,7 +122,7 @@ namespace DevryService.Wizards
             {
                 // Need to acquire the 'human readable' version for our code block. This will appear in menus when selecting a snippet
                 string readableName = string.Empty;
-                readableName = await ReplyEditWithReply<string>(context, _recentMessage,
+                readableName = await ReplyEditWithReply<string>(_recentMessage,
                     EmbedBuilder()
                     .WithDescription($"Looks like a new type of language is being used... What is the 'human readable' text for this language? For instance, C#, C++, YAML, etc")
                     .Build());
@@ -149,7 +148,7 @@ namespace DevryService.Wizards
             }
 
             // Retrieve CODE BLOCK
-            string codeBlock = await ReplyEditWithReply<string>(context, _recentMessage,
+            string codeBlock = await ReplyEditWithReply<string>(_recentMessage,
                 EmbedBuilder().WithDescription("Provide the content you wish to share (in discord's code-block format)").Build());
 
             string snippetBasePath = _snippetConfig.RootCodePath;

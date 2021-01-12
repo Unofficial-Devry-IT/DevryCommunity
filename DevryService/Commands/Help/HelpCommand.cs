@@ -18,7 +18,7 @@ namespace DevryService.Commands.Help
         {
             HelpWizard wizard = new HelpWizard(context);
 
-            try { wizard.Run(context); } catch { } finally { await wizard.CleanupAsync(); }
+            try { wizard.Run(); } catch { } finally { await wizard.CleanupAsync(); }
         }
     }
 }

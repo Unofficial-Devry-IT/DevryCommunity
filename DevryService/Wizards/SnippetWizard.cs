@@ -141,9 +141,7 @@ namespace DevryService.Wizards
             for (int i = 0; i < options.Count; i++)
                 embed.AddField((i + 1).ToString(), options[i], true);
 
-            string reply = string.Empty;
-
-            _recentMessage = await ReplyEditWithReply(_recentMessage, embed.Build(), (context) => ReplyHandlerAction(context, ref reply));
+            string reply = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
 
             List<string> selectedLanguages = new List<string>();
             foreach(var parameter in reply.Replace(","," ").Split(" "))
@@ -181,7 +179,7 @@ namespace DevryService.Wizards
             }
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             Categories = GetSnippetCategories();
 
@@ -191,7 +189,7 @@ namespace DevryService.Wizards
                 categoryMenu += $"[{i + 1}] - {Categories[i]}\n";
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(context, categoryMenu, (context)=>ReplyHandlerAction(context, ref reply), true);
+            _recentMessage = await WithReply(categoryMenu, (context)=>ReplyHandlerAction(context, ref reply), true);
 
             if(string.IsNullOrEmpty(reply))
             {
@@ -204,7 +202,7 @@ namespace DevryService.Wizards
             if(string.IsNullOrEmpty(category))
             {
                 await CleanupAsync();
-                await context.RespondAsync(embed: new DiscordEmbedBuilder()
+                await _context.RespondAsync(embed: new DiscordEmbedBuilder()
                     .WithAuthor(_options.AuthorName, null, _options.AuthorIcon)
                     .WithTitle("Invalid Input")
                     .WithDescription($"Expected value between 1 - {Categories.Count}")
@@ -236,10 +234,10 @@ namespace DevryService.Wizards
 
             _recentMessage = await ReplyEdit(_recentMessage, embed.Build());
 
-            var response = await context.Message.GetNextMessageAsync();
+            var response = await _context.Message.GetNextMessageAsync();
             if(response.TimedOut)
             {
-                await SimpleReply(context, $"{_options.AuthorName} Wizard Timed Out...", false, false);
+                await SimpleReply($"{_options.AuthorName} Wizard Timed Out...", false, false);
                 throw new StopWizardException(_options.AuthorName);
             }
 

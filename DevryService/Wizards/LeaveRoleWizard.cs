@@ -72,7 +72,7 @@ namespace DevryService.Wizards
             return config;
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower()).ToList();
 
@@ -83,7 +83,7 @@ namespace DevryService.Wizards
                 .ToList();
 
             // We have to do this to update our local cache.. otherwise any roles appied won't appear/disappear
-            var member = await context.Guild.GetMemberAsync(context.Member.Id);
+            var member = await _context.Guild.GetMemberAsync(_originalMember.Id);
             
             var memberRoles = member.Roles.Where(x => !lowercased.Contains(x.Name.ToLower()))
                 .OrderBy(x => x.Name)
@@ -91,7 +91,7 @@ namespace DevryService.Wizards
             
             if(memberRoles.Count == 0)
             {
-                await SimpleReply(context, "You don't have any roles for me to remove!", false, false);
+                await SimpleReply("You don't have any roles for me to remove!", false, false);
                 return;
             }
 
@@ -113,7 +113,7 @@ namespace DevryService.Wizards
                 
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(context, embed.Build(), (context) => reply = context.Result.Content, true);
+            _recentMessage = await WithReply(embed.Build(), (context) => reply = context.Result.Content, true);
 
             string[] parameters = null;
 
@@ -136,7 +136,7 @@ namespace DevryService.Wizards
                     index -= 1;
                     if(index < 0 || index >= memberRoles.Count)
                         continue;
-
+                    
                     await member.RevokeRoleAsync(memberRoles[index]);
                     removed.Add(memberRoles[index].Name);
                 }
@@ -151,10 +151,10 @@ namespace DevryService.Wizards
                 for (int i = 0; i < removed.Count; i++)
                     embed.AddField((i + 1).ToString(), removed[i]);
 
-                await SimpleReply(context, embed.Build(), false, false);
+                await SimpleReply(embed.Build(), false, false);
             }
             else
-                await SimpleReply(context, EmbedBuilder().WithDescription($"{member.Mention},\nNo changes were made").Build(), false, false);
+                await SimpleReply(EmbedBuilder().WithDescription($"{member.Mention},\nNo changes were made").Build(), false, false);
         }
     }
 }

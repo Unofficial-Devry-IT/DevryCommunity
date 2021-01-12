@@ -32,12 +32,14 @@ namespace DevryService.Core
 
         protected const string CANCEL_MESSAGE = "Type `stop` to cancel the wizard";
         protected ILogger<WizardBase<TOptions>> logger;
+        protected CommandContext _context;
 
         public WizardBase(CommandContext commandContext)
         {
             if (commandContext == null)
                 return;
 
+            _context = commandContext;
             _channel = commandContext.Channel;
             _originalMember = commandContext.Member;
             
@@ -70,7 +72,8 @@ namespace DevryService.Core
                 .WithAuthor("Hall Monitor")
                 .WithTitle("Error")
                 .WithColor(DiscordColor.IndianRed)
-                .WithDescription(errorMessage);
+                .WithDescription(errorMessage)
+                .WithFooter(_options.AuthorName + (_context != null ? _context.Member.DisplayName : ""));
 
             await _channel.SendMessageAsync(embed: builder.Build());
         }
@@ -101,7 +104,6 @@ namespace DevryService.Core
             catch(Exception ex)
             {
                 logger?.LogError($"Unable to load settings for {GetType().Name} --> {ex.Message}\n\tError Type: {ex.GetType().Name}\nReverting to Default Settings");
-
                 this._options = DefaultSettings();
             }
         }
@@ -110,13 +112,13 @@ namespace DevryService.Core
         /// Long running wizards shall be taken care of by being offloaded onto separate threads/tasks
         /// </summary>
         /// <param name="context"></param>
-        public void Run(CommandContext context)
+        public void Run()
         {
             _ = Task.Run(async () => 
                 {
                     try
                     {
-                        await ExecuteAsync(context);
+                        await ExecuteAsync();
                     }
                     catch { }
                     finally
@@ -132,7 +134,7 @@ namespace DevryService.Core
         /// </summary>
         /// <returns></returns>
         /// <exception cref="StopWizardException">When user attempts to stop wizard</exception>
-        protected abstract Task ExecuteAsync(CommandContext context);
+        protected abstract Task ExecuteAsync();
 
         /// <summary>
         /// Basic response predicate that could be used to filter messages
@@ -187,20 +189,14 @@ namespace DevryService.Core
         /// <param name="text">Text to display</param>
         /// <param name="isCancellable">Is this considered 'cancellable'</param>
         /// <returns><see cref="_recentMessage"/></returns>
-        public async Task<DiscordMessage> SimpleReply(CommandContext context, string text, bool isCancellable = false, bool trackMessage = true)
+        public async Task<DiscordMessage> SimpleReply(string text, bool isCancellable = false, bool trackMessage = true)
         {
-            DiscordEmbedBuilder builder = new DiscordEmbedBuilder();
+            DiscordEmbedBuilder builder = EmbedBuilder()
+                .WithDescription(text)
+                .WithColor(DiscordColor.Cyan)
+                .WithTitle(_options.Headline);
 
-            if (!string.IsNullOrEmpty(_options.AuthorName))
-                builder = builder.WithAuthor(name: _options.AuthorName, iconUrl: !string.IsNullOrEmpty(_options.AuthorIcon) ? _options.AuthorIcon : "");
-            else if (!string.IsNullOrEmpty(_options.AuthorIcon))
-                builder = builder.WithAuthor(iconUrl: _options.AuthorIcon);
-
-            builder.Title = _options.Headline;
-            builder.Description = text;
-            builder.Color = DiscordColor.Cyan;
-
-            _recentMessage = await context.RespondAsync(embed: builder.Build());
+            _recentMessage = await _context.RespondAsync(embed: builder.Build());
 
             // If tracked --> the message will be 'cleaned up' at the end of the wizard
             if(trackMessage)
@@ -212,9 +208,9 @@ namespace DevryService.Core
             return _recentMessage;
         }
 
-        public async Task<DiscordMessage> SimpleReply(CommandContext context, DiscordEmbed embed, bool isCancellable = false, bool trackMessage = true)
+        public async Task<DiscordMessage> SimpleReply(DiscordEmbed embed, bool isCancellable = false, bool trackMessage = true)
         {
-            _recentMessage = await context.RespondAsync(embed: embed);
+            _recentMessage = await _context.RespondAsync(embed: embed);
 
             if (trackMessage)
                 _messages.Add(_recentMessage);
@@ -231,20 +227,19 @@ namespace DevryService.Core
         /// <param name="isCancellable">Is this cancellable</param>
         /// <param name="replyPredicate">Optional: filter out replies</param>
         /// <returns><see cref="_recentMessage"/></returns>
-        public async Task<DiscordMessage> WithReply(CommandContext context,
-                                                         string text,
-                                                         Action<InteractivityResult<DiscordMessage>> replyHandler,
-                                                         bool isCancellable = false,
-                                                         Func<DiscordMessage,bool> replyPredicate = null)
+        public async Task<DiscordMessage> WithReply(string text,
+                                                    Action<InteractivityResult<DiscordMessage>> replyHandler,
+                                                    bool isCancellable = false,
+                                                    Func<DiscordMessage,bool> replyPredicate = null)
         {            
-            _recentMessage = await SimpleReply(context, text, isCancellable);
+            _recentMessage = await SimpleReply(text, isCancellable);
 
             if (replyPredicate == null)
                 replyPredicate = ResponsePredicate;
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await context.Message.GetNextMessageAsync(predicate: replyPredicate, timeoutOverride: _options.TimeoutOverride);
+                var result = await _context.Message.GetNextMessageAsync(predicate: replyPredicate, timeoutOverride: _options.TimeoutOverride);
                 replyHandler.Invoke(result);
             }
             else
@@ -259,18 +254,18 @@ namespace DevryService.Core
             return _recentMessage;
         }
 
-        public async Task<DiscordMessage> WithReply(CommandContext context, DiscordEmbed embed, Action<InteractivityResult<DiscordMessage>> replyHandler,
+        public async Task<DiscordMessage> WithReply(DiscordEmbed embed, Action<InteractivityResult<DiscordMessage>> replyHandler,
             bool isCancellable = false,
             Func<DiscordMessage, bool> replyPredicate = null)
         {
-            _recentMessage = await SimpleReply(context, embed, isCancellable);
+            _recentMessage = await SimpleReply(embed, isCancellable);
 
             if (replyPredicate == null)
                 replyPredicate = ResponsePredicate;
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await context.Message.GetNextMessageAsync(predicate: replyPredicate);
+                var result = await _context.Message.GetNextMessageAsync(predicate: replyPredicate);
                 replyHandler.Invoke(result);
             }
             else
@@ -291,20 +286,19 @@ namespace DevryService.Core
         /// <param name="isCancellable">Is this cancellable</param>
         /// <param name="reactionPredicate">Optional - filter out reactions</param>
         /// <returns><see cref="_recentMessage"/></returns>
-        public async Task<DiscordMessage> WithReaction(CommandContext context,
-                                                            string text,
-                                                            Action<InteractivityResult<MessageReactionAddEventArgs>> reactionHandler,
-                                                            bool isCancellable = false,
-                                                            Func<MessageReactionAddEventArgs, bool> reactionPredicate = null)
+        public async Task<DiscordMessage> WithReaction(string text,
+                                                       Action<InteractivityResult<MessageReactionAddEventArgs>> reactionHandler,
+                                                       bool isCancellable = false,
+                                                       Func<MessageReactionAddEventArgs, bool> reactionPredicate = null)
         {
-            _recentMessage = await SimpleReply(context, text, isCancellable);
+            _recentMessage = await SimpleReply(text, isCancellable);
 
             if (reactionPredicate == null)
                 reactionPredicate = ReactionPredicate;
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await context.Message.WaitForReactionAsync(_originalMember);
+                var result = await _context.Message.WaitForReactionAsync(_originalMember);
                 reactionHandler.Invoke(result);
             }
             else
@@ -331,15 +325,12 @@ namespace DevryService.Core
             if (add && message.Embeds.Count > 0)
                 text = message.Embeds[0].Description + text;
 
-            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                .WithAuthor(name: _options.AuthorName, iconUrl: _options.AuthorIcon);
+            DiscordEmbedBuilder builder = EmbedBuilder()
+                .WithDescription(text)
+                .WithTitle(_options.Headline);
 
             if (isCancellable)
                 builder = builder.WithFooter(CANCEL_MESSAGE + _originalMember != null ? $"\n--{_originalMember.Username}" : "");
-
-            builder.Title = _options.Headline;
-            builder.Description = text;
-            builder.Color = DiscordColor.Cyan;
 
             _recentMessage = await message.ModifyAsync(embed: builder.Build());
 
@@ -351,42 +342,7 @@ namespace DevryService.Core
             return await message.ModifyAsync(embed);
         }
 
-        public async Task<DiscordMessage> ReplyEditWithReply(DiscordMessage message, DiscordEmbed embed, Action<InteractivityResult<DiscordMessage>> replyHandler = null,
-            Func<DiscordMessage, bool> replyPredicate = null)
-        {
-            _recentMessage = await ReplyEdit(message, embed);
-
-            if (replyPredicate == null)
-                replyPredicate = ResponsePredicate;
-
-            if(!_options.AcceptAnyUser)
-            {
-                var result = await Bot.Interactivity.WaitForMessageAsync((msg) => _originalMember.Id == msg.Author.Id);
-                
-                if(result.TimedOut)
-                {
-                    await message.RespondAsync($"{_options.AuthorName} Wizard Timed Out...");
-                    throw new StopWizardException(GetType().Name);
-                }
-
-                replyHandler.Invoke(result);
-            }
-            else
-            {
-                var result = await Bot.Interactivity.WaitForMessageAsync(replyPredicate);
-                if(result.TimedOut)
-                {
-                    await message.RespondAsync($"{_options.AuthorName} Wizard Timed Out...");
-                }
-
-                _messages.Add(result.Result);
-                replyHandler.Invoke(result);
-            }
-
-            return _recentMessage;
-        }
-
-        public async Task<T> ReplyEditWithReply<T>(CommandContext context, DiscordMessage message, DiscordEmbed embed, Func<DiscordMessage,bool> replyPredicate = null)
+        public async Task<T> ReplyEditWithReply<T>(DiscordMessage message, DiscordEmbed embed, Func<DiscordMessage,bool> replyPredicate = null)
         {
             if (replyPredicate == null)
                 replyPredicate = ResponsePredicate;
@@ -397,11 +353,11 @@ namespace DevryService.Core
 
             if(!_options.AcceptAnyUser)
             {
-                var result = await context.Message.GetNextMessageAsync();
+                var result = await _context.Message.GetNextMessageAsync();
 
                 if(result.TimedOut)
                 {
-                    await SimpleReply(context, $"{_options.AuthorName} Wizard Timed Out...", false, false);
+                    await SimpleReply($"{_options.AuthorName} Wizard Timed Out...", false, false);
                     throw new StopWizardException(_options.AuthorName);
                 }
 
@@ -417,7 +373,7 @@ namespace DevryService.Core
                 }
                 catch
                 {
-                    await SimpleReply(context, embed: EmbedBuilder().WithDescription("Invalid Input").WithColor(DiscordColor.Red).Build(), false,false);
+                    await SimpleReply(embed: EmbedBuilder().WithDescription("Invalid Input").WithColor(DiscordColor.Red).Build(), false,false);
                     throw new StopWizardException(_options.AuthorName);
                 }
             }

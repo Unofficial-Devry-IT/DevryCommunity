@@ -131,12 +131,12 @@ namespace DevryService.Wizards.Admin
             for (int i = 0; i < daysOfWeek.Length; i++)
                 embed.AddField(i.ToString(), daysOfWeek[i], true);
 
-            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+            string value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
 
             while(!ValidCron(value.Trim(), 0, 6))
             {
                 embed.Description += $"\n:exclamation: Invalid Input. Expected a value between 0 - {daysOfWeek.Length - 1}";
-                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+                value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
             }
 
             return value;
@@ -151,12 +151,12 @@ namespace DevryService.Wizards.Admin
             for (int i = 0; i < months.Length; i++)
                 embed.AddField((i + 1).ToString(), months[i], true);
 
-            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+            string value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
 
             while (!ValidCron(value.Trim(), 1, 12))
             {
                 embed.Description += $"\n:exclamation: Invalid Input. Expected a value between 1 - {months.Length}";
-                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+                value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
             }
 
             return value;
@@ -167,25 +167,22 @@ namespace DevryService.Wizards.Admin
             string display = baseMessage + customMessage + "\n" + cronUsageMenu + $"Valid Range: {min} - {max}\n";
             var embed = EmbedBuilder().WithDescription(display);
 
-            string value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+            string value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
             
             while(!ValidCron(value.Trim(), min, max))
             {
                 display += $"\n:exclamation: - {invalidInputMessage}";
-                value = await ReplyEditWithReply<string>(_context, _recentMessage, embed.Build());
+                value = await ReplyEditWithReply<string>(_recentMessage, embed.Build());
             }
 
             return value;
         }
 
-        CommandContext _context;
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
-            _context = context;
-
-            if (!ResponsePredicate(context.Message))
+            if (!ResponsePredicate(_context.Message))
             {
-                logger.LogWarning($"{context.Message.Author.Username} - attempted to use a command they don't have access to");
+                logger.LogWarning($"{_context.Message.Author.Username} - attempted to use a command they don't have access to");
                 return;
             }
 
@@ -197,11 +194,11 @@ namespace DevryService.Wizards.Admin
                 month = string.Empty,
                 daysOfWeek = string.Empty;
 
-            _recentMessage = await WithReply(context, "What should the headline be?",
+            _recentMessage = await WithReply("What should the headline be?",
                 (context) => headline = context.Result.Content,
                 true);
             
-            description = await ReplyEditWithReply<string>(context, _recentMessage,
+            description = await ReplyEditWithReply<string>(_recentMessage,
                 EmbedBuilder()
                 .WithDescription("What should the contents of this message be?").Build());
 
@@ -216,8 +213,8 @@ namespace DevryService.Wizards.Admin
             
             Reminder reminder = new Reminder
             {
-                ChannelId = context.Channel.Id,
-                GuildId = context.Guild.Id,
+                ChannelId = _context.Channel.Id,
+                GuildId = _context.Guild.Id,
                 Contents = description,
                 Name = headline,
                 Schedule = cronString,
@@ -228,7 +225,7 @@ namespace DevryService.Wizards.Admin
 
             if(statusCode != DiscordService.OK)
             {
-                await SimpleReply(context, "Sorry, an error occurred while processing your request. --Try again, then contact a moderator if the issue persists", false, false);
+                await SimpleReply("Sorry, an error occurred while processing your request. --Try again, then contact a moderator if the issue persists", false, false);
                 throw new InvalidOperationException($"Unable to create reminder. Status Code: {statusCode}\n\tCron String: {cronString}");
             }
          
@@ -236,7 +233,7 @@ namespace DevryService.Wizards.Admin
 
             string humanReadable = CronExpressionDescriptor.ExpressionDescriptor.GetDescription(cronString);
             Worker.Instance.Logger.LogInformation($"Event Created:\n\tChannel->{_channel.Name}\n\t{humanReadable}");
-            await SimpleReply(context, $"Event Created!\n\n{humanReadable}", false, false);
+            await SimpleReply($"Event Created!\n\n{humanReadable}", false, false);
         }
     }
 }

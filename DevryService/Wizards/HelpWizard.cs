@@ -93,7 +93,7 @@ namespace DevryService.Wizards
             }
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             var embed = EmbedBuilder();
 
@@ -117,7 +117,7 @@ namespace DevryService.Wizards
                     // If this command has restrictions on roles -- take that into consideration
                     if(config.RestrictedRoles != null && config.RestrictedRoles.Count > 0)
                         // We want to see if the roles on the member match anything within the restricted roles array
-                        if (!context.Member.Roles.Any(x => config.RestrictedRoles.Contains(x.Name)))
+                        if (!_context.Member.Roles.Any(x => config.RestrictedRoles.Contains(x.Name)))
                             continue;
 
                     // Option will become the following
@@ -145,11 +145,11 @@ namespace DevryService.Wizards
 
                     bool addYes = true, addNo = true;
                     if (yesConfig.RestrictedRoles != null && yesConfig.RestrictedRoles.Count > 0)
-                        if (!context.Member.Roles.Any(x => yesConfig.RestrictedRoles.Contains(x.Name)))
+                        if (!_context.Member.Roles.Any(x => yesConfig.RestrictedRoles.Contains(x.Name)))
                             addYes = false;
 
                     if (noConfig.RestrictedRoles != null && noConfig.RestrictedRoles.Count > 0)
-                        if (!context.Member.Roles.Any(x => noConfig.RestrictedRoles.Contains(x.Name)))
+                        if (!_context.Member.Roles.Any(x => noConfig.RestrictedRoles.Contains(x.Name)))
                             addNo = false;
 
                     // At this point we can finally 'ADD' the menu emoji to the help menu because the user has permission to use AT LEAST one of the sub-commands
@@ -161,7 +161,7 @@ namespace DevryService.Wizards
                 }
             }
 
-            _recentMessage = await SimpleReply(context, embed.Build(), true, true);
+            _recentMessage = await SimpleReply(embed.Build(), true, true);
 
             // Add emojis from above
             foreach (var emoji in currentEmojis)
@@ -170,15 +170,15 @@ namespace DevryService.Wizards
                 await Task.Delay(250);
             }
 
-            var interactivityResult = await _recentMessage.WaitForReactionAsync(context.Member);
+            var interactivityResult = await _recentMessage.WaitForReactionAsync(_context.Member);
 
             // Did the client timeout?
             if(interactivityResult.TimedOut)
             {
-                await SimpleReply(context, EmbedBuilder()
-                                            .WithColor(DiscordColor.Red)
-                                            .WithDescription(_options.AuthorName + " Wizard timed out...")
-                                            .Build(),
+                await SimpleReply(EmbedBuilder()
+                                        .WithColor(DiscordColor.Red)
+                                        .WithDescription(_options.AuthorName + " Wizard timed out...")
+                                        .Build(),
                                   false,false);
                 throw new StopWizardException(_options.AuthorName);
             }
@@ -201,7 +201,7 @@ namespace DevryService.Wizards
 
                         var data = commandsToMethods[option.RunCommand.CommandName];
                         object instance = Activator.CreateInstance(data.Item1);
-                        data.Item2.Invoke(instance, new object[] { context });
+                        data.Item2.Invoke(instance, new object[] { _context });
                         break;
                     }
                 }
@@ -223,12 +223,12 @@ namespace DevryService.Wizards
                         await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, option.YesNoBetween.NoEmoji));
                         await Task.Delay(250);
 
-                        interactivityResult = await _recentMessage.WaitForReactionAsync(context.Member);
+                        interactivityResult = await _recentMessage.WaitForReactionAsync(_context.Member);
 
                         if(interactivityResult.TimedOut)
                         {
                             await CleanupAsync();
-                            await SimpleReply(context, EmbedBuilder().WithColor(DiscordColor.Red).WithDescription(_options.AuthorName + " Wizard Timed Out"),false,false);
+                            await SimpleReply(EmbedBuilder().WithColor(DiscordColor.Red).WithDescription(_options.AuthorName + " Wizard Timed Out"),false,false);
                             break;
                         }
 
@@ -242,13 +242,13 @@ namespace DevryService.Wizards
                         {
                             var data = commandsToMethods[option.YesNoBetween.Yes];
                             object instance = Activator.CreateInstance(data.Item1);
-                            data.Item2.Invoke(instance, new object[] { context });
+                            data.Item2.Invoke(instance, new object[] { _context });
                         }
                         else if(option.YesNoBetween.NoEmoji.Equals(userEmoji))
                         {
                             var data = commandsToMethods[option.YesNoBetween.No];
                             object instance = Activator.CreateInstance(data.Item1);
-                            data.Item2.Invoke(instance, new object[] { context });
+                            data.Item2.Invoke(instance, new object[] { _context });
                         }
 
                         break;

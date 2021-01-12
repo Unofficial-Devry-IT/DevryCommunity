@@ -31,7 +31,6 @@ namespace DevryService.Wizards.Admin
 
     public class CreateClassWizard : WizardBase<CreateClassWizardConfig>
     {
-        private readonly ILogger<CreateClassWizard> _logger;
         /// <summary>
         /// Permissions for allowed users/roles
         /// </summary>
@@ -105,7 +104,7 @@ namespace DevryService.Wizards.Admin
                 }
                 catch
                 {
-                    _logger?.LogError($"Unable to locate role '{name}'");
+                    logger?.LogError($"Unable to locate role '{name}'");
                 }
             }
 
@@ -188,7 +187,7 @@ namespace DevryService.Wizards.Admin
             _ = await this._channel.Guild.CreateChannelAsync($"{prefix} {title}", ChannelType.Text, parent: parent);
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             string promptResponse = string.Empty;
 
@@ -198,7 +197,7 @@ namespace DevryService.Wizards.Admin
                 _courseNumber = string.Empty;
                 _courseTitle = string.Empty;
                 
-                _recentMessage = await WithReply(context, $"Time to create a new class!\n\nWhat is the course category? (i.e CEIS, NETW, etc)\n",
+                _recentMessage = await WithReply($"Time to create a new class!\n\nWhat is the course category? (i.e CEIS, NETW, etc)\n",
                     replyHandler: (context) => _courseCategory = context.Result.Content,
                     isCancellable: true);
 

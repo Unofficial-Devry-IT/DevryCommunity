@@ -79,11 +79,11 @@ namespace DevryService.Wizards
         {
         }
 
-        protected override async Task ExecuteAsync(CommandContext context)
+        protected override async Task ExecuteAsync()
         {
             var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
 
-            var roles = context.Guild.Roles
+            var roles = _context.Guild.Roles
                 .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
@@ -101,7 +101,7 @@ namespace DevryService.Wizards
                 embed.AddField(i.ToString(), courseTypes[i], true);
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(context, embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
+            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
             string[] parameters = reply.Replace(",", " ").Split(" ");
 
             Dictionary<string, List<DiscordRole>> selectedGroups = new Dictionary<string, List<DiscordRole>>();
@@ -132,15 +132,15 @@ namespace DevryService.Wizards
                     current++;
                 }
 
-                _recentMessage = await SimpleReply(context, embed.Build(), true, true);
+                _recentMessage = await SimpleReply(embed.Build(), true, true);
             }
 
             reply = string.Empty;
-            var response = await context.Message.GetNextMessageAsync();
+            var response = await _context.Message.GetNextMessageAsync();
 
             if (response.TimedOut)
             {
-                await SimpleReply(context, $"{_options.AuthorName} Wizard timed out...", false, false);
+                await SimpleReply($"{_options.AuthorName} Wizard timed out...", false, false);
                 throw new StopWizardException(_options.AuthorName);
             }
 
@@ -160,7 +160,7 @@ namespace DevryService.Wizards
 
             List<string> appliedRoles = new List<string>();
 
-            DiscordMember member = context.Member;
+            DiscordMember member = _context.Member;
 
             foreach (var selection in parameters)
             {
@@ -181,9 +181,9 @@ namespace DevryService.Wizards
             await CleanupAsync();
 
             if (appliedRoles.Count > 0)
-                await SimpleReply(context, $"Hey, {context.Member.Username}, the following roles were applied: \n{string.Join(", ", appliedRoles)}", false, false);
+                await SimpleReply($"Hey, {_originalMember.DisplayName}, the following roles were applied: \n{string.Join(", ", appliedRoles)}", false, false);
             else
-                await SimpleReply(context, $"Hey, {context.Member.Username}, no changes were applied", false, false);
+                await SimpleReply($"Hey, {_originalMember.DisplayName}, no changes were applied", false, false);
         }
     }
 }

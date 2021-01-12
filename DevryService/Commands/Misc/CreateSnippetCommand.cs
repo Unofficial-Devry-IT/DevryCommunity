@@ -16,7 +16,7 @@ namespace DevryService.Commands.Misc
         {
             CreateSnippetWizard wizard = new CreateSnippetWizard(context);
 
-            try { wizard.Run(context); } catch { } finally{ await wizard.CleanupAsync(); }
+            try { wizard.Run(); } catch { } finally{ await wizard.CleanupAsync(); }
         }
     }
 }
