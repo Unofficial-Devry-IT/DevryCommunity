@@ -91,12 +91,19 @@ namespace DevryService
 
         private async Task Discord_GuildMemberAdded(DiscordClient client, DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
         {
-            DiscordChannel test = Bot.Discord.Guilds
-                .First().Value.Channels
-                .FirstOrDefault(x => x.Value.Name.ToLower().Contains("bot-test"))
+            try
+            {
+                DiscordChannel test = Bot.Discord.Guilds
+                .First(x => x.Value.Name.ToLower().Contains("devry")).Value.Channels
+                .FirstOrDefault(x => x.Value.Name.ToLower().Contains("welcome"))
                 .Value;
 
-            await test.SendMessageAsync(embed: GenerateWelcomeMessage(e.Member));            
+                await test.SendMessageAsync(embed: GenerateWelcomeMessage(e.Member));
+            }
+            catch(Exception ex)
+            {
+                Logger?.LogError($"An error occurred while trying to welcome '{e.Member.DisplayName}'\n\t{ex.Message}");
+            }
         }
 
         public static DiscordEmbed GenerateWelcomeMessage(DiscordMember newMember)
