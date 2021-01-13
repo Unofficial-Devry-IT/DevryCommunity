@@ -4,5 +4,9 @@ services:
      devry-services:
           environment:
                TZ: "America/New_York"
-          image: "devry-services"
+          image: "mercenary9312/unofficial-devry-service-bot"
           restart: "always"
+          volumes:
+            - ${PWD}/DevryCommunity.db:/app/DevryCommunity.db
+            - ${PWD}/Configs:/app/Configs
+            - ${PWD}/Snippets:/app/Snippets

@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DevryService.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,25 +10,26 @@ namespace DevryService
     public class Worker : BackgroundService
     {
         public readonly ILogger<Worker> Logger;
-        private readonly string _token;
-
         public static Worker Instance;
-        
+        public static IConfiguration Configuration;
+        public DiscordService DiscordService;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration)
+        Bot bot;
+
+        public Worker(ILogger<Worker> logger, IConfiguration configuration, ILogger<Bot> botLogger, DiscordService discordService)
         {
             Logger = logger;
-            _token = configuration.GetValue<string>("token");
+            Configuration = configuration;
+            DiscordService = discordService;
 
             Instance = this;
 
-            if (string.IsNullOrEmpty(_token))
-                throw new ArgumentNullException(nameof(_token));
+            bot = new Bot(configuration, botLogger, discordService);
+            
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Bot bot = new Bot(_token);
             await bot.StartAsync();
 
             while (!stoppingToken.IsCancellationRequested)

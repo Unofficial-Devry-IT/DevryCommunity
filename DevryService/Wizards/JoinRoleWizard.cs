@@ -5,53 +5,109 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Linq;
 using System.Threading.Tasks;
 using DevryService.Core.Util;
+using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.EventArgs;
 
 namespace DevryService.Wizards
 {
-    [WizardInfo(Name ="Sorting Hat",
-        IconUrl = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849",
-        Title = "Let's get you settled")]
-    public class JoinRoleWizard : Wizard
+    public class JoinRoleWizardConfig : WizardConfig
     {
-        public JoinRoleWizard(ulong userId, DiscordChannel channel) : base(userId, channel)
+        public string[] BlacklistedRoles = new string[0];
+    }
+
+    public class JoinRoleWizard : WizardBase<JoinRoleWizardConfig>
+    {
+        const string AUTHOR_NAME = "Sorting Hat";
+        const string AUTHOR_ICON = "https://vignette.wikia.nocookie.net/harrypotter/images/6/62/Sorting_Hat.png/revision/latest?cb=20161120072849";
+        const string REACTION_EMOJI = "";
+        const string DESCRIPTION = "Allows a user to join their fellow classmates";
+
+        public override JoinRoleWizardConfig DefaultSettings()
+        {
+            JoinRoleWizardConfig config = new JoinRoleWizardConfig();
+
+            config.AuthorIcon = AUTHOR_ICON;
+            config.AuthorName = AUTHOR_NAME;
+            config.Headline = "Let's get you settled";
+            config.Description = DESCRIPTION;
+
+            config.BlacklistedRoles = new string[]
+            {
+                "Moderator",
+                "Admin",
+                "Hardware",
+                "Networking",
+                "Programmer",
+                "Professor",
+                "Database",
+                "Pollmaster",
+                "See-All-Channels",
+                "Motivator",
+                "Server Booster",
+                "Devry Test Bot",
+                "Devry-Challenge-Bot",
+                "Devry-Service-Bot",
+                "DeVry-SortingHat",
+                "announcement permissions",
+                "@everyone"
+            };
+
+            config.UsesCommand = new WizardToCommandLink
+            {
+                DiscordCommand = "join",
+                CommandConfig = DefaultCommandConfig()
+            };
+
+            return config;
+        }
+
+        public override CommandConfig DefaultCommandConfig()
+        {
+            return new CommandConfig
+            {
+                AuthorName = AUTHOR_NAME,
+                Description = DESCRIPTION,
+                ReactionEmoji = REACTION_EMOJI,
+                IgnoreHelpWizard = false
+            };
+        }
+
+        public JoinRoleWizard(CommandContext commandContext) : base(commandContext)
         {
         }
 
-        public override async Task StartWizard(CommandContext context)
+
+        protected override async Task ExecuteAsync()
         {
-            var roles = context.Guild.Roles
-                .Where(x => NotBlacklisted(x.Name))
-                .OrderBy(x => x.Name)
+            var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
+
+            await _context.TriggerTypingAsync();
+            var roles = _context.Guild.Roles
+                .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
+                .OrderBy(x => x.Value.Name)
+                .Select(x=>x.Value)
                 .ToList();
 
             List<string> courseTypes = roles.Select(x => x.Name.Replace("-", " ").Split(" ").First())
                 .Distinct()
                 .ToList();
 
-            string message = $"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n";
+            var embed = EmbedBuilder()
+                .WithFooter(CANCEL_MESSAGE)
+                .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
 
             for (int i = 0; i < courseTypes.Count; i++)
-                message += $"[{i + 1}] - {courseTypes[i]}\n";
+                embed.AddField(i.ToString(), courseTypes[i], true);
 
-            await WizardReply(context, message, true);
+            string reply = string.Empty;
+            await _context.TriggerTypingAsync();
+            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);            
 
-            DiscordMessage userReply = await GetUserReply();
+            string[] parameters = reply.Replace(",", " ").Split(" ");
 
-            string[] parameters = null;
-
-            try
-            {
-                parameters = userReply.Content.Replace(",", " ").Split(" ");
-            }
-            catch
-            {
-                await Cleanup();
-                return;
-            }
-            
             Dictionary<string, List<DiscordRole>> selectedGroups = new Dictionary<string, List<DiscordRole>>();
             Dictionary<int, DiscordRole> roleMap = new Dictionary<int, DiscordRole>();
 
@@ -59,8 +115,6 @@ namespace DevryService.Wizards
             {
                 if(int.TryParse(selection, out int index))
                 {
-                    index -= 1;
-
                     if (index < 0 || index > courseTypes.Count)
                     {
                         Console.WriteLine($"Invalid input");
@@ -73,33 +127,46 @@ namespace DevryService.Wizards
             int current = 0;
             foreach(var key in selectedGroups.Keys)
             {
-                message = $"Select the number associated with the class(es) you wish to join\n\n{key}:\n";
+                embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n");
+                
                 foreach(var item in selectedGroups[key])
                 {
-                    message += $"[{current + 1}] - {item.Name}\n";
+                    embed.AddField((current + 1).ToString(), item.Name, true);
                     roleMap.Add(current, item);
                     current++;
                 }
 
-                await WizardReply(context, message, true);
+                _recentMessage = await SimpleReply(embed.Build(), true, true);
             }
 
-            userReply = await GetUserReply();
+            reply = string.Empty;
+            var response = await _context.Message.GetNextMessageAsync();
+
+            if (response.TimedOut)
+            {
+                await SimpleReply($"{_options.AuthorName} Wizard timed out...", false, false);
+                throw new StopWizardException(_options.AuthorName);
+            }
+
+            _messages.Add(response.Result);
+
+            reply = response.Result.Content.Trim();
 
             try
             {
-                parameters = userReply.Content.Replace(",", " ").Split(" ");
+                parameters = reply.Replace(",", " ").Split(" ");
             }
             catch
             {
-                await Cleanup();
+                await CleanupAsync();
                 return;
             }
 
             List<string> appliedRoles = new List<string>();
 
-            DiscordMember member = await context.Guild.GetMemberAsync(OriginalUserId);
-
+            DiscordMember member = _context.Member;
+            await _context.TriggerTypingAsync();
+            
             foreach (var selection in parameters)
             {
                 if(int.TryParse(selection, out int index))
@@ -110,18 +177,20 @@ namespace DevryService.Wizards
                         Console.WriteLine($"Invalid Input: {index + 1}");
                     else
                     {
-                        await context.Guild.GrantRoleAsync(member, roleMap[index]);
+                        await _originalMember.GrantRoleAsync(roleMap[index]);
                         appliedRoles.Add(roleMap[index].Name);
+                        await Task.Delay(500);
                     }
                 }
             }
 
-            await Cleanup();
+            await _context.TriggerTypingAsync();
+            await CleanupAsync();
 
             if (appliedRoles.Count > 0)
-                await WizardReply(context, $"Hey, {context.Member.Username}, the following roles were applied: \n{string.Join(", ", appliedRoles)}", false);
+                await SimpleReply($"Hey, {_originalMember.DisplayName}, the following roles were applied: \n{string.Join(", ", appliedRoles)}", false, false);
             else
-                await WizardReply(context, $"Hey, {context.Member.Username}, no changes were applied", false);
+                await SimpleReply($"Hey, {_originalMember.DisplayName}, no changes were applied", false, false);
         }
     }
 }

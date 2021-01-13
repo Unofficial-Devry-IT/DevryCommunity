@@ -1,12 +1,16 @@
 ﻿using DevryService.Commands;
+using DevryService.Core;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DevryService
@@ -14,76 +18,135 @@ namespace DevryService
     public class Bot
     {
         public static DiscordClient Discord { get; private set; }
-        public static CommandsNextModule Commands { get; private set; }
-        public static InteractivityModule Interactivity { get; private set; }
+        public static CommandsNextExtension Commands { get; private set; }
+        public static InteractivityExtension Interactivity { get; private set; }
+        
         public static string Prefix = "!";
+        public static List<string> BlackListedRoles = new List<string>();
 
-        public Bot(string token)
+        public IConfiguration Configuration { get; private set; }
+        public ILogger<Bot> Logger { get; private set; }
+        public DiscordService DiscordService { get; private set; }
+
+        public Bot(IConfiguration config, ILogger<Bot> logger, DiscordService discordService)
         {
+            this.Logger = logger;
+            this.DiscordService = discordService;
+
+            Prefix = config.GetValue<string>("prefix");
             Discord = new DiscordClient(new DiscordConfiguration
             {
-                Token = token,
+                Token = config.GetValue<string>("token"),
                 TokenType = TokenType.Bot,
-                UseInternalLogHandler = false,
-                LogLevel = LogLevel.Warning | LogLevel.Error,
-                AutoReconnect = true
+                MinimumLogLevel = LogLevel.Information,
+                AutoReconnect = true,
+                Intents = 
+                        DiscordIntents.GuildEmojis |
+                        DiscordIntents.GuildMembers |
+                        DiscordIntents.GuildInvites |
+                        DiscordIntents.GuildMessageReactions |
+                        DiscordIntents.GuildMessages |
+                        DiscordIntents.GuildMessageTyping |
+                        DiscordIntents.Guilds
             });
+
+            // Shall be used across our bot stuff
+            Configuration = config;
+
+            // Ensure our stuff gets loaded
+            Core.Util.ConfigHandler.InitializeSettings();
         }
 
         public async Task StartAsync()
         {
             Commands = Discord.UseCommandsNext(new CommandsNextConfiguration
             {
-                StringPrefix = Prefix,
+                StringPrefixes = new string[] { Prefix },
                 EnableDms = true,
                 EnableDefaultHelp = false
             });
 
             Interactivity = Discord.UseInteractivity(new InteractivityConfiguration
             {
-                PaginationBehaviour = TimeoutBehaviour.Ignore,
-                PaginationTimeout = TimeSpan.FromMinutes(5),
+                PaginationBehaviour =  DSharpPlus.Interactivity.Enums.PaginationBehaviour.Ignore,
                 Timeout = TimeSpan.FromMinutes(2)
             });
 
-            Commands.RegisterCommands<EventCommands>();
-            Commands.RegisterCommands<HelpCommand>();
-            Commands.RegisterCommands<SnippetCommands>();
-            Commands.RegisterCommands<RoleCommands>();
-            Commands.RegisterCommands<CreateClassCommand>();
+            Type[] types = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(x => (x.Name.ToLower().EndsWith("command") || x.Name.ToLower().EndsWith("commands")) && !x.IsInterface && !x.IsAbstract)
+                .ToArray();
+
+            foreach (var type in types)
+            {
+                Console.WriteLine($"Registered Command: '{type.Name}'");
+                Commands.RegisterCommands(type);
+            }
 
             // Welcome message that gets dispatched to newcomers
-            Discord.GuildMemberAdded += Discord_GuildMemberAdded;                       
-            
+            Discord.GuildMemberAdded += Discord_GuildMemberAdded;
+
             await Discord.ConnectAsync();
-            await Discord.UpdateStatusAsync(new DiscordGame()
-            {                
-                Name = $"Ask for help: {Bot.Prefix}help"
-            }, UserStatus.Online);
 
         }
 
-        private async Task Discord_GuildMemberAdded(DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
+        private async Task Discord_GuildMemberAdded(DiscordClient client, DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
         {
-            await e.Member.SendMessageAsync(embed: GenerateWelcomeMessage());
+            try
+            {
+                DiscordChannel test = Bot.Discord.Guilds
+                .First(x => x.Value.Name.ToLower().Contains("devry")).Value.Channels
+                .FirstOrDefault(x => x.Value.Name.ToLower().Contains("welcome"))
+                .Value;
+
+                await test.SendMessageAsync(embed: GenerateWelcomeMessage(e.Member));
+            }
+            catch(Exception ex)
+            {
+                Logger?.LogError($"An error occurred while trying to welcome '{e.Member.DisplayName}'\n\t{ex.Message}");
+            }
         }
 
-        public static DiscordEmbed GenerateWelcomeMessage()
+        public static DiscordEmbed GenerateWelcomeMessage(DiscordMember newMember)
         {
-            DiscordChannel welcomeChannel = Bot.Discord.Guilds
-                .First().Value.Channels
-                .FirstOrDefault(x => x.Name.ToLower().Contains("welcome"));
+            MessageConfig config = Core.Util.ConfigHandler.ViewWelcomeConfig();
+            DiscordGuild guild = Bot.Discord.Guilds.FirstOrDefault(x => x.Value.Name.ToLower().Contains("devry")).Value;
+            DiscordChannel welcomeChannel = guild.Channels
+                                                    .FirstOrDefault(x => x.Value.Name.ToLower().Contains("welcome"))
+                                                    .Value;
 
-            string welcomeMessage = $"Welcome to Devry IT! A community built to foster professional and educational growth! Please, introduce yourself here {welcomeChannel.Mention}.\n\n" +
-                                    $"Our custom bot has a variety of features. From joining/leaving a class, viewing of code snippets, to creating channel-wide reminders! " +
-                                    $"Anywhere within our server, type the following ```{Bot.Prefix}help```";
+            string[] words = config.Contents.Split(" ");
+            
+            for(int i = 0; i < words.Length; i++)
+            {
+                if(words[i].StartsWith('#'))
+                {
+                    DiscordChannel channel = guild.Channels.FirstOrDefault(x => x.Value.Name.ToLower()
+                                                                                                .Contains(words[i].ToLower()
+                                                                                                                .Substring(1)))
+                                                        .Value;
+                    if(channel != null)
+                        words[i] = channel.Mention;
+                }
+                else if(words[i].StartsWith("@"))
+                {
+                    DiscordRole role = guild.Roles
+                        .Where(x => x.Value.Name.ToLower().Contains(words[i].Substring(1).ToLower()))
+                        .FirstOrDefault().Value;
+
+                    if (role != null)
+                        words[i] = role.Mention;
+                }
+                else if(words[i].Contains("[USER]"))
+                {
+                    words[i] = words[i].Replace("[USER]",newMember.Mention);
+                }
+            }
 
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                 .WithAuthor("Devry IT")
                 .WithTitle("Welcome!")
-                .WithDescription(welcomeMessage)
-                .WithColor(DiscordColor.Cyan)
-                .WithFooter("Note: Responding to this DM will not do anything");
+                .WithDescription(string.Join(" ", words))
+                .WithColor(DiscordColor.Cyan);
 
             return builder.Build();
         }
