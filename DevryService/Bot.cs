@@ -42,7 +42,10 @@ namespace DevryService
 
             if (OperatingSystem.IsLinux())
             {
-                var bytes = Convert.FromBase64String(config.GetValue<string>("token"));
+                if (!System.IO.File.Exists("token.cfg"))
+                    throw new ArgumentNullException("No token provided");
+
+                var bytes = Convert.FromBase64String(System.IO.File.ReadAllText("token.cfg"));
                 token = System.Text.Encoding.UTF8.GetString(bytes);
 
             }

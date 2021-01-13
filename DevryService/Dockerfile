@@ -23,7 +23,7 @@ COPY ["DevryService/DevryCommunity.db", "/app/publish"]
 ADD DevryService/Snippets /app/publish
 
 RUN chmod -R 777 /app/publish
-RUN sed -i 's|"token": ""|"token": "$TOKEN"|g' /app/publish/appsettings.json
+RUN echo $TOKEN > /app/publish/token.cfg
 
 FROM base AS final
 WORKDIR /app
