@@ -23,8 +23,12 @@ jobs:
       run: dotnet restore DevryService
     - name: Build
       run: dotnet build --no-restore --configuration Release --no-restore
-    - name: Docker Build
-      run: docker build -f DevryService/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
-    - name: Push Docker
-      run: docker push mercenary9312/unofficial-devry-service-bot
+    - name: Build and push
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        context: ./
+        file: ./DevryService/Dockerfile
+        push: true
+        tags: mercenary9312/unofficial-devry-service-bot:latest
           
