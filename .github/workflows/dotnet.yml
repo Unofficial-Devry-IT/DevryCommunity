@@ -35,9 +35,7 @@ jobs:
         filename: 'token.txt'
         encodedString: ${{ secrets.DISCORD_TOKEN }}        
     - name: Build Docker Image
-      env:
-        TOKEN: $(cat ${{ steps.write_file.outputs.filePath }})  
-      run: docker build --build-arg TOKEN=$TOKEN -f DevryService/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
+      run: export TOKEN=$(cat ${{ steps.write_file.outputs.filePath }}) && docker build --build-arg TOKEN -f DevryService/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
     - name: Push Docker Image
       run: docker push mercenary9312/unofficial-devry-service-bot
           
