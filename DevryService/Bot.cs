@@ -40,17 +40,17 @@ namespace DevryService
                 Token will be encoded
              */
 
-            if (OperatingSystem.IsLinux())
-            {
-                if (!System.IO.File.Exists("token.cfg"))
-                    throw new ArgumentNullException("No token provided");
+#if RELEASE
+            if (!System.IO.File.Exists("token.cfg"))
+                throw new ArgumentNullException("No token provided");
 
-                var bytes = Convert.FromBase64String(System.IO.File.ReadAllText("token.cfg"));
-                token = System.Text.Encoding.UTF8.GetString(bytes);
-
-            }
-            else
-                token = config.GetValue<string>("token");
+            var bytes = Convert.FromBase64String(System.IO.File.ReadAllText("token.cfg"));
+            token = System.Text.Encoding.UTF8.GetString(bytes);
+            Console.WriteLine("Acquired PROD Token");
+#else
+            token = config.GetValue<string>("token");
+            Console.WriteLine("Acquired DEBUG Token");
+#endif
 
             Discord = new DiscordClient(new DiscordConfiguration
             {
