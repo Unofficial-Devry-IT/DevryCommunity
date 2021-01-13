@@ -79,10 +79,12 @@ namespace DevryService.Wizards
         {
         }
 
+
         protected override async Task ExecuteAsync()
         {
             var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
 
+            await _context.TriggerTypingAsync();
             var roles = _context.Guild.Roles
                 .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
                 .OrderBy(x => x.Value.Name)
@@ -101,7 +103,9 @@ namespace DevryService.Wizards
                 embed.AddField(i.ToString(), courseTypes[i], true);
 
             string reply = string.Empty;
-            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
+            await _context.TriggerTypingAsync();
+            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);            
+
             string[] parameters = reply.Replace(",", " ").Split(" ");
 
             Dictionary<string, List<DiscordRole>> selectedGroups = new Dictionary<string, List<DiscordRole>>();
@@ -161,7 +165,8 @@ namespace DevryService.Wizards
             List<string> appliedRoles = new List<string>();
 
             DiscordMember member = _context.Member;
-
+            await _context.TriggerTypingAsync();
+            
             foreach (var selection in parameters)
             {
                 if(int.TryParse(selection, out int index))
@@ -174,10 +179,12 @@ namespace DevryService.Wizards
                     {
                         await _originalMember.GrantRoleAsync(roleMap[index]);
                         appliedRoles.Add(roleMap[index].Name);
+                        await Task.Delay(500);
                     }
                 }
             }
 
+            await _context.TriggerTypingAsync();
             await CleanupAsync();
 
             if (appliedRoles.Count > 0)

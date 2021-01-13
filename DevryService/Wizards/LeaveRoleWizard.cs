@@ -128,7 +128,7 @@ namespace DevryService.Wizards
             }
 
             List<string> removed = new List<string>();
-
+            await _context.TriggerTypingAsync();
             foreach(var selection in parameters)
             {
                 if(int.TryParse(selection, out int index))
@@ -139,9 +139,12 @@ namespace DevryService.Wizards
                     
                     await member.RevokeRoleAsync(memberRoles[index]);
                     removed.Add(memberRoles[index].Name);
+
+                    await Task.Delay(500);
                 }
             }
 
+            await _context.TriggerTypingAsync();
             await CleanupAsync();
 
             if (removed.Count > 0)
@@ -149,12 +152,14 @@ namespace DevryService.Wizards
                 embed = EmbedBuilder().WithDescription($"{member.Mention}\nThe following roles were removed:");
 
                 for (int i = 0; i < removed.Count; i++)
-                    embed.AddField((i + 1).ToString(), removed[i]);
+                    embed.AddField((i + 1).ToString(), removed[i], true);
 
                 await SimpleReply(embed.Build(), false, false);
             }
             else
                 await SimpleReply(EmbedBuilder().WithDescription($"{member.Mention},\nNo changes were made").Build(), false, false);
+
+            
         }
     }
 }

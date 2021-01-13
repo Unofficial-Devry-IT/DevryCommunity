@@ -39,7 +39,15 @@ namespace DevryService
                 Token = config.GetValue<string>("token"),
                 TokenType = TokenType.Bot,
                 MinimumLogLevel = LogLevel.Information,
-                AutoReconnect = true
+                AutoReconnect = true,
+                Intents = 
+                        DiscordIntents.GuildEmojis |
+                        DiscordIntents.GuildMembers |
+                        DiscordIntents.GuildInvites |
+                        DiscordIntents.GuildMessageReactions |
+                        DiscordIntents.GuildMessages |
+                        DiscordIntents.GuildMessageTyping |
+                        DiscordIntents.Guilds
             });
 
             // Shall be used across our bot stuff

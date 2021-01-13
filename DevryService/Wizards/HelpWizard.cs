@@ -98,9 +98,11 @@ namespace DevryService.Wizards
             var embed = EmbedBuilder();
 
             List<string> currentEmojis = new List<string>();
+            
+            await _context.TriggerTypingAsync();
 
             // This is to create our first main window
-            foreach(var option in _options.Options)
+            foreach (var option in _options.Options)
             {
                 string description = string.Empty;
                 
@@ -161,6 +163,7 @@ namespace DevryService.Wizards
                 }
             }
 
+            await _context.TriggerTypingAsync();
             _recentMessage = await SimpleReply(embed.Build(), true, true);
 
             // Add emojis from above

@@ -259,9 +259,15 @@ namespace DevryService.Wizards
             }
 
             await CleanupAsync();
-
+            await _context.TriggerTypingAsync();
+            
             foreach (var lang in selectedLanguages)
+            {
                 await DisplayCode(lang, groups[NameToExtension(lang)]);
+                await Task.Delay(500);
+            }
+
+            await _context.TriggerTypingAsync();
         }        
 
         /// <summary>
