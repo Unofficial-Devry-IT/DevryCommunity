@@ -10,6 +10,8 @@
 *.userosscache
 *.sln.docstates
 
+DevryService/Configs/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

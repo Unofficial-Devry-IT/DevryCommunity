@@ -32,11 +32,26 @@ namespace DevryService
         {
             this.Logger = logger;
             this.DiscordService = discordService;
-
+            string token = "";
             Prefix = config.GetValue<string>("prefix");
+
+            /*
+                Docker image will run in a linux environment
+                Token will be encoded
+             */
+
+            if (OperatingSystem.IsLinux())
+            {
+                var bytes = Convert.FromBase64String(config.GetValue<string>("token"));
+                token = System.Text.Encoding.UTF8.GetString(bytes);
+
+            }
+            else
+                token = config.GetValue<string>("token");
+
             Discord = new DiscordClient(new DiscordConfiguration
             {
-                Token = config.GetValue<string>("token"),
+                Token = token,
                 TokenType = TokenType.Bot,
                 MinimumLogLevel = LogLevel.Information,
                 AutoReconnect = true,
