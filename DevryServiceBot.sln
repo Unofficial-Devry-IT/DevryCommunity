@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevryService", "DevryService\DevryService.csproj", "{8B05D0DD-DE23-470D-9092-6EDD72177FAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevryService.Web", "DevryService.Web\DevryService.Web.csproj", "{D0E16831-9115-49FC-B29C-7325F9BFF4FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevryServices.Common", "DevryServices.Common\DevryServices.Common.csproj", "{6BEC7EEA-C64F-41BF-9F78-1BE4C25F7B23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{8B05D0DD-DE23-470D-9092-6EDD72177FAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B05D0DD-DE23-470D-9092-6EDD72177FAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B05D0DD-DE23-470D-9092-6EDD72177FAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0E16831-9115-49FC-B29C-7325F9BFF4FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0E16831-9115-49FC-B29C-7325F9BFF4FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0E16831-9115-49FC-B29C-7325F9BFF4FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0E16831-9115-49FC-B29C-7325F9BFF4FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6BEC7EEA-C64F-41BF-9F78-1BE4C25F7B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6BEC7EEA-C64F-41BF-9F78-1BE4C25F7B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6BEC7EEA-C64F-41BF-9F78-1BE4C25F7B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6BEC7EEA-C64F-41BF-9F78-1BE4C25F7B23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

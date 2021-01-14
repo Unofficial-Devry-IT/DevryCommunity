@@ -1,4 +1,5 @@
 ﻿using DevryService.Core;
+using DevryServices.Common.Models;
 using System;
 
 namespace DevryService.Models
