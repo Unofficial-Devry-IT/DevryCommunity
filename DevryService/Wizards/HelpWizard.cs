@@ -123,7 +123,7 @@ namespace DevryService.Wizards
                             continue;
 
                     // Option will become the following
-                    embed.AddField(option.RunCommand.Emoji, ConfigHandler.CommandConfigs[option.RunCommand.CommandName].Description+"\n\n", true);
+                    embed.AddField(option.RunCommand.Emoji, DiscordMarkdown.GetText(_context, ConfigHandler.CommandConfigs[option.RunCommand.CommandName].Description)+ "\n\n", true);
                     currentEmojis.Add(option.RunCommand.Emoji);
                 }
                 else if(option.YesNoBetween != null)
@@ -157,7 +157,7 @@ namespace DevryService.Wizards
                     // At this point we can finally 'ADD' the menu emoji to the help menu because the user has permission to use AT LEAST one of the sub-commands
                     if(addYes || addNo)
                     {
-                        embed.AddField(option.YesNoBetween.Emoji, option.YesNoBetween.Description + "\n\n", true);
+                        embed.AddField(option.YesNoBetween.Emoji, DiscordMarkdown.GetText(_context, option.YesNoBetween.Description) + "\n\n", true);
                         currentEmojis.Add(option.YesNoBetween.Emoji);
                     }
                 }
@@ -221,9 +221,9 @@ namespace DevryService.Wizards
                     if(option.YesNoBetween.Emoji.Equals(userEmoji, StringComparison.OrdinalIgnoreCase))
                     {
                         // We have established the fact this menu was selected. No we need a submenu to select yes/no
-                        embed = EmbedBuilder().WithDescription(option.YesNoBetween.Description)
-                            .AddField(option.YesNoBetween.YesEmoji, ConfigHandler.CommandConfigs[option.YesNoBetween.Yes].Description)
-                            .AddField(option.YesNoBetween.NoEmoji, ConfigHandler.CommandConfigs[option.YesNoBetween.No].Description)
+                        embed = EmbedBuilder().WithDescription(DiscordMarkdown.GetText(_context, option.YesNoBetween.Description))
+                            .AddField(option.YesNoBetween.YesEmoji, DiscordMarkdown.GetText(_context, ConfigHandler.CommandConfigs[option.YesNoBetween.Yes].Description))
+                            .AddField(option.YesNoBetween.NoEmoji, DiscordMarkdown.GetText(_context, ConfigHandler.CommandConfigs[option.YesNoBetween.No].Description))
                             .WithColor(DiscordColor.PhthaloGreen);
 
                         await _recentMessage.ModifyAsync(embed: embed.Build());
