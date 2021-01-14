@@ -65,7 +65,7 @@ namespace DevryService.Wizards
 
             config.UsesCommand = new WizardToCommandLink
             {
-                DiscordCommand = "leave",
+                DiscordCommand = "leave",                
                 CommandConfig = DefaultCommandConfig()
             };
 

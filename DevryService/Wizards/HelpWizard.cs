@@ -169,9 +169,17 @@ namespace DevryService.Wizards
             // Add emojis from above
             foreach (var emoji in currentEmojis)
             {
-                await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, emoji));
+                try
+                {
+                    await _recentMessage.CreateReactionAsync(DiscordEmoji.FromName(Bot.Discord, emoji));
+                }
+                catch
+                {
+                    Console.WriteLine($"Invalid emoji: {emoji}");
+                }
                 await Task.Delay(250);
             }
+            
 
             var interactivityResult = await _recentMessage.WaitForReactionAsync(_context.Member);
 
@@ -297,7 +305,7 @@ namespace DevryService.Wizards
                     Page = 0,
                     RunCommand = new RunCommandConfig
                     {
-                        Emoji = ":e_email:",
+                        Emoji = ":e_mail:",
                         CommandName = "invite"
                     }
                 },
@@ -310,6 +318,9 @@ namespace DevryService.Wizards
                         Emoji = ":classical_building:",
                         Yes = "join",
                         No = "leave",
+                        Description = "Need to join a class? No problem! Or is it that time of year where your class has ended?\n\n" +
+                        "It is worth noting you are NOT required to leave. You're more than welcome to stick around for awhile! Help out!" +
+                        "Perhaps become a tutor for that class! (let a @Moderator know!)",
                         YesEmoji = POSITIVE_EMOJI,
                         NoEmoji = NEGATIVE_EMOJI
                     }
@@ -334,7 +345,9 @@ namespace DevryService.Wizards
                         Yes = "create-event",
                         No = "delete-event",
                         YesEmoji = POSITIVE_EMOJI,
-                        NoEmoji = NEGATIVE_EMOJI
+                        NoEmoji = NEGATIVE_EMOJI,
+                        Description = "Create a reminder/event that regularly displays a message! Or... perhaps delete one!\n\nThis is channel-based. So make sure " +
+                        "the channel you wish to display a reminder in is the one you're in right now! Same applies for deleting!"
                     },
                     RestrictedRoles = new List<string>()
                     {

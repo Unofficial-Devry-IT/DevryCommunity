@@ -84,7 +84,10 @@ namespace DevryService.Core.Util
                 // Put the path together...
                 string configFilePath = Path.Combine(ConfigDirectory, GetConfigFileName(wizard));
                 configFiles.Add(configFilePath);
-                
+
+                if (WizardConfigs.ContainsKey(wizard.Name))
+                    continue;
+
                 object wizardInstance = Activator.CreateInstance(wizard, args: new object[] { null });
                 // We shall invoke the DefaultSettings method on this wizard to acquire ... default configuration
                 MethodInfo info = wizard.GetMethods().FirstOrDefault(x => x.Name.Equals("DefaultSettings", StringComparison.OrdinalIgnoreCase));
@@ -112,7 +115,7 @@ namespace DevryService.Core.Util
                             if (typeof(IEnumerable).IsAssignableFrom(field.FieldType) || typeof(IList).IsAssignableFrom(field.FieldType))
                                 field.SetValue(config.UsesCommand.CommandConfig, commandConfigSection.GetSection(field.Name).Get(field.FieldType));
 
-                        if(config.UsesCommand != null && config.UsesCommand.CommandConfig != null)
+                        if(config.UsesCommand != null && config.UsesCommand.CommandConfig != null && !CommandConfigs.ContainsKey(config.UsesCommand.DiscordCommand))
                             CommandConfigs.Add(config.UsesCommand.DiscordCommand, config.UsesCommand.CommandConfig);
 
                         if (typeof(HelpWizardConfig).IsAssignableTo(config.GetType()))
