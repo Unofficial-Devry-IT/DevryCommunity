@@ -34,6 +34,12 @@ namespace DevryService
             this.DiscordService = discordService;
             Prefix = config.GetValue<string>("prefix");
 
+#if DEBUG
+            Prefix = "$";
+#else
+            Prefix = "!";
+#endif
+
             var bytes = Convert.FromBase64String(config.GetValue<string>("token"));
             string token = System.Text.Encoding.UTF8.GetString(bytes).Replace("\n","");
 
