@@ -12,9 +12,5 @@ namespace DevryServices.Common.Tasks.Scheduling
         string Schedule { get; set; }
         string Id { get; set; }
         DateTime NextRunTime { get; set; }
-
-        bool Expired { get; }
-
-        Task ExecuteAsync(CancellationToken cancellationToken);
     }
 }

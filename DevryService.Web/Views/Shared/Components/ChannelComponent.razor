@@ -1,0 +1,36 @@
+﻿@using DevryService.Web.Models.Class
+@page "/channelComponent"
+
+@{
+    string nameIcon = isEditingName ? "bi-pen-fill" : "bi-pen";
+}
+
+<div class="form-group">
+    <button type="button" class="btn btn-warning" @onclick=ToggleEditable>
+        <i class="bi @nameIcon"></i>    
+    </button>
+
+    @if (isEditingName)
+    {
+        <form method="post" asp-controller="DiscordClass" asp-action="EditName">
+            <input id="@Channel.ChannelId"
+                   name="@Channel.ChannelId"
+                   type="text"
+                   class="form-control"
+                   value="@Channel.ChannelName"/>
+            <button class="btn btn-primary" type="submit">Update</button>
+        </form>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ChannelModel Channel { get; set; }
+
+    bool isEditingName = false;
+
+    void ToggleEditable()
+    {
+        isEditingName = !isEditingName;
+    }
+}

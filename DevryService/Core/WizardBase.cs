@@ -277,38 +277,6 @@ namespace DevryService.Core
             return _recentMessage;
         }
 
-        /// <summary>
-        /// Executes <see cref="SimpleReply(CommandContext, string, bool)"/> then waits for user reaction
-        /// </summary>
-        /// <param name="context">Current context</param>
-        /// <param name="text">Text to display</param>
-        /// <param name="reactionHandler">What shall happen when user replies</param>
-        /// <param name="isCancellable">Is this cancellable</param>
-        /// <param name="reactionPredicate">Optional - filter out reactions</param>
-        /// <returns><see cref="_recentMessage"/></returns>
-        public async Task<DiscordMessage> WithReaction(string text,
-                                                       Action<InteractivityResult<MessageReactionAddEventArgs>> reactionHandler,
-                                                       bool isCancellable = false,
-                                                       Func<MessageReactionAddEventArgs, bool> reactionPredicate = null)
-        {
-            _recentMessage = await SimpleReply(text, isCancellable);
-
-            if (reactionPredicate == null)
-                reactionPredicate = ReactionPredicate;
-
-            if(!_options.AcceptAnyUser)
-            {
-                var result = await _context.Message.WaitForReactionAsync(_originalMember);
-                reactionHandler.Invoke(result);
-            }
-            else
-            {
-                var result = await Bot.Interactivity.WaitForReactionAsync(reactionPredicate, message: _recentMessage, user: null);
-                reactionHandler.Invoke(result);
-            }
-
-            return _recentMessage;
-        }
 
         /// <summary>
         /// Modifies an existing message
@@ -405,32 +373,6 @@ namespace DevryService.Core
                 _messages.Add(result.Result);
                 _recentMessage = result.Result;
                 replyHandler.Invoke(result);
-            }
-
-            return _recentMessage;
-        }
-
-        public async Task<DiscordMessage> ReplyWithReaction(DiscordMessage message, 
-                            string text, 
-                            Action<InteractivityResult<MessageReactionAddEventArgs>> reactionHandler,
-                            bool add=false, 
-                            bool isCancellable=false,
-                            Func<MessageReactionAddEventArgs, bool> reactionPredicate = null)
-        {
-            _recentMessage = await ReplyEdit(message, text, add, isCancellable);
-
-            if (reactionPredicate == null)
-                reactionPredicate = ReactionPredicate;
-
-            if(!_options.AcceptAnyUser)
-            {
-                var result = await _recentMessage.WaitForReactionAsync(_originalMember);
-                reactionHandler.Invoke(result);
-            }
-            else
-            {
-                var result = await Bot.Interactivity.WaitForReactionAsync(reactionPredicate, message: _recentMessage, user: null);
-                reactionHandler.Invoke(result);
             }
 
             return _recentMessage;

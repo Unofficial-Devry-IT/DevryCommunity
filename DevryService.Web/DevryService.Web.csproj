@@ -18,4 +18,10 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DevryService.Bot\DevryService.Bot.csproj" />
+    <ProjectReference Include="..\DevryService.Database\DevryService.Database.csproj" />
+    <ProjectReference Include="..\DevryServices.Common\DevryServices.Common.csproj" />
+  </ItemGroup>
+
 </Project>

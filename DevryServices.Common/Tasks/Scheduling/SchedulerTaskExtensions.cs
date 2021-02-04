@@ -12,12 +12,17 @@ namespace DevryServices.Common.Tasks.Scheduling
         public static IServiceCollection AddScheduler(this IServiceCollection services)
             => services.AddSingleton<IHostedService, SchedulerBackgroundService>();
 
-        public static IServiceCollection AddScheduler(this IServiceCollection services, EventHandler<UnobservedTaskExceptionEventArgs> unobservedTaskExceptionHandler)
-            => services.AddSingleton<IHostedService, SchedulerBackgroundService>(ServiceProvider =>
+        public static IServiceCollection AddScheduler<T>(this IServiceCollection services, EventHandler<UnobservedTaskExceptionEventArgs> unobservedTaskExceptionHandler) where T : SchedulerBackgroundService
+        {
+            services.AddSingleton<IHostedService, SchedulerBackgroundService>(ServiceProvider =>
             {
-                var instance = new SchedulerBackgroundService(ServiceProvider.GetServices<IScheduledTask>());
+                var instance = (T)Activator.CreateInstance(typeof(T), new object[] { ServiceProvider });
                 instance.UnoservedTaskException += unobservedTaskExceptionHandler;
                 return instance;
             });
+
+            return services;
+        }
+            
     }
 }

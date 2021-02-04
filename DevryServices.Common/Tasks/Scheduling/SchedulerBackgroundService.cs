@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NCrontab;
 using System;
 using System.Collections.Generic;
@@ -8,15 +9,25 @@ using System.Threading.Tasks;
 
 namespace DevryServices.Common.Tasks.Scheduling
 {
-    public class SchedulerBackgroundService : BackgroundService
+    public abstract class SchedulerBackgroundService : BackgroundService
     {
         private readonly List<SchedulerTaskWrapper> _scheduledTasks = new List<SchedulerTaskWrapper>();
 
         public event EventHandler<UnobservedTaskExceptionEventArgs> UnoservedTaskException;
 
-        public SchedulerBackgroundService(IEnumerable<IScheduledTask> tasks)
+        protected readonly IScheduledTaskService _taskService;
+
+        public SchedulerBackgroundService(IServiceProvider serviceProvider)
         {
             var referenceTime = DateTime.Now;
+            var tasks = serviceProvider.GetServices<IScheduledTask>();
+
+            _taskService = serviceProvider.GetService<IScheduledTaskService>();
+
+            // Task service is required. This will allow the addition / removal of tasks within this hosted service.
+            // Otherwise there will be no way of adding/removing during runtime.
+            if (_taskService == null)
+                throw new InvalidOperationException($"{GetType().Name} - Requires a IScheduledTaskService to be registered");
 
             foreach(var task in tasks)
             {
@@ -25,6 +36,31 @@ namespace DevryServices.Common.Tasks.Scheduling
                     Schedule = CrontabSchedule.Parse(task.Schedule),
                     Task = task,
                     NextRunTime = referenceTime
+                });
+            }
+
+            _taskService.OnAddTask += AddTask;
+            _taskService.OnRemoveTask += RemoveTask;
+        }
+
+        public void RemoveTask(IScheduledTask task)
+        {
+            if(_scheduledTasks.Any(x=>x.Task.Id == task.Id))
+            {
+                var obj = _scheduledTasks.First(x => x.Task.Id == task.Id);
+                _scheduledTasks.Remove(obj);
+            }
+        }
+
+        public void AddTask(IScheduledTask task)
+        {
+            if(!_scheduledTasks.Any(x=>x.Task.Id == task.Id))
+            {
+                _scheduledTasks.Add(new SchedulerTaskWrapper
+                {
+                    Schedule = CrontabSchedule.Parse(task.Schedule),
+                    Task = task,
+                    NextRunTime = task.NextRunTime
                 });
             }
         }
@@ -37,6 +73,8 @@ namespace DevryServices.Common.Tasks.Scheduling
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
             }
         }
+
+        protected abstract Task ProcessTask(SchedulerTaskWrapper task, CancellationToken token);
 
         async Task ExecuteOnceAsync(CancellationToken cancellationToken)
         {
@@ -53,7 +91,7 @@ namespace DevryServices.Common.Tasks.Scheduling
                     {
                         try
                         {
-                            await task.Task.ExecuteAsync(cancellationToken);
+                            await ProcessTask(task, cancellationToken);
                         }
                         catch (Exception ex)
                         {
