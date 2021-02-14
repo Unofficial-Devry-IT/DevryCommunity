@@ -45,10 +45,8 @@ namespace Domain.Entities
 
             set
             {
-                if (value && _done == false)
-                {
+                if (value && !_done)
                     DomainEvents.Add(new ChannelCreatedEvent(this));
-                }
 
                 _done = value;
             }

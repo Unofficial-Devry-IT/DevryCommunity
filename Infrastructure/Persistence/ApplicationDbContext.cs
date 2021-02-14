@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Entities.Configs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence
@@ -28,6 +29,9 @@ namespace Infrastructure.Persistence
         public DbSet<CodeSnippet> CodeSnippets { get; set; }
         public DbSet<CodeInfo> CodeInfo { get; set; }
         public DbSet<Channel> Channels { get; set; }
+        public DbSet<WizardConfig> WizardConfigs { get; set; }
+        public DbSet<CommandConfig> CommandConfigs { get; set; }
+        public DbSet<Reminder> Reminders { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
