@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Common;
 using Domain.Enums;
 using Domain.Events.Channels;
@@ -52,6 +53,7 @@ namespace Domain.Entities
             }
         }
 
+        [NotMapped]
         public List<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
     }
 }

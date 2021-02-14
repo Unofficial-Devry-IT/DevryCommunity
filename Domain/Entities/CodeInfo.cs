@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using DevryServices.Common.Models;
 using Domain.Common;
 using Domain.Events.CodeInfo;
@@ -17,6 +18,7 @@ namespace Domain.Entities
         public string Color { get; set; }
         public string FileExtension { get; set; }
 
+        [NotMapped]
         public List<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
         private bool _done;
 

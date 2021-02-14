@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using DevryServices.Common.Models;
 using DevryServices.Common.Tasks.Scheduling;
 using Domain.Common;
@@ -36,6 +37,7 @@ namespace Domain.Entities
             }
         }
 
+        [NotMapped]
         public List<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
     }
 }

@@ -8,19 +8,23 @@ using Application.Common.Interfaces;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Entities.Configs;
+using IdentityServer4.EntityFramework.Options;
+using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext, IApplicationDbContext
+    public class ApplicationDbContext : ApiAuthorizationDbContext<ApplicationUser>, IApplicationDbContext
     {
         private readonly ICurrentUserService _currentUserService;
         private readonly IDomainEventService _domainEventService;
 
         public ApplicationDbContext(
             DbContextOptions options,
+            IOptions<OperationalStoreOptions> operationalStoreOptions,
             ICurrentUserService currentUserService,
-            IDomainEventService domainEventService) : base(options)
+            IDomainEventService domainEventService) : base(options, operationalStoreOptions)
         {
             _currentUserService = currentUserService;
             _domainEventService = domainEventService;

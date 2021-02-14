@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Common;
+using Newtonsoft.Json;
 
 namespace Domain.Entities.Configs
 {
@@ -7,7 +9,15 @@ namespace Domain.Entities.Configs
     {
         public string DiscordCommand { get; set; }
         public bool IgnoreHelpWizard { get; set; }
-        public List<string> RestrictedRoles { get; set; } = new List<string>();
+        public string RestrictedRolesJSON { get; protected set; }
+
+        [NotMapped]
+        public List<string> RestrictedRoles
+        {
+            get => JsonConvert.DeserializeObject<List<string>>(RestrictedRolesJSON);
+            set => JsonConvert.SerializeObject(value);
+        }
+        
         private bool _done;
 
         public bool Done
@@ -18,7 +28,8 @@ namespace Domain.Entities.Configs
                 _done = value;
             }
         }
-
+        
+        [NotMapped]
         public List<DomainEvent> DomainEvents { get; set; } = new List<DomainEvent>();
     }
 }

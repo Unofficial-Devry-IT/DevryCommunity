@@ -16,7 +16,7 @@ namespace Web.Controllers
     {
         [HttpGet]
         public async Task<ActionResult<PaginatedList<Channel>>> GetChannelsWithPagination(
-            [FromQuery] GetChannelsWithPaginationQuery query)
+            [FromQuery] GetAllChannelsPaginationQuery query)
         {
             return await Mediator.Send(query);
         }

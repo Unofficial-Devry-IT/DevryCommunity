@@ -6,14 +6,16 @@ using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
-using Web.Data;
-using Web.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Application;
+using Application.Common.Interfaces;
+using Domain.Entities;
 using Infrastructure;
+using Infrastructure.Persistence;
+using Web.Services;
 
 namespace Web
 {
@@ -33,11 +35,7 @@ namespace Web
             services.AddInfrastructure(Configuration);
 
             services.AddHttpContextAccessor();
-            
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(
-                    Configuration.GetConnectionString("DefaultConnection")));
-
+            services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddDatabaseDeveloperPageExceptionFilter();
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

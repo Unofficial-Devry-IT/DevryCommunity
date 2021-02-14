@@ -18,7 +18,7 @@ namespace Infrastructure
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseInMemoryDatabase(typeof(ApplicationDbContext).Namespace);
+                    options.UseInMemoryDatabase("TestDatabase");
                 });
             }
             else
