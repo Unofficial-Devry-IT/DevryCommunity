@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,6 +9,24 @@ namespace DevryServices.Common.Helpers
 {
     public static class EnumHelper
     {
+        public static IDictionary<string, string> ToMenuDictionary(Type type, bool zeroBased = true)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+
+            var dics = new Dictionary<string, string>();
+            var enumValues = Enum.GetValues(type);
+
+            int index = 0;
+            foreach (Enum value in enumValues)
+            {
+                string position = (index + (zeroBased ? 0 : 1)).ToString();
+                dics.Add(position, GetDisplayName(value));
+            }
+
+            return dics;
+        }
+        
         public static IDictionary<Enum, string> ToDictionary(Type type)
         {
             if (type == null)

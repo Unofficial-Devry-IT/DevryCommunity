@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using DevryServices.Common.Models;
+using Domain.Entities.Configs;
 
 namespace Domain.Entities
 {
-    public interface IDiscordCommand : IExtendableObject
+    public interface IDiscordCommand
     {
-        string CommandName { get; }
-        IList<string> RestrictedRoles { get; }
-        string Description { get; }
-        string Emoji { get; }
-        TimeSpan? TimeoutOverride { get; }
+        CommandConfig CurrentConfig { get; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Domain.Entities;
@@ -33,7 +34,8 @@ namespace Application.Reminders.Commands
                 ChannelId = request.ChannelId,
                 Schedule = request.Schedule,
                 Name = request.Name,
-                Contents = request.Contents
+                Contents = request.Contents,
+                NextRunTime = NCrontab.CrontabSchedule.Parse(request.Schedule).GetNextOccurrence(DateTime.Now)
             };
 
             entity.DomainEvents.Add(new ReminderCreatedEvent(entity));
