@@ -1,5 +1,5 @@
 # Devry-Service-Bot
-This bot is primarily used for academic purposes. 
+Used in an academic setting, for students / professors.
 
 It provides the Unofficial Devry Discord Community an 
 enhanced user experience compared to vanilla discord.
