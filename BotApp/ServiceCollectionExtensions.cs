@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Reflection;
+using BotApp.Services.Reminders;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BotApp
 {
@@ -7,7 +10,9 @@ namespace BotApp
         public static IServiceCollection AddDiscordBot(this IServiceCollection services)
         {
             services.AddSingleton<Bot>();
-
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddMediatR(Assembly.GetExecutingAssembly());
+            services.AddHostedService<ReminderBackgroundService>();
             return services;
         }
     }

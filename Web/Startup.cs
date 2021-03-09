@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 
 using Application;
 using Application.Common.Interfaces;
+using BotApp;
 using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Persistence;
@@ -33,6 +34,7 @@ namespace Web
         {
             services.AddApplication();
             services.AddInfrastructure(Configuration);
+            services.AddDiscordBot();
 
             services.AddHttpContextAccessor();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();

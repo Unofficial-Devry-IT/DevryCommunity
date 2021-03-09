@@ -16,6 +16,7 @@ namespace Domain.Entities
         }
         
         public ulong GuildId { get; set; }
+        
         public ulong ChannelId { get; set; }
         public Channel Channel { get; set; }
         public string Schedule { get; set; }

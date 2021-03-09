@@ -9,6 +9,7 @@ using Domain.Entities;
 using Domain.Exceptions;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NCrontab;
@@ -20,11 +21,16 @@ namespace BotApp.Services.Reminders
         private readonly ILogger<ReminderBackgroundService> _logger;
         private readonly IApplicationDbContext _context;
         private readonly Bot _bot;
+        private IServiceScope _scope;
+
+        public static ReminderBackgroundService Instance;
         
-        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger, IApplicationDbContext context, Bot bot)
+        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger, IServiceProvider serviceProvider, Bot bot)
         {
+            Instance = this;
             _logger = logger;
-            _context = context;
+            _scope = serviceProvider.CreateScope();
+            _context = _scope.ServiceProvider.GetService<IApplicationDbContext>();
             _bot = bot;
         }
 
@@ -92,6 +98,12 @@ namespace BotApp.Services.Reminders
             }
         }
 
+        public override void Dispose()
+        {
+            base.Dispose();
+            _scope.Dispose();
+        }
+
         private async Task ExecuteOnceAsync(CancellationToken cancellationToken)
         {
             var taskFactory = new TaskFactory(TaskScheduler.Current);
@@ -132,7 +144,9 @@ namespace BotApp.Services.Reminders
                         {
                             Reminder reminder = (Reminder) task.Task;
 
-                            var channel = _bot.MainGuild.Channels.FirstOrDefault(x => x.Key == reminder.ChannelId).Value;
+                            var allChannels = await _bot.MainGuild.GetChannelsAsync();
+                            
+                            var channel = allChannels.FirstOrDefault(x => x.Id == reminder.ChannelId);
 
                             if (channel == null)
                                 throw new NotFoundException(nameof(DiscordChannel), reminder.ChannelId);

@@ -12,7 +12,7 @@ namespace Domain.Entities
         /// Unique Id / PK of channel
         /// </summary>
         public ulong Id { get; set; }
-        
+
         /// <summary>
         /// Discord server Id
         /// </summary>

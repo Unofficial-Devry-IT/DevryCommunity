@@ -26,7 +26,7 @@ namespace Infrastructure
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
                     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
-                        b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                        b => b.MigrationsAssembly("Web"));
                 });
             }
 

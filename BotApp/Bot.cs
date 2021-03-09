@@ -2,19 +2,24 @@
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
+using Domain.Entities;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ChannelType = Domain.Enums.ChannelType;
 
 namespace BotApp
 {
-    public class Bot
+    public class Bot : IDisposable
     {
         public static DiscordClient Discord;
         public static CommandsNextExtension Commands;
@@ -27,13 +32,15 @@ namespace BotApp
         public IServiceProvider ServiceProvider { get; private set; }
         public DiscordGuild MainGuild { get; private set; }
         public IApplicationDbContext Context { get; private set; }
-
-        public Bot(IConfiguration configuration, ILogger<Bot> logger, IApplicationDbContext context, IServiceProvider provider)
+        private readonly IServiceScope _scope;
+        public Bot(IConfiguration configuration, ILogger<Bot> logger, IServiceProvider provider)
         {
             Instance = this;
             ServiceProvider = provider;
             Logger = logger;
-            Context = context;
+
+            _scope = provider.CreateScope();
+            Context = _scope.ServiceProvider.GetService<IApplicationDbContext>();
             
             #if DEBUG
             Prefix = "$";
@@ -48,7 +55,7 @@ namespace BotApp
             {
                 Token = token,
                 TokenType = TokenType.Bot,
-                MinimumLogLevel = LogLevel.Information,
+                MinimumLogLevel = LogLevel.Debug,
                 AutoReconnect = true,
                 Intents = DiscordIntents.Guilds |
                           DiscordIntents.GuildMembers |
@@ -56,7 +63,8 @@ namespace BotApp
                           DiscordIntents.GuildMessageReactions |
                           DiscordIntents.GuildMessages |
                           DiscordIntents.GuildMessageTyping |
-                          DiscordIntents.GuildEmojis
+                          DiscordIntents.GuildEmojis |
+                          DiscordIntents.All
             });
 
             Configuration = configuration;
@@ -94,11 +102,12 @@ namespace BotApp
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;
 
             await Discord.ConnectAsync();
-
-            MainGuild = Discord.Guilds.FirstOrDefault(x => x.Value.Name.ToLower().Contains("devry")).Value;
+            MainGuild = await Discord.GetGuildAsync(618254766396538901);
 
             if (MainGuild == null)
                 throw new ArgumentNullException(nameof(MainGuild));
+
+            await SyncDiscordChannels();
         }
 
         private Task Discord_GuildMemberAdded(DiscordClient client,
@@ -118,6 +127,68 @@ namespace BotApp
             }
             
             return Task.CompletedTask;
+        }
+
+        private async Task SyncDiscordChannels()
+        {
+            var channels = await MainGuild.GetChannelsAsync();
+
+            try
+            {
+                foreach (var channel in channels)
+                {
+                    var existing = await Context.Channels.FirstOrDefaultAsync(x => x.Id == channel.Id);
+
+                    if (existing != null)
+                    {
+                        existing.Position = channel.Position;
+                        existing.Name = channel.Name;
+
+                        Context.Channels.Update(existing);
+                    }
+                    else
+                    {
+                        ChannelType type = ChannelType.Text;
+
+                        switch (channel.Type)
+                        {
+                            case DSharpPlus.ChannelType.Category:
+                                type = ChannelType.Category;
+                                break;
+                            case DSharpPlus.ChannelType.Voice:
+                                type = ChannelType.Voice;
+                                break;
+                        }
+
+                        existing = new Channel()
+                        {
+                            Name = channel.Name,
+                            Position = channel.Position,
+                            ChannelType = type,
+                            GuildId = channel.GuildId,
+                            Id = channel.Id
+                        };
+
+                        if (existing.Name.Equals("ceis-210-general"))
+                        {
+                            Console.WriteLine($"Id: {existing.Id}\n{channel.Id}");
+                        }
+
+                        await Context.Channels.AddAsync(existing);
+                    }
+
+                    await Context.SaveChangesAsync(default(CancellationToken));
+                }
+            }
+            catch (Exception exception)
+            {
+                
+            }
+        }
+        
+        public void Dispose()
+        {
+            _scope.Dispose();
         }
     }
 }

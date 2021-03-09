@@ -15,7 +15,7 @@ namespace Web.Controllers
     public class ChannelController : ApiControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<PaginatedList<Channel>>> GetChannelsWithPagination(
+        public async Task<ActionResult<PaginatedList<ChannelResponse>>> GetChannelsWithPagination(
             [FromQuery] GetAllChannelsPaginationQuery query)
         {
             return await Mediator.Send(query);

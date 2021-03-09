@@ -5,6 +5,7 @@ using Application.Common.Interfaces;
 using Domain.Entities;
 using Domain.Events.Reminders;
 using MediatR;
+using Application.Helpers;
 
 namespace Application.Reminders.Commands
 {
@@ -28,16 +29,20 @@ namespace Application.Reminders.Commands
 
         public async Task<string> Handle(CreateReminderCommand request, CancellationToken cancellationToken)
         {
+            string name = request.Name.FromBase64();
+            string contents = request.Contents.FromBase64();
+            string schedule = request.Schedule.FromBase64();
+            
             var entity = new Reminder()
             {
                 GuildId = request.GuildId,
                 ChannelId = request.ChannelId,
-                Schedule = request.Schedule,
-                Name = request.Name,
-                Contents = request.Contents,
-                NextRunTime = NCrontab.CrontabSchedule.Parse(request.Schedule).GetNextOccurrence(DateTime.Now)
+                Schedule = schedule,
+                Name = name,
+                Contents = contents,
+                NextRunTime = NCrontab.CrontabSchedule.Parse(schedule).GetNextOccurrence(DateTime.Now)
             };
-
+            
             entity.DomainEvents.Add(new ReminderCreatedEvent(entity));
 
             await _context.Reminders.AddAsync(entity, cancellationToken);
