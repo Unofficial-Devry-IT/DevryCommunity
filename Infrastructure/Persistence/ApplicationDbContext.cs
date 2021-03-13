@@ -36,6 +36,7 @@ namespace Infrastructure.Persistence
         public DbSet<WizardConfig> WizardConfigs { get; set; }
         public DbSet<CommandConfig> CommandConfigs { get; set; }
         public DbSet<Reminder> Reminders { get; set; }
+        public DbSet<Role> Roles { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {

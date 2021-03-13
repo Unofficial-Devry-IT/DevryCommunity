@@ -15,6 +15,7 @@ namespace Application.Common.Interfaces
         DbSet<WizardConfig> WizardConfigs { get; set; }
         DbSet<CommandConfig> CommandConfigs { get; set; }
         DbSet<Reminder> Reminders { get; set; }
+        DbSet<Role> Roles { get; set; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

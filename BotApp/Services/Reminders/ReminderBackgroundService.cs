@@ -9,6 +9,7 @@ using Domain.Entities;
 using Domain.Exceptions;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,16 +23,19 @@ namespace BotApp.Services.Reminders
         private readonly IApplicationDbContext _context;
         private readonly Bot _bot;
         private IServiceScope _scope;
+        private readonly bool _isDisabled;
 
         public static ReminderBackgroundService Instance;
         
-        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger, IServiceProvider serviceProvider, Bot bot)
+        public ReminderBackgroundService(ILogger<ReminderBackgroundService> logger, IServiceProvider serviceProvider, IConfiguration configuration, Bot bot)
         {
             Instance = this;
             _logger = logger;
             _scope = serviceProvider.CreateScope();
             _context = _scope.ServiceProvider.GetService<IApplicationDbContext>();
             _bot = bot;
+
+            _isDisabled = configuration.GetValue<bool>("disableReminders");
         }
 
         private Dictionary<string, SchedulerTaskWrapper> _scheduledTasks =
@@ -93,7 +97,9 @@ namespace BotApp.Services.Reminders
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                await ExecuteOnceAsync(stoppingToken);
+                if(!_isDisabled)
+                    await ExecuteOnceAsync(stoppingToken);
+                
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
             }
         }
@@ -110,7 +116,7 @@ namespace BotApp.Services.Reminders
             
             // Cached since this will be referenced quite frequently in this method
             var referenceTime = DateTime.Now;
-
+            
             var removeList = _scheduledTasks.Where(x => x.Value.WillNeverRunAgain)
                 .ToList();
 
