@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using DevryService.Core.Util;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Interactivity;
@@ -91,7 +92,7 @@ namespace DevryService.Wizards
             await _context.TriggerTypingAsync();
 
             var roles = _context.Guild.Roles
-                .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
+                .Where(x => !lowercased.Contains(x.Value.Name.ToLower()) && !x.Value.Name.Contains("^"))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
                 .ToList();
