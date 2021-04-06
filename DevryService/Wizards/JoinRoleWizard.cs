@@ -94,7 +94,7 @@ namespace DevryService.Wizards
                 .Select(x=>x.Value)
                 .ToList();
 
-            DevryService.Worker.Instance.Logger.LogInformation(string.Join("\n", roles.Select(x=>x.Value.Name)));
+            DevryService.Worker.Instance.Logger.LogInformation(string.Join("\n", roles.Select(x=>x.Name)));
 
             List<string> courseTypes = roles.Select(x => x.Name.Replace("-", " ").Split(" ").First())
                 .Distinct()
