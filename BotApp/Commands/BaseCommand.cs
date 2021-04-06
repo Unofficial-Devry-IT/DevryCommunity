@@ -23,30 +23,30 @@ namespace BotApp.Commands
         /// <param name="context"></param>
         public abstract Task ExecuteAsync(CommandContext context);
 
-        public CommandConfig CurrentConfig { get; protected set; }
+        public Config CurrentConfig { get; protected set; }
 
         private ISender _mediator;
         protected ISender Mediator => _mediator ??= Bot.Instance?.ServiceProvider.GetService<ISender>();
         
 
-        public async Task<CommandConfig> FindConfig()
+        public async Task<Config> FindConfig()
         {
             MethodInfo commandMethod = GetType().GetMethod("ExecuteAsync");
 
             if (commandMethod == null)
-                throw new NotFoundException(nameof(CommandConfig), "ExecuteAsync Method not found");
+                throw new NotFoundException(nameof(Config), "ExecuteAsync Method not found");
 
             var attribute = commandMethod.GetCustomAttribute<CommandAttribute>();
 
             if (attribute == null)
             {
                 Bot.Instance.Logger.LogError($"{GetType().Name}.ExecuteAsync does not have CommandAttribute");
-                throw new NotFoundException(nameof(CommandConfig), "Command Attribute not found");
+                throw new NotFoundException(nameof(Config), "Command Attribute not found");
             }
 
-            return await Bot.Instance.Context.CommandConfigs
+            return await Bot.Instance.Context.Configs
                 .FirstOrDefaultAsync(x =>
-                    x.DiscordCommand.Equals(attribute.Name, StringComparison.CurrentCultureIgnoreCase));
+                    x.ConfigName.Equals(attribute.Name, StringComparison.CurrentCultureIgnoreCase));
         }
     }
 }

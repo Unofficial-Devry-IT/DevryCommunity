@@ -8,4 +8,8 @@
     <ProjectReference Include="..\DevryServices.Common\DevryServices.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-rc3" />
+  </ItemGroup>
+
 </Project>

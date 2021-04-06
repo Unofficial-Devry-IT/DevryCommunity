@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BotApp.Common.Exceptions;
 using Domain.Entities.Configs;
+using Domain.Entities.Configs.ConfigTypes;
 using Domain.Enums;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using BotApp.Common.Exceptions;
 using Domain.Entities.Configs;
+using Domain.Entities.Configs.ConfigTypes;
 using Domain.Enums;
 using Domain.Exceptions;
 using DSharpPlus.CommandsNext;
@@ -12,6 +12,7 @@ using DSharpPlus.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using ChannelType = DSharpPlus.ChannelType;
 
 namespace BotApp.Interaction
@@ -74,7 +75,7 @@ namespace BotApp.Interaction
                 catch (Exception ex)
                 {
                     await Context.ReplyWithStatus(StatusCode.ERROR,
-                        $"A generic exception was thrown while processing your request. Perhaps try again? If the issue persists please open a ticket!",
+                        $"A generic exception was thrown while processing your request. Perhaps try again? If the issue persists please open a ticket at {Constants.GITHUB_ISSUES}!",
                         InvokingUser);
                 }
                 finally
@@ -92,18 +93,22 @@ namespace BotApp.Interaction
         /// <exception cref="NotFoundException">When config could not be located in the database</exception>
         private async Task<WizardConfig> FindConfig()
         {
-            var config = await Bot.Instance.Context.WizardConfigs
-                .FirstOrDefaultAsync(x => x.AuthorName.Equals(WizardName(), StringComparison.CurrentCultureIgnoreCase));
+            var config = await Bot.Instance.Context.Configs
+                .FirstOrDefaultAsync(x => x.ConfigName.Equals(WizardName(), StringComparison.CurrentCultureIgnoreCase));
 
             if (config == null)
-                throw new NotFoundException(nameof(WizardConfig),
+                throw new NotFoundException(nameof(Config),
                     $"Could not locate config for wizard '{WizardName()}'");
 
-            return config;
+            return JsonConvert.DeserializeObject<WizardConfig>(config.ExtensionData);
         }
 
         protected abstract Task ExecuteAsync(CommandContext context);
-
+        
+        /// <summary>
+        /// Deletes messages pertaining to this wizard
+        /// </summary>
+        /// <returns></returns>
         private async Task CleanupAsync()
         {
             if (TrackedMessages.Any())
@@ -112,7 +117,14 @@ namespace BotApp.Interaction
                     await Context.Channel.DeleteMessagesAsync(TrackedMessages.Where(x => x != null));
             }
         }
-
+        
+        /// <summary>
+        /// Attempts to retrieve a certain data type from the user via reply
+        /// </summary>
+        /// <param name="embed"></param>
+        /// <param name="cleanupPromptAfter"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         protected async Task<T> RetrieveData<T>(DiscordEmbed embed, bool cleanupPromptAfter = false)
         {
             var message = await Context.RespondAsync(embed);
@@ -130,6 +142,13 @@ namespace BotApp.Interaction
             return response.Value;
         }
         
+        /// <summary>
+        /// Alternative to <see cref="RetrieveData{T}(DSharpPlus.Entities.DiscordEmbed,bool)"/>
+        /// </summary>
+        /// <param name="prompt"></param>
+        /// <param name="cleanupPromptAfter"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         protected async Task<T> RetrieveData<T>(string prompt, bool cleanupPromptAfter = false)
         {
             var embed = CurrentConfig.BuildEmbed(InvokingUser)

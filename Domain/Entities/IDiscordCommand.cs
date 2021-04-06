@@ -7,6 +7,6 @@ namespace Domain.Entities
 {
     public interface IDiscordCommand
     {
-        CommandConfig CurrentConfig { get; }
+        Config CurrentConfig { get; }
     }
 }

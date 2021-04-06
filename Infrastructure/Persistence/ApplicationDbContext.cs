@@ -10,6 +10,7 @@ using Domain.Entities;
 using Domain.Entities.Configs;
 using IdentityServer4.EntityFramework.Options;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -33,10 +34,8 @@ namespace Infrastructure.Persistence
         public DbSet<CodeSnippet> CodeSnippets { get; set; }
         public DbSet<CodeInfo> CodeInfo { get; set; }
         public DbSet<Channel> Channels { get; set; }
-        public DbSet<WizardConfig> WizardConfigs { get; set; }
-        public DbSet<CommandConfig> CommandConfigs { get; set; }
+        public DbSet<Config> Configs { get; set; }
         public DbSet<Reminder> Reminders { get; set; }
-        public DbSet<Role> Roles { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {

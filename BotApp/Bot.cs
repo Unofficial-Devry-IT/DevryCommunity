@@ -169,11 +169,6 @@ namespace BotApp
                             Id = channel.Id
                         };
 
-                        if (existing.Name.Equals("ceis-210-general"))
-                        {
-                            Console.WriteLine($"Id: {existing.Id}\n{channel.Id}");
-                        }
-
                         await Context.Channels.AddAsync(existing);
                     }
 

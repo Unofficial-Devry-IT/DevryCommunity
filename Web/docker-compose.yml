@@ -1,0 +1,23 @@
+﻿version: "3.8"
+
+networks:
+  default:
+    
+
+services:
+  devry-services:
+    environment:
+      TZ: "America/New_York"
+    image: "mercenary9312/unofficial-devry-service-bot"
+    restart: "always"
+    volumes:
+      - ${PWD}/DevryCommunity.db:/app/DevryCommunity.db
+      - ${PWD}/Configs:/app/Configs
+      - ${PWD}/Snippets:/app/Snippets
+  devry-services-db:
+    environment:
+      MYSQL_ROOT_PASSWORD: devry123      
+    image: "mysql"
+    restart: "always"
+    volumes:
+      - ${PWD}/devry-service-db-data:/var/lib/mysql        

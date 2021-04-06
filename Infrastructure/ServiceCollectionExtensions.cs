@@ -11,7 +11,7 @@ namespace Infrastructure
     
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services,
+        public static IServiceCollection AddInfrastructure<Startup>(this IServiceCollection services,
             IConfiguration configuration)
         {
             if (configuration.GetValue<bool>("UseInMemoryDatabase"))
@@ -26,13 +26,12 @@ namespace Infrastructure
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
                     options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
-                        b => b.MigrationsAssembly("Web"));
+                        b => b.MigrationsAssembly(typeof(Startup).Namespace));
                 });
             }
-
-            services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
+            //services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
             services.AddScoped<IDomainEventService, DomainEventService>();
-
+            
             return services;
         }
     }

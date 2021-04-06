@@ -4,6 +4,7 @@ using BotApp.Extensions;
 using DSharpPlus.CommandsNext;
 using DevryServices.Common.Extensions;
 using DevryServices.Common.Helpers;
+using Domain.Entities.Configs.ConfigTypes;
 using Domain.Enums;
 
 namespace BotApp.Interaction.Reminders
