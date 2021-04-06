@@ -10,6 +10,7 @@ using DevryService.Core.Util;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Logging;
 
 namespace DevryService.Wizards
 {
@@ -95,12 +96,14 @@ namespace DevryService.Wizards
                 .Distinct()
                 .ToList();
 
+            DevryService.Worker.Logger.LogInfo("Course types: " + String.join('\n', courseTypes));
             var embed = EmbedBuilder()
                 .WithFooter(CANCEL_MESSAGE)
                 .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
 
             for (int i = 0; i < courseTypes.Count; i++)
-                embed.AddField(i.ToString(), courseTypes[i], true);
+                if(String.IsNullOrEmpty(courseTypes[i])) continue;
+                else embed.AddField(i.ToString(), courseTypes[i], true);
 
             string reply = string.Empty;
             await _context.TriggerTypingAsync();
