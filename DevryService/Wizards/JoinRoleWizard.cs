@@ -94,13 +94,13 @@ namespace DevryService.Wizards
                 .Select(x=>x.Value)
                 .ToList();
 
-            DevryService.Worker.Instance.Logger.LogInformation(string.Join("\n", roles.Select(x=>string.Trim(x.Name))));
+            DevryService.Worker.Instance.Logger.LogInformation(string.Join('\n', roles.Select(x=>string.Trim(x.Name))));
 
             List<string> courseTypes = roles.Select(x => string.Trim(x.Name).Replace("-", " ").Split(" ").First())
                 .Distinct()
                 .ToList();
 
-            DevryService.Worker.Instance.Logger.LogInformation("Course types: " + string.Join("\n", courseTypes));
+            DevryService.Worker.Instance.Logger.LogInformation("Course types: " + string.Join('\n', courseTypes));
             var embed = EmbedBuilder()
                 .WithFooter(CANCEL_MESSAGE)
                 .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
