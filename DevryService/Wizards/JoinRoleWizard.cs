@@ -96,13 +96,13 @@ namespace DevryService.Wizards
                 .Distinct()
                 .ToList();
 
-            DevryService.Worker.Instance.Logger.LogInfo("Course types: " + String.join('\n', courseTypes));
+            DevryService.Worker.Instance.Logger.LogInfo("Course types: " + string.join("\n", courseTypes));
             var embed = EmbedBuilder()
                 .WithFooter(CANCEL_MESSAGE)
                 .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
 
             for (int i = 0; i < courseTypes.Count; i++)
-                if(String.IsNullOrEmpty(courseTypes[i])) continue;
+                if(string.IsNullOrEmpty(courseTypes[i])) continue;
                 else embed.AddField(i.ToString(), courseTypes[i], true);
 
             string reply = string.Empty;
