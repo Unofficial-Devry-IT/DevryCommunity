@@ -339,7 +339,7 @@ namespace DevryService.Core
 
         public async Task<DiscordMessage> ReplyEdit(DiscordMessage message, DiscordEmbed embed)
         {
-            return await message.ModifyAsync(embed);
+            return await message.ModifyAsync(embed: embed);
         }
 
         public async Task<T> ReplyEditWithReply<T>(DiscordMessage message, DiscordEmbed embed, Func<DiscordMessage,bool> replyPredicate = null)

@@ -87,31 +87,48 @@ namespace DevryService.Wizards
 
             await _context.TriggerTypingAsync();
 
-            DevryService.Worker.Instance.Logger.LogInformation("before roles");
             var roles = _context.Guild.Roles
                 .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
                 .ToList();
-
-            DevryService.Worker.Instance.Logger.LogInformation(string.Join("\n", roles.Where(x=>!string.IsNullOrEmpty(x.Name)).Select(x=>string.Trim(x.Name))));
-
-            List<string> courseTypes = roles.Select(x => string.Trim(x.Name).Replace("-", " ").Split(" ").First())
+            
+            List<string> courseTypes = roles.Select(x =>x.Name.Trim().Replace("-", " ").Split(" ").First())
                 .Distinct()
                 .ToList();
 
-            //DevryService.Worker.Instance.Logger.LogInformation("Course types: " + string.Join('\n', courseTypes));
-            var embed = EmbedBuilder()
-                .WithFooter(CANCEL_MESSAGE)
-                .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
-
-            for (int i = 0; i < courseTypes.Count; i++)
-                if(string.IsNullOrEmpty(courseTypes[i])) continue;
-                else embed.AddField(i.ToString(), courseTypes[i], true);
-
+            int count = -1;
+            int max = (int) Math.Ceiling((decimal) courseTypes.Count / 25);
             string reply = string.Empty;
-            await _context.TriggerTypingAsync();
-            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);            
+            
+            for (int i = 0; i < max; i++)
+            {
+                if (i % 25 == 0)
+                    count++;
+                
+                var section = count == 0 ? courseTypes.Take(25).ToList() : courseTypes.Skip(count * 25).ToList();
+                
+                var embed = EmbedBuilder()
+                    .WithFooter(CANCEL_MESSAGE)
+                    .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
+                
+                for (int x = 0; x < section.Count; x++)
+                {
+                    if (string.IsNullOrEmpty(section[x]))
+                        continue;
+                    
+                    int index = x + (count * 25);
+                    embed.AddField(index.ToString(), courseTypes[x], true);
+                }
+                
+                await _context.TriggerTypingAsync();
+
+                if (i < max - 1)
+                    _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
+                else
+                    await SimpleReply(embed.Build(), isCancellable: false, trackMessage: true);
+            }
+            
 
             string[] parameters = reply.Replace(",", " ").Split(" ");
 
@@ -132,9 +149,10 @@ namespace DevryService.Wizards
             }
 
             int current = 0;
+            
             foreach(var key in selectedGroups.Keys)
             {
-                embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n");
+                var embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n");
                 
                 foreach(var item in selectedGroups[key])
                 {

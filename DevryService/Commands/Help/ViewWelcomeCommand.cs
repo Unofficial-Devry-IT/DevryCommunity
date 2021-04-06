@@ -33,7 +33,7 @@ namespace DevryService.Commands.Help
                 return;
             }
 
-            await channel.SendMessageAsync(Bot.GenerateWelcomeMessage(context.Member));
+            await channel.SendMessageAsync(embed: Bot.GenerateWelcomeMessage(context.Member));
         }
     }
 }
