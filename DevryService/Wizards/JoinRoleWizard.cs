@@ -100,7 +100,7 @@ namespace DevryService.Wizards
                 .Distinct()
                 .ToList();
 
-            DevryService.Worker.Instance.Logger.LogInformation("Course types: " + string.Join('\n', courseTypes));
+            //DevryService.Worker.Instance.Logger.LogInformation("Course types: " + string.Join('\n', courseTypes));
             var embed = EmbedBuilder()
                 .WithFooter(CANCEL_MESSAGE)
                 .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
