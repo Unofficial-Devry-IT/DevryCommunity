@@ -26,7 +26,7 @@ namespace DevryService.Commands.Roles
             } 
             catch(Exception ex)
             { 
-               Worker.Instance.Logger.LogError(ex);
+               Worker.Instance.Logger.LogError(ex.ToString());
                System.Console.WriteLine(ex);
             } finally { await wizard.CleanupAsync(); }
         }
