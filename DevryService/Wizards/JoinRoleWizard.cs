@@ -53,7 +53,10 @@ namespace DevryService.Wizards
                 "Devry-Service-Bot",
                 "DeVry-SortingHat",
                 "announcement permissions",
-                "@everyone"
+                "@everyone",
+                "Content Contributor",
+                "Tutors",
+                "DeVry Alumni"
             };
 
             config.UsesCommand = new WizardToCommandLink
