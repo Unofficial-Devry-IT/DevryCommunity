@@ -86,11 +86,15 @@ namespace DevryService.Wizards
             var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
 
             await _context.TriggerTypingAsync();
+
+            DevryService.Worker.Instance.Logger.LogInformation("before roles");
             var roles = _context.Guild.Roles
                 .Where(x => !lowercased.Contains(x.Value.Name.ToLower()))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
                 .ToList();
+
+            DevryService.Worker.Instance.Logger.LogInformation(string.Join("\n", roles.Select(x=>x.Value.Name)));
 
             List<string> courseTypes = roles.Select(x => x.Name.Replace("-", " ").Split(" ").First())
                 .Distinct()
