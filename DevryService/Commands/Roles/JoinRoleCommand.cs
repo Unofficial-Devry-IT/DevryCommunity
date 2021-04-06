@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DevryService;
+using Microsoft.Extensions.Logging;
 
 namespace DevryService.Commands.Roles
 {
@@ -24,6 +26,7 @@ namespace DevryService.Commands.Roles
             } 
             catch(Exception ex)
             { 
+               Worker.Instance.Logger.LogError(ex);
                System.Console.WriteLine(ex);
             } finally { await wizard.CleanupAsync(); }
         }
