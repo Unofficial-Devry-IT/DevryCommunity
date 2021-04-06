@@ -47,7 +47,7 @@ namespace DevryService
             {
                 Token = token,
                 TokenType = TokenType.Bot,
-                MinimumLogLevel = LogLevel.Critical,
+                MinimumLogLevel = LogLevel.Debug,
                 AutoReconnect = true,
                 Intents = 
                         DiscordIntents.GuildEmojis |
