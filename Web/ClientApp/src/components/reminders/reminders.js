@@ -67,7 +67,7 @@ export class FetchReminders extends Component
             : FetchReminders.renderReminders(items);
             
         return(<div>
-            <h1>Unofficial DeVry: Reminder/Events</h1>
+            <h1>Reminder/Events</h1>
             <p>Typically used to remind users of live lectures</p>
             
             {contents}

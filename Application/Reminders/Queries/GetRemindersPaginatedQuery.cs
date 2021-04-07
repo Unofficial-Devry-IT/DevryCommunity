@@ -2,9 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using Application.Common.Mappings;
 using Application.Common.Models;
-using AutoMapper;
+using Application.Extensions;
 using Domain.Entities;
 using MediatR;
 
@@ -14,20 +13,17 @@ namespace Application.Reminders.Queries
     {
         public ulong ChannelId { get; set; }
         public ulong GuildId { get; set; }
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
     }
 
-    public class GetRemindersPaginatedQueryHandler
-        : IRequestHandler<GetRemindersPaginatedQuery, PaginatedList<Reminder>>
+    public class
+        GetRemindersPaginatedQueryHandler : IRequestHandler<GetRemindersPaginatedQuery, PaginatedList<Reminder>>
     {
         private readonly IApplicationDbContext _context;
-        private IMapper _mapper;
 
-        public GetRemindersPaginatedQueryHandler(IApplicationDbContext context,
-            IMapper mapper)
+        public GetRemindersPaginatedQueryHandler(IApplicationDbContext context)
         {
-            _mapper = mapper;
             _context = context;
         }
 

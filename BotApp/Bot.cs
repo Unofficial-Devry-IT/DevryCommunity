@@ -5,10 +5,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
+using Application.Extensions;
+using BotApp.Services;
 using Domain.Entities;
+using Domain.Entities.Discord;
+using Domain.Events.Channels;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -33,29 +38,60 @@ namespace BotApp
         public DiscordGuild MainGuild { get; private set; }
         public IApplicationDbContext Context { get; private set; }
         private readonly IServiceScope _scope;
+
+        private readonly IConfigService _configService;
+        
         public Bot(IConfiguration configuration, ILogger<Bot> logger, IServiceProvider provider)
         {
             Instance = this;
             ServiceProvider = provider;
             Logger = logger;
-
+            Configuration = configuration;
             _scope = provider.CreateScope();
+            
             Context = _scope.ServiceProvider.GetService<IApplicationDbContext>();
             
+            _configService = new ConfigService();
+            _configService.InitializeInteractionConfigs();
+            _configService.InitializeCommandConfigs();
+            
             #if DEBUG
-            Prefix = "$";
+                Prefix = "$";
+                string token = Configuration.GetValue<string>("Discord:Token").FromBase64();
             #else
-            Prefix = "!";
+                Prefix = "!";
+                string token = Environment.GetEnvironmentVariable("DISCORD_TOKEN").FromBase64();
             #endif
+            
+            LogLevel discordLogLevel = LogLevel.Information;
 
-            var bytes = Convert.FromBase64String(configuration.GetValue<string>("token"));
-            string token = Encoding.UTF8.GetString(bytes).Replace("\n", "");
-
+            switch (configuration.GetValue<string>("discordLogLevel")?.ToLower())
+            {
+                case "debug":
+                    discordLogLevel = LogLevel.Debug;
+                    break;
+                case "trace":
+                    discordLogLevel = LogLevel.Trace;
+                    break;
+                case "warning":
+                    discordLogLevel = LogLevel.Warning;
+                    break;
+                case "none":
+                    discordLogLevel = LogLevel.None;
+                    break;
+                default:
+                    discordLogLevel = LogLevel.Information;
+                    break;
+                case "critical":
+                    discordLogLevel = LogLevel.Critical;
+                    break;
+            }
+            
             Discord = new DiscordClient(new DiscordConfiguration()
             {
                 Token = token,
                 TokenType = TokenType.Bot,
-                MinimumLogLevel = LogLevel.Debug,
+                MinimumLogLevel = discordLogLevel,
                 AutoReconnect = true,
                 Intents = DiscordIntents.Guilds |
                           DiscordIntents.GuildMembers |
@@ -63,11 +99,8 @@ namespace BotApp
                           DiscordIntents.GuildMessageReactions |
                           DiscordIntents.GuildMessages |
                           DiscordIntents.GuildMessageTyping |
-                          DiscordIntents.GuildEmojis |
-                          DiscordIntents.All
+                          DiscordIntents.GuildEmojis 
             });
-
-            Configuration = configuration;
 
             Task.Run(StartAsync);
         }
@@ -96,22 +129,100 @@ namespace BotApp
             foreach (var type in types)
             {
                 Logger.LogDebug($"Registering Command: '{type.Name}'");
-                Commands.RegisterCommands(type);
+                //Commands.RegisterCommands(type);
             }
 
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;
-
+            
+            
+            /*
+              We shall track when channels are created, updated, or deleted
+              - This works two ways
+                - if user did this via discord itself
+                - or within the app/architecture
+             */
+            Discord.ChannelCreated += DiscordOnChannelCreated;
+            Discord.ChannelDeleted += DiscordOnChannelDeleted;
+            Discord.ChannelUpdated += DiscordOnChannelUpdated;
+            
             await Discord.ConnectAsync();
+            
+            #if DEBUG
+            MainGuild = await Discord.GetGuildAsync(642161335089627156);
+            #else
             MainGuild = await Discord.GetGuildAsync(618254766396538901);
-
+            #endif
             if (MainGuild == null)
                 throw new ArgumentNullException(nameof(MainGuild));
 
             await SyncDiscordChannels();
         }
 
-        private Task Discord_GuildMemberAdded(DiscordClient client,
-            DSharpPlus.EventArgs.GuildMemberAddEventArgs args)
+        private async Task DiscordOnChannelDeleted(DiscordClient sender, ChannelDeleteEventArgs e)
+        {
+            var entity = await Context.Channels.FindAsync(e.Channel.Id);
+
+            if (entity == null)
+                return;
+
+            Context.Channels.Remove(entity);
+            await Context.SaveChangesAsync(CancellationToken.None);
+        }
+
+        private async Task DiscordOnChannelUpdated(DiscordClient sender, ChannelUpdateEventArgs e)
+        {
+            var entity = await Context.Channels.FindAsync(e.ChannelAfter.Id);
+
+            // Should never be null... but we'll ignore it if it doesn't exist within this context
+            if (entity == null)
+                return;
+
+            entity.Name = e.ChannelAfter.Name;
+            entity.Position = e.ChannelAfter.Position;
+
+            await Context.SaveChangesAsync(CancellationToken.None);
+        }
+
+        /// <summary>
+        /// -- We need to capture discord channels that are created manually on discord
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private async Task DiscordOnChannelCreated(DiscordClient sender, ChannelCreateEventArgs e)
+        {
+            var entity = await Context.Channels.FindAsync(e.Channel.Id);
+
+            if (entity == null)
+            {
+                ChannelType type = ChannelType.Text;
+
+                switch (e.Channel.Type)
+                {
+                    case DSharpPlus.ChannelType.Category:
+                        type = ChannelType.Category;
+                        break;
+                    case DSharpPlus.ChannelType.Voice:
+                        type = ChannelType.Voice;
+                        break;
+                }
+                
+                entity = new Channel()
+                {
+                    Id = e.Channel.Id,
+                    GuildId = e.Channel.GuildId.Value,
+                    Name = e.Channel.Name,
+                    Description = e.Channel.Topic,
+                    Position = e.Channel.Position,
+                    ChannelType = type
+                };
+
+                await Context.Channels.AddAsync(entity);
+                await Context.SaveChangesAsync(CancellationToken.None);
+            }
+        }
+
+        private Task Discord_GuildMemberAdded(DiscordClient client, GuildMemberAddEventArgs args)
         {
             try
             {
@@ -165,7 +276,7 @@ namespace BotApp
                             Name = channel.Name,
                             Position = channel.Position,
                             ChannelType = type,
-                            GuildId = channel.GuildId,
+                            GuildId = channel.GuildId.Value,
                             Id = channel.Id
                         };
 
@@ -177,7 +288,7 @@ namespace BotApp
             }
             catch (Exception exception)
             {
-                
+                Logger.LogError(exception.Message);
             }
         }
         

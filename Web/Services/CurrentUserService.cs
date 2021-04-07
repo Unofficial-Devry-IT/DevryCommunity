@@ -1,9 +1,9 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 
 namespace Web.Services
 {
@@ -11,18 +11,18 @@ namespace Web.Services
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ApplicationDbContext _context;
-        
+
         public CurrentUserService(IHttpContextAccessor httpContextAccessor, ApplicationDbContext context)
         {
-            _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
-        public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        public async Task<ApplicationUser> CurrentUser()
+        public async Task<IdentityUser> CurrentUser()
         {
             return await _context.Users.FindAsync(UserId);
         }
+        
+        public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 }

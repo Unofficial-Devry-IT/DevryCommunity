@@ -11,10 +11,12 @@ namespace BotApp
         public static IServiceCollection AddDiscordBot(this IServiceCollection services)
         {
             services.AddSingleton<Bot>();
+            
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddMediatR(Assembly.GetExecutingAssembly());
             services.AddHostedService<ReminderBackgroundService>();
-            services.AddTransient<DiscordRoleService>();
+            
+            //services.AddTransient<DiscordRoleService>();
             return services;
         }
     }

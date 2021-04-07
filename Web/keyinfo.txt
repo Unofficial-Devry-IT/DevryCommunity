@@ -1,0 +1,6 @@
+﻿ "Key": {
+      "Type": "Store",
+      "StoreName": "unofficialDevryIT",
+      "StoreLocation": "LocalMachine",
+      "Name": "CN=identityserver.unofficial-devry-it.com"
+    },

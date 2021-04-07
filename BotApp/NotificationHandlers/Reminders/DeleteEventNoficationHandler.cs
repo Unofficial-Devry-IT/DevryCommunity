@@ -12,7 +12,7 @@ namespace BotApp.NotificationHandlers.Reminders
         public Task Handle(DomainEventNotification<ReminderDeletedEvent> notification,
             CancellationToken cancellationToken)
         {
-            ReminderBackgroundService.Instance?.RemoveTask(notification.DomainEvent.Reminder.Id);
+            ReminderBackgroundService.Instance?.RemoveTask(notification.DomainEvent.Reminder.Id.ToString());
 
             return Task.CompletedTask;
         }

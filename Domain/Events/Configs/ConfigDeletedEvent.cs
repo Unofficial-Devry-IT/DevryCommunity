@@ -1,15 +1,21 @@
-﻿using Domain.Common;
-using Domain.Entities.Configs;
+﻿using Domain.Common.Models;
+using Domain.Entities;
 
-namespace Domain.Events.CommandConfigs
+namespace Domain.Events.Configs
 {
-    public class CommandConfigDeletedEvent : DomainEvent
+    /// <summary>
+    /// Event when config gets deleted
+    /// </summary>
+    public class ConfigDeletedEvent : DomainEvent
     {
-        public Config CommandConfig { get; }
+        /// <summary>
+        /// Config which got deleted
+        /// </summary>
+        public Config Config { get; }
 
-        public CommandConfigDeletedEvent(Config config)
+        public ConfigDeletedEvent(Config config)
         {
-            CommandConfig = config;
+            Config = config;
         }
     }
 }

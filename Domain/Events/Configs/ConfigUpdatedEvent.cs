@@ -1,15 +1,21 @@
-﻿using Domain.Common;
-using Domain.Entities.Configs;
+﻿using Domain.Common.Models;
+using Domain.Entities;
 
-namespace Domain.Events.CommandConfigs
+namespace Domain.Events.Configs
 {
+    /// <summary>
+    /// Event when config is updated
+    /// </summary>
     public class ConfigUpdatedEvent : DomainEvent
     {
-        public Config CommandConfig { get; }
+        /// <summary>
+        /// Config which got updated
+        /// </summary>
+        public Config Config { get; }
 
         public ConfigUpdatedEvent(Config config)
         {
-            CommandConfig = config;
+            Config = config;
         }
     }
 }

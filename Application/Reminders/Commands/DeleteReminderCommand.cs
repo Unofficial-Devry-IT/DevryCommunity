@@ -7,11 +7,18 @@ using MediatR;
 
 namespace Application.Reminders.Commands
 {
+    /// <summary>
+    /// Remove reminders from service
+    /// <see cref="DeleteReminderCommandHandler"/> handles these requests
+    /// </summary>
     public class DeleteReminderCommand : IRequest
     {
         public string Id { get; set; }
     }
 
+    /// <summary>
+    /// Handles <see cref="DeleteReminderCommand"/> requests
+    /// </summary>
     public class DeleteReminderCommandHandler : IRequestHandler<DeleteReminderCommand>
     {
         private readonly IApplicationDbContext _context;
@@ -23,6 +30,7 @@ namespace Application.Reminders.Commands
 
         public async Task<Unit> Handle(DeleteReminderCommand request, CancellationToken cancellationToken)
         {
+            // Ensure the reminder's ID is being tracked by the application
             var entity = await _context.Reminders.FindAsync(request.Id);
 
             if (entity == null)

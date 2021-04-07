@@ -2,38 +2,44 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using Application.Common.Mappings;
 using Application.Common.Models;
-using AutoMapper;
-using Domain.Entities;
+using Application.Extensions;
 using Domain.Enums;
 using MediatR;
 
 namespace Application.Channels.Queries
 {
-    public class GetChannelsOfTypePaginatedQuery : IRequest<PaginatedList<Channel>>
+    public class GetChannelsOfTypePaginatedQuery : IRequest<PaginatedList<ChannelResponse>>
     {
         public ChannelType ChannelType { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }
 
-    public class GetChannelsOfTypePaginatedQueryHandler
-        : IRequestHandler<GetChannelsOfTypePaginatedQuery, PaginatedList<Channel>>
+    public class
+        GetChannelsOfTypePaginatedQueryHandler : IRequestHandler<GetChannelsOfTypePaginatedQuery,
+            PaginatedList<ChannelResponse>>
     {
         private readonly IApplicationDbContext _context;
-        private IMapper _mapper;
 
-        public GetChannelsOfTypePaginatedQueryHandler(IApplicationDbContext context, IMapper mapper)
+        public GetChannelsOfTypePaginatedQueryHandler(IApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
 
-        public async Task<PaginatedList<Channel>> Handle(GetChannelsOfTypePaginatedQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedList<ChannelResponse>> Handle(GetChannelsOfTypePaginatedQuery request, CancellationToken cancellationToken)
         {
             return await _context.Channels
                 .Where(x => x.ChannelType == request.ChannelType)
+                .Select(x=>new ChannelResponse()
+                {
+                    Id = x.Id.ToString(),
+                    GuildId = x.GuildId.ToString(),
+                    Description = x.Description,
+                    Name = x.Name,
+                    Position = x.Position,
+                    ChannelType = x.ChannelType
+                })
                 .OrderBy(x => x.Position)
                 .PaginatedListAsync(request.PageNumber, request.PageSize);
         }

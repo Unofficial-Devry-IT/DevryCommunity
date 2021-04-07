@@ -2,6 +2,9 @@
 
 namespace Domain.Exceptions
 {
+    /// <summary>
+    /// When something is not found this exception shall get thrown
+    /// </summary>
     public class NotFoundException : Exception 
     {
         public NotFoundException() : base()

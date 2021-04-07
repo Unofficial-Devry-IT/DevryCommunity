@@ -2,11 +2,33 @@
 
 /* Provide sufficient contrast against white background */
 a {
-  color: #0366d6;
+  color: #fec221;
+}
+
+.site-brand {
+  color: #fec221;
+}
+
+/* Basic styling across the board*/
+.devry-navbar, body
+{
+  color: white;
+  background-color: #1d2333;
+}
+
+.ant-divider-inner-text { color: white; }
+
+h1, h2, h3, h4, h5, h6
+{
+  color: #61dde8;
 }
 
 code {
   color: #E01A76;
+}
+
+.menuButton {
+  margin-right: 2rem;
 }
 
 .btn-primary {

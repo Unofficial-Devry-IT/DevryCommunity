@@ -50,7 +50,7 @@ export default function CreateReminder(props) {
         } = props;
     
     const inputRef = useRef(null)
-    const defaultValue = '* * * * MON-WED,sat'
+    const defaultValue = '* * * * *'
     const [value, setValue] = useState(defaultValue);
     const [name, setName] = useState("Default Name");
     const [contents, setContents] = useState();

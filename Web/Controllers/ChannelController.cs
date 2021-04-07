@@ -2,21 +2,21 @@
 using Application.Channels.Commands;
 using Application.Channels.Queries;
 using Application.Common.Models;
-using Domain.Entities;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Web.Controllers
 {
+    /// <summary>
+    /// Handles the CRUD events pertaining to <see cref="Domain.Entities.Discord.Channel"/>
+    /// </summary>
     [Authorize]
     [ApiController]
     public class ChannelController : ApiControllerBase
     {
         [HttpGet]
         public async Task<ActionResult<PaginatedList<ChannelResponse>>> GetChannelsWithPagination(
-            [FromQuery] GetAllChannelsPaginationQuery query)
+            [FromQuery] GetAllChannelsPaginatedQuery query)
         {
             return await Mediator.Send(query);
         }

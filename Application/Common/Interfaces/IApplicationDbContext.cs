@@ -1,19 +1,22 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using Domain.Entities;
-using Domain.Entities.Configs;
-using Microsoft.AspNetCore.Identity;
+using Domain.Entities.Discord;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Common.Interfaces
 {
-    public interface IApplicationDbContext 
+    /// <summary>
+    /// Information / tables required by the architecture
+    /// </summary>
+    public interface IApplicationDbContext
     {
         DbSet<CodeSnippet> CodeSnippets { get; set; }
         DbSet<CodeInfo> CodeInfo { get; set; }
         DbSet<Channel> Channels { get; set; }
-        DbSet<Config> Configs { get; set; }
         DbSet<Reminder> Reminders { get; set; }
+        DbSet<Config> Configs { get; set; }
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }
 }

@@ -3,15 +3,28 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import {createMuiTheme, MuiThemeProvider} from "@material-ui/core";
 //import registerServiceWorker from './registerServiceWorker';
+import { SnackbarProvider } from "notistack";
 
 const baseUrl = document.getElementsByTagName('base')[0].getAttribute('href');
 const rootElement = document.getElementById('root');
 
+const THEME = createMuiTheme(
+{
+            palette: 
+            {
+                type: "dark"
+            }
+        });
 
 ReactDOM.render(
   <BrowserRouter basename={baseUrl}>
-        <App />
+        <MuiThemeProvider theme={THEME}>
+            <SnackbarProvider maxSnack={5}>
+                <App />
+            </SnackbarProvider>
+        </MuiThemeProvider>
   </BrowserRouter>,
   rootElement);
 

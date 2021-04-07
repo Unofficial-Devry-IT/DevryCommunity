@@ -201,7 +201,6 @@ export class FetchChannels extends Component
                             <button className="btn btn-primary" onClick={this.onPageUp.bind(this)}>&raquo;</button>
                         </div>
                     }
-                    
                     <Modal style={{
                                     zIndex: 0,
                                     marginTop: "60px"
@@ -210,7 +209,7 @@ export class FetchChannels extends Component
                            onClose={this.closeReminder}
                            >
                         <Container maxWidth="md">
-                            <Typography component="div" style={{backgroundColor: "#fff", padding: "32px"}}>
+                            <Typography component="div" style={{backgroundColor: "#1d2333", padding: "32px"}}>
                             <CreateReminder guidId={selectedGuidId}
                                             channelId={selectedChannelId}
                                             callback={this.closeReminder.bind(this)}/>

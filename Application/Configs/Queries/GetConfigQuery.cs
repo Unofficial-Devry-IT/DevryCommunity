@@ -1,23 +1,21 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using Domain.Entities.Configs;
+using Domain.Entities;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
-namespace Application.CommandConfigs.Queries
+namespace Application.Configs.Queries
 {
     public class GetConfigQuery : IRequest<Config>
     {
-        public string ConfigName { get; set; }
+        public string Id { get; set; }
     }
 
-    public class GetCommandConfigQueryHandler : IRequestHandler<GetConfigQuery, Config>
+    public class GetConfigQueryHandler : IRequestHandler<GetConfigQuery, Config>
     {
         private readonly IApplicationDbContext _context;
 
-        public GetCommandConfigQueryHandler(IApplicationDbContext context)
+        public GetConfigQueryHandler(IApplicationDbContext context)
         {
             _context = context;
         }
@@ -25,8 +23,7 @@ namespace Application.CommandConfigs.Queries
         public async Task<Config> Handle(GetConfigQuery request,
             CancellationToken cancellationToken)
         {
-            return await _context.Configs.FirstOrDefaultAsync(x =>
-                x.ConfigName.Equals(request.ConfigName, StringComparison.CurrentCultureIgnoreCase));
+            return await _context.Configs.FindAsync(request.Id);
         }
     }
 }

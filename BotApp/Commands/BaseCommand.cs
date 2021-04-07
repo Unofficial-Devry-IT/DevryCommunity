@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Domain.Entities;
-using Domain.Entities.Configs;
 using Domain.Exceptions;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -27,26 +26,29 @@ namespace BotApp.Commands
 
         private ISender _mediator;
         protected ISender Mediator => _mediator ??= Bot.Instance?.ServiceProvider.GetService<ISender>();
-        
-
         public async Task<Config> FindConfig()
         {
-            MethodInfo commandMethod = GetType().GetMethod("ExecuteAsync");
+            /*
+             *  Technically our interaction configs will be invoked via
+             *  Commands. Plus, our interaction configs are derived from Command configs
+             *
+             *  - So first - check to see if we get a config that matches the prefix of our command
+             *  - If nothing is found then we search for a command config with this type's name
+             */
+            string prefix = GetType().Name.Replace("Command", "");
 
-            if (commandMethod == null)
-                throw new NotFoundException(nameof(Config), "ExecuteAsync Method not found");
+            var configs = await Bot.Instance.Context.Configs
+                .Where(x => x.ConfigType == ConfigType.INTERACTION &&
+                            x.ConfigName.StartsWith(prefix))
+                .ToListAsync();
 
-            var attribute = commandMethod.GetCustomAttribute<CommandAttribute>();
-
-            if (attribute == null)
-            {
-                Bot.Instance.Logger.LogError($"{GetType().Name}.ExecuteAsync does not have CommandAttribute");
-                throw new NotFoundException(nameof(Config), "Command Attribute not found");
-            }
-
+            if (configs.Any())
+                return configs.First();
+            
             return await Bot.Instance.Context.Configs
-                .FirstOrDefaultAsync(x =>
-                    x.ConfigName.Equals(attribute.Name, StringComparison.CurrentCultureIgnoreCase));
+                .Where(x => x.ConfigType == ConfigType.COMMAND &&
+                            x.ConfigName.Equals(GetType().Name))
+                .FirstOrDefaultAsync();
         }
     }
 }

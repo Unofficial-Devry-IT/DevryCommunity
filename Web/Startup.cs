@@ -1,22 +1,19 @@
+using Application;
+using Application.Extensions;
+using BotApp;
+using DiscordOAuth;
+using Infrastructure;
+using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
-using Application;
-using Application.Common.Interfaces;
-using BotApp;
-using Domain.Entities;
-using Infrastructure;
-using Infrastructure.Persistence;
-using Web.Services;
 
 namespace Web
 {
@@ -33,25 +30,55 @@ namespace Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            services.AddDatabaseDeveloperPageExceptionFilter();
-
+            
             services.AddApplication();
-            services.AddInfrastructure<Startup>(Configuration);
             services.AddDiscordBot();
-            services.AddSingleton<ICurrentUserService, CurrentUserService>();
-
-            services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddInfrastructure<Startup>(Configuration);
+            
+            services.AddDefaultIdentity<IdentityUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = true;
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddIdentityServer()
-                .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
+                .AddApiAuthorization<IdentityUser, ApplicationDbContext>();
 
             services.AddAuthentication()
-                .AddIdentityServerJwt();
+                .AddDiscord(x =>
+                {
+                    /*
+                        In Production:
+                            Shall leverage secret a secret layer within the docker container
+                            to safely store these values
+                            
+                        In Development:
+                            User Secrets are leveraged
+                                Avoids storing these sensitive items in appsettings which gets
+                                committed to github
+                        
+                        View OAuth.md within the Web directory for more details                                                          
+                     */
+                    
+                    #if DEBUG
+                        x.AppId = Configuration["Discord:AppId"].FromBase64();
+                        x.AppSecret = Configuration["Discord:AppSecret"].FromBase64();
+                    #else
+                        string appId = System.Environment.GetEnvironmentVariable("DISCORD_APPID");
+                        string appSecret = System.Environment.GetEnvironmentVariable("DISCORD_APPSECRET");
+                        x.AppId = appId.FromBase64();
+                        x.AppSecret = appSecret.FromBase64();
+                    #endif
 
+                    x.Scope.Add("guilds");
+                    x.Scope.Add("email");
+                })
+                .AddIdentityServerJwt();
+        
             services.AddControllersWithViews();
             services.AddRazorPages();
-
+            
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
         }
@@ -62,7 +89,6 @@ namespace Web
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseMigrationsEndPoint();
             }
             else
             {
@@ -80,6 +106,7 @@ namespace Web
             app.UseAuthentication();
             app.UseIdentityServer();
             app.UseAuthorization();
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

@@ -1,26 +1,57 @@
 import React, { Component } from 'react';
+import {Grid, Paper} from "@material-ui/core";
 
 export class Home extends Component {
   static displayName = Home.name;
 
   render () {
     return (
-      <div>
-        <h1>Hello, world!</h1>
-        <p>Welcome to your new single-page application, built with:</p>
-        <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
-        </ul>
-        <p>To help you get started, we have also set up:</p>
-        <ul>
-          <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-          <li><strong>Development server integration</strong>. In development mode, the development server from <code>create-react-app</code> runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-          <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration produces minified, efficiently bundled JavaScript files.</li>
-        </ul>
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
-      </div>
+        <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+                <Paper elevation={3} style={{padding: "32px"}}>
+                    <h2>Github</h2>
+                    <p>
+                        This entire website and discord bot is open source. Feel free to contribute if you want! <a href="https://github.com/JBraunsmaJr/Devry-Service-Bot">Link</a><br/>
+                        
+                        If you discover an issue please open a <a href="https://github.com/JBraunsmaJr/Devry-Service-Bot/issues">ticket</a>!
+                    </p>
+                </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+                <Paper elevation={3} style={{padding: "32px"}}>
+                    <h2>Overview</h2>
+                    <p>
+                        This website is currently under construction. Many features you'd probably expect may not be implemented yet.
+                        Below is a list of features currently in-use / available to you
+                    </p>
+                    
+                    <br/><br/>
+                    <h3>Current Features</h3>
+                    <p>
+                        <ul>
+                            <li>Can view channels from associated discord server</li>
+                            <li>Can create a <code>course</code> area (i.e create category/role/channels for a class)</li>
+                            <li>Can create reminders that will appear on certain channels</li>
+                        </ul>
+                    </p>
+                </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+                <Paper elevation={3} style={{padding: "32px"}}>
+                    <h2>Disclaimer</h2>
+                    <p>
+                        Registration portion of this site has not been fully fledged out.
+                        This means -- we can't quite differenciate between moderators or average user(s).
+                    </p>
+                    
+                    <p>
+                        Not ready for general use by the community... Granted the current features available are mostly administrative in nature.
+                    </p>
+                </Paper>
+            </Grid>
+        </Grid>
     );
   }
 }

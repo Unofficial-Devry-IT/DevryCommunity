@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using DevryServices.Common.Tasks.Scheduling;
+using Core.Tasks.Scheduling;
 using Domain.Entities;
 using Domain.Exceptions;
 using DSharpPlus.Entities;
@@ -32,7 +32,7 @@ namespace BotApp.Services.Reminders
             Instance = this;
             _logger = logger;
             _scope = serviceProvider.CreateScope();
-            _context = _scope.ServiceProvider.GetService<IApplicationDbContext>();
+            _context = Bot.Instance.Context;//_scope.ServiceProvider.GetService<IApplicationDbContext>();
             _bot = bot;
 
             _isDisabled = configuration.GetValue<bool>("disableReminders");
@@ -54,12 +54,12 @@ namespace BotApp.Services.Reminders
         
         public void UpdateTask(Reminder task)
         {
-            if (_scheduledTasks.ContainsKey(task.Id))
+            if (_scheduledTasks.ContainsKey(task.Id.ToString()))
             {
                 _logger.LogInformation($"Updating Task: '{task.Id}'");
-                var nextRunTime = _scheduledTasks[task.Id].NextRunTime;
+                var nextRunTime = _scheduledTasks[task.Id.ToString()].NextRunTime;
                 
-                _scheduledTasks[task.Id] = new SchedulerTaskWrapper()
+                _scheduledTasks[task.Id.ToString()] = new SchedulerTaskWrapper()
                 {
                     Schedule = CrontabSchedule.Parse(task.Schedule),
                     Task = task,
@@ -70,9 +70,9 @@ namespace BotApp.Services.Reminders
         
         public void AddTask(IScheduledTask task)
         {
-            if (!_scheduledTasks.ContainsKey(task.Id))
+            if (!_scheduledTasks.ContainsKey(task.Id.ToString()))
             {
-                _scheduledTasks.Add(task.Id, new SchedulerTaskWrapper()
+                _scheduledTasks.Add(task.Id.ToString(), new SchedulerTaskWrapper()
                 {
                     Schedule = CrontabSchedule.Parse(task.Schedule),
                     Task = task,
@@ -95,6 +95,9 @@ namespace BotApp.Services.Reminders
         {
             await Initialize();
 
+            string enabled = _isDisabled ? "disabled" : "enabled";
+            _bot.Logger.LogInformation($"Reminder service is {enabled}");
+            
             while (!stoppingToken.IsCancellationRequested)
             {
                 if(!_isDisabled)
@@ -150,7 +153,7 @@ namespace BotApp.Services.Reminders
                         {
                             Reminder reminder = (Reminder) task.Task;
 
-                            var allChannels = await _bot.MainGuild.GetChannelsAsync();
+                            var allChannels = await Bot.Instance.MainGuild.GetChannelsAsync();
                             
                             var channel = allChannels.FirstOrDefault(x => x.Id == reminder.ChannelId);
 
