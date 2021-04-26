@@ -83,56 +83,40 @@ namespace DevryService.Wizards
         public JoinRoleWizard(CommandContext commandContext) : base(commandContext)
         {
         }
-
-
+        
         protected override async Task ExecuteAsync()
         {
             var lowercased = _options.BlacklistedRoles.Select(x => x.ToLower());
 
             await _context.TriggerTypingAsync();
-
+            
+            // Get all the roles that users are allowed to join
             var roles = _context.Guild.Roles
                 .Where(x => !lowercased.Contains(x.Value.Name.ToLower()) && !x.Value.Name.Contains("^"))
                 .OrderBy(x => x.Value.Name)
                 .Select(x=>x.Value)
                 .ToList();
             
-            List<string> courseTypes = roles.Select(x =>x.Name.Trim().Replace("-", " ").Split(" ").First())
+            // We only care about the FIRST word in the role (we follow a CATEGORY | COURSE NUMBER | DESCRIPTION format)
+            List<string> courseTypes = roles.Select(x =>x.Name
+                    .Trim()
+                    .Replace("-", " ")
+                    .Split(" ")
+                    .First())
                 .Distinct()
                 .ToList();
 
-            int count = -1;
-            int max = (int) Math.Ceiling((decimal) courseTypes.Count / 25);
             string reply = string.Empty;
-            
-            for (int i = 0; i < max; i++)
-            {
-                if (i % 25 == 0)
-                    count++;
-                
-                var section = count == 0 ? courseTypes.Take(25).ToList() : courseTypes.Skip(count * 25).ToList();
-                
-                var embed = EmbedBuilder()
-                    .WithFooter(CANCEL_MESSAGE)
-                    .WithDescription($"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n");
-                
-                for (int x = 0; x < section.Count; x++)
-                {
-                    if (string.IsNullOrEmpty(section[x]))
-                        continue;
-                    
-                    int index = x + (count * 25);
-                    embed.AddField(index.ToString(), courseTypes[x], true);
-                }
-                
-                await _context.TriggerTypingAsync();
 
-                if (i < max - 1)
-                    _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
-                else
-                    await SimpleReply(embed.Build(), isCancellable: false, trackMessage: true);
-            }
+            StringBuilder textBuilder = new StringBuilder();
+
+            var embed = EmbedBuilder()
+                .WithFooter($"{CANCEL_MESSAGE}\n--{_context.Member.DisplayName}")
+                .WithDescription(
+                    $"Which course(s) are you currently attending/teaching? Below is a list of categories. \nPlease type in the number(s) associated with the course\n")
+                .FormatAsMenu(courseTypes, true);
             
+            _recentMessage = await WithReply(embed.Build(), replyHandler: (context) => ReplyHandlerAction(context, ref reply), true);
 
             string[] parameters = reply.Replace(",", " ").Split(" ");
 
@@ -156,16 +140,14 @@ namespace DevryService.Wizards
             
             foreach(var key in selectedGroups.Keys)
             {
-                var embed = EmbedBuilder().WithFooter(CANCEL_MESSAGE).WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n");
-                
-                foreach(var item in selectedGroups[key])
-                {
-                    embed.AddField((current + 1).ToString(), item.Name, true);
-                    roleMap.Add(current, item);
-                    current++;
-                }
+                var temp = EmbedBuilder()
+                    .WithFooter($"{CANCEL_MESSAGE}\n--{_context.Member.DisplayName}")
+                    .WithDescription($"Select the number associated with the class(es) you wish to join\n\n{key}:\n")
+                    .FormatAsMenu(selectedGroups[key], ref roleMap, (x)=>x.Name, current, out int actuallyAdded);
 
-                _recentMessage = await SimpleReply(embed.Build(), true, true);
+                current += actuallyAdded;
+                
+                _recentMessage = await SimpleReply(temp.Build(), true, true);
             }
 
             reply = string.Empty;
@@ -200,8 +182,6 @@ namespace DevryService.Wizards
             {
                 if(int.TryParse(selection, out int index))
                 {
-                    index -= 1;
-
                     if (index < 0 || index >= roleMap.Count)
                         Console.WriteLine($"Invalid Input: {index + 1}");
                     else
