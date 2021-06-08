@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using DSharpPlus.EventArgs;
 
 namespace DevryService
 {
@@ -93,9 +94,22 @@ namespace DevryService
 
             // Welcome message that gets dispatched to newcomers
             Discord.GuildMemberAdded += Discord_GuildMemberAdded;
-
+            Discord.GuildMemberRemoved += DiscordOnGuildMemberRemoved; 
+            
             await Discord.ConnectAsync();
 
+        }
+
+        private async Task DiscordOnGuildMemberRemoved(DiscordClient sender, GuildMemberRemoveEventArgs e)
+        {
+            var guild = sender.Guilds.First(x => x.Value.Name.ToLower().Contains("Devry")).Value;
+            var channel = guild.Channels.First(x => x.Value.Name.ToLower().Equals("user-activity")).Value;
+
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+                .WithAuthor("Hall Monitor")
+                .WithDescription($"{e.Member.DisplayName} has left the building.");
+
+            await channel.SendMessageAsync(embed: builder.Build());
         }
 
         private async Task Discord_GuildMemberAdded(DiscordClient client, DSharpPlus.EventArgs.GuildMemberAddEventArgs e)
