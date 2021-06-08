@@ -148,7 +148,8 @@ namespace BotApp
             await Discord.ConnectAsync();
             
             #if DEBUG
-            MainGuild = await Discord.GetGuildAsync(642161335089627156);
+            //MainGuild = await Discord.GetGuildAsync(642161335089627156);
+            MainGuild = await Discord.GetGuildAsync(618254766396538901);
             #else
             MainGuild = await Discord.GetGuildAsync(618254766396538901);
             #endif
