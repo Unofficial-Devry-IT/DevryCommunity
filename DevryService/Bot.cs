@@ -102,8 +102,8 @@ namespace DevryService
 
         private async Task DiscordOnGuildMemberRemoved(DiscordClient sender, GuildMemberRemoveEventArgs e)
         {
-            var guild = sender.Guilds.First(x => x.Value.Name.Contains("Devry")).Value;
-            var channel = guild.Channels.First(x => x.Value.Name.Equals("user-activity")).Value;
+            var guild = sender.Guilds.First(x => x.Value.Name.ToLower().Contains("Devry")).Value;
+            var channel = guild.Channels.First(x => x.Value.Name.ToLower().Equals("user-activity")).Value;
 
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                 .WithAuthor("Hall Monitor")
