@@ -29,8 +29,10 @@ namespace BotApp.Extensions
                 // We want to mention some sort of role
                 else if (words[i].StartsWith("@"))
                 {
+                    int length = words[i].Replace(".", "").Length - 1;
+                    
                     DiscordRole role = guild.Roles
-                        .FirstOrDefault(x => x.Value.Name.ToLower().Contains(words[i].Substring(1).ToLower())).Value;
+                        .FirstOrDefault(x => x.Value.Name.ToLower().Contains(words[i].Substring(1, length).ToLower())).Value;
 
                     if (role != null)
                         words[i] = role.Mention;
