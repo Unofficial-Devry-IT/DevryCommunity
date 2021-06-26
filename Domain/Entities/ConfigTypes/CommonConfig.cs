@@ -9,5 +9,6 @@ namespace Domain.Entities.ConfigTypes
         public string AuthorIcon { get; set; }
         public string ReactionEmoji { get; set; }
         public string Description { get; set; }
+        public string DisplayName { get; set; }
     }
 }

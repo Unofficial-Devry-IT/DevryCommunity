@@ -12,14 +12,21 @@ namespace BotApp.Extensions
 
             for (int i = 0; i < words.Length; i++)
             {
+                // If the word starts with a # symbol we want to "mention" a channel!
                 if (words[i].StartsWith("#"))
                 {
+                    // We do NOT want to inclue a period as it may skew our search. We also don't want the first character (#)
+                    int length = words[i].Replace(".", "").Length - 1;
+                    
                     DiscordChannel channel = guild.Channels.FirstOrDefault(x =>
-                        x.Value.Name.Equals(words[i].Substring(1), StringComparison.OrdinalIgnoreCase)).Value;
-
+                        x.Value.Name.Equals(words[i].Substring(1, length), StringComparison.OrdinalIgnoreCase)).Value;
+                    
+                    // If the channel was valid -- we replace the word with the designated mention 
                     if (channel != null)
                         words[i] = channel.Mention;
                 }
+                
+                // We want to mention some sort of role
                 else if (words[i].StartsWith("@"))
                 {
                     DiscordRole role = guild.Roles

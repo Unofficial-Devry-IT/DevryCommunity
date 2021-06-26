@@ -53,8 +53,11 @@ namespace BotApp.Interaction
         /// <returns></returns>
         public static DiscordEmbedBuilder BuildEmbed(this InteractionConfig config)
         {
+            // If we specify a display name we'd like to use that instead please
+            string displayName = string.IsNullOrEmpty(config.DisplayName) ? config.AuthorName : config.DisplayName;
+            
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                .WithAuthor(config.AuthorName, iconUrl: config.AuthorIcon)
+                .WithAuthor(displayName, iconUrl: config.AuthorIcon)
                 .WithTitle(config.Headline)
                 .WithDescription(config.Description)
                 .WithColor(DiscordColor.Cyan);

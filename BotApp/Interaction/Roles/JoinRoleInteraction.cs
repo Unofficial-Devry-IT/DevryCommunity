@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BotApp.Interaction.Roles
 {
+    [DisplayName("Sorting Hat")]
     public class JoinRoleInteraction : InteractionBase
     {
         public JoinRoleInteraction(CommandContext context) : base(context)
@@ -115,7 +117,7 @@ namespace BotApp.Interaction.Roles
                 .Distinct()
                 .ToList();
 
-            
+            // TODO: Improve this process. It probably shouldn't be multiple pages
             // Generate the messages required to showcase all the options
             var builders = CurrentConfig
                 .BuildEmbed(Context.User.Username)

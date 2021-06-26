@@ -30,21 +30,20 @@ namespace Infrastructure
                 #if DEBUG
                     string dbUser = configuration.GetValue<string>("Database:User");
                     string dbPassword = configuration.GetValue<string>("Database:Password");
+                    string host = configuration.GetValue<string>("Database:Host");
                 #else
                     string dbUser = Environment.GetEnvironmentVariable("DATABASE_USER");
                     string dbPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD");
+                    string host = Environment.GetEnvironmentVariable("DATABASE_HOST");
                 #endif
                 
                 string dbConnectionString = configuration.GetConnectionString("DefaultConnection");
                 
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseMySql(string.Format(dbConnectionString, dbUser, dbPassword), serverVersion, 
+                    options.UseMySql(string.Format(dbConnectionString, host, dbUser, dbPassword), serverVersion, 
                             x=>x.MigrationsAssembly(typeof(Startup).Namespace))
                         .EnableDetailedErrors();
-                    
-                    /*options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
-                        b => b.MigrationsAssembly(typeof(Startup).Namespace));*/
                 });
             }
             

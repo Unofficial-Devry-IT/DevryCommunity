@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Linq;
 using System.Threading;
@@ -13,6 +15,35 @@ namespace BotApp.Services
 {
     public class ConfigService : IConfigService
     {
+        /// <summary>
+        /// Attempt to retrieve the proper display name for specified type
+        /// </summary>
+        /// <remarks>
+        /// By default the display name will be the same as the given type name
+        /// If a display attribute exists it will use the name property on it
+        /// If a display name attribute exists it will use the DisplayName property on it
+        /// </remarks>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private string GetDisplayName(Type type)
+        {
+            string name = type.Name;
+
+            var displayAttribute = type.GetCustomAttribute<DisplayAttribute>();
+            
+            if (displayAttribute != null && !string.IsNullOrEmpty(displayAttribute.Name))
+                name = displayAttribute.Name;
+            else
+            {
+                var displayName = type.GetCustomAttribute<DisplayNameAttribute>();
+
+                if (displayName != null && !string.IsNullOrEmpty(displayName.DisplayName))
+                    name = displayName.DisplayName;
+            }
+            
+            return name;
+        }
+        
         public async Task InitializeInteractionConfigs()
         {
             // We need to get all interactions from the assembly
@@ -34,14 +65,15 @@ namespace BotApp.Services
                     continue;
                 
                 InteractionConfig config = new InteractionConfig();
-
+                
                 config.AuthorName = type.Name;
+                config.DisplayName = GetDisplayName(type);
                 config.TimeoutOverride = TimeSpan.FromMinutes(5); // default timout of 5 minutes seems reasonable
                 
                 Config typeConfig = new Config();
                 typeConfig.ConfigName = type.Name;
                 typeConfig.ConfigType = ConfigType.INTERACTION;
-                
+
                 typeConfig.ExtensionData = Newtonsoft.Json.JsonConvert.SerializeObject(config);
 
                 await Bot.Instance.Context.Configs.AddAsync(typeConfig);
@@ -78,6 +110,7 @@ namespace BotApp.Services
 
                 CommandConfig config = new CommandConfig();
                 config.AuthorName = type.Name;
+                config.DisplayName = GetDisplayName(type);
                 config.TimeoutOverride = TimeSpan.FromMinutes(5);
                 config.DiscordCommand = commandAttribute.Name;
 
