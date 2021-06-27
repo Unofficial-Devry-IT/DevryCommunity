@@ -11,6 +11,8 @@ If you make any changes to a database model located within [Domain.Entities](./.
 The default connection string must utilize the `string.format` method (already implemented). Both the `user` and `password` values are stored as user secrets. Obviously, for security reasons. The application will be looking for the following values
 at startup
 
+> `Database:Host`
+
 > `Database:User`
 
 > `Database:Password`
