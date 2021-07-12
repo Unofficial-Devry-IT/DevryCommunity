@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <UserSecretsId>dotnet-DevryBot-066BAE45-0F10-46D5-AB7C-4A04BACFBA93</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DSharpPlusNextGen" Version="9.5.3" />
+        <PackageReference Include="DSharpPlusNextGen.CommandsNext" Version="9.5.3" />
+        <PackageReference Include="DSharpPlusNextGen.Common" Version="9.5.3" />
+        <PackageReference Include="DSharpPlusNextGen.Interactivity" Version="9.5.3" />
+        <PackageReference Include="DSharpPlusNextGen.SlashCommands" Version="9.5.3" />
+        <PackageReference Include="HSNXT.DSharpPlus.CommandsNext.Extended" Version="3.0.198" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.7">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+        <PackageReference Include="NCrontab" Version="3.3.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
+      <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
+    </ItemGroup>
+</Project>

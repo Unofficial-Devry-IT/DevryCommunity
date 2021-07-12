@@ -81,12 +81,10 @@ namespace DevryService.Core.Schedule
                         _logger.LogWarning($"Unable to locate reminder with Id: {pair.Key}");
                         continue;
                     }
-                    else
-                    {
-                        _logger.LogInformation($"Reminder: '{reminder.Name}' with Id '{reminder.Id}' is being cleaned up. --Determined to never run again");
-                        context.Reminders.Remove(reminder);
-                        _scheduledTasks.Remove(pair.Key);
-                    }
+                    
+                    _logger.LogInformation($"Reminder: '{reminder.Name}' with Id '{reminder.Id}' is being cleaned up. --Determined to never run again");
+                    context.Reminders.Remove(reminder);
+                    _scheduledTasks.Remove(pair.Key);
                 }
 
                 // Save changes (if applicable)
