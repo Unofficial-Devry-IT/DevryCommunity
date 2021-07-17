@@ -24,7 +24,7 @@ namespace DevryBot
 
             try
             {
-                _context.Database.Migrate();
+                _context.Database.EnsureCreated();
             }
             catch
             {
