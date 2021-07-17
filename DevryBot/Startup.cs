@@ -21,7 +21,7 @@ namespace DevryBot
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDevryInfrastructure<Bot>(Configuration);
-            services.AddHostedService<SchedulerBackgroundService>();
+            services.AddDevryApplication();
             services.AddSingleton<ReminderBackgroundService>();
             services.AddHostedService<DevryBotWorker>();
         }
