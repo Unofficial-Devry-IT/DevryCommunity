@@ -1,0 +1,45 @@
+﻿{
+  "Discord": {
+    "Token": "TnpVM01EUTNPRFEwTXpNd01ERXlOek15LlgyYXR2dy5kaUVPNHNvQzJJeEpiWW5hMnRtNzF4VVVM YncK",
+    "Prefix": "!",
+    "QueueImage": "https://clipartstation.com/wp-content/uploads/2017/11/queue-clipart-13.jpg",
+    "CompletedImage": "https://www.kingmaterialshandling.com/wp-content/uploads/2019/09/completed-icon-6.png",
+    "WarningImage": "https://www.nerdwallet.com/assets/blog/wp-content/uploads/2014/10/shutterstock_121160620.jpg",
+    "ErrorImage": "https://cdn-images-1.medium.com/max/1200/0*NGIDR93EFsuVUt-K.jpg",
+    "InviteImage": "https://www.newyorker.com/wp-content/uploads/2015/02/Stein-Hogwarts-1200.jpg",
+    "UhOhImage": "https://media.istockphoto.com/photos/uh-oh-sign-picture-id464392649?k=6&m=464392649&s=170667a&w=0&h=9lqBHJjPp4TnYBWkw6ntXEYN9RZPABvSciVkPOqyVug=",
+    "ClearCommands": false,
+    "InviteLinkSearchCriteria": "discord",
+    "BlacklistedRoles": [
+      "@everyone",
+      "Admin",
+      "Senior Moderator",
+      "Junior Moderator",
+      "Pollmaster",
+      "Professor",
+      "Database",
+      "Programmer",
+      "Motivator",
+      "Server Booster",
+      "DeVry-SortingHat",
+      "Devry-Service-Bot",
+      "Devry-Challenge-Bot",
+      "Devry-Test-Bot",
+      "MathBot",
+      "See-All-Channels",
+      "Devry",
+      "tutor"
+    ],
+    "ClassCreation": 
+    {
+      "VoiceChannels": 1,
+      "TextChannels": [
+        "general",
+        "i-need-help"
+      ],
+      "AdditionalRoles": [
+        "See-All-Channels"
+      ]
+    }
+  }
+}

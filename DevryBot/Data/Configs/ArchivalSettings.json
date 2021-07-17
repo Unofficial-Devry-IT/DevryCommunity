@@ -1,0 +1,16 @@
+﻿{
+  "ArchiveSettings": {
+    "IgnoreArchive": [
+      "Moderators Only",
+      "Main hub",
+      "Personal Projects and hobbies",
+      "Tutoring and Scheduling",
+      "Resources",
+      "Code Reviews",
+      "Sites-Wix-And-Profiles",
+      "CNO: Computer Network Operations",
+      "Alumni"
+    ],
+    "ArchiveOverDays": 21
+  }
+}

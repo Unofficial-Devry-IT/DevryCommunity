@@ -1,0 +1,10 @@
+﻿version: "3.8"
+
+services:
+     devry-services:
+          environment:
+               TZ: "America/New_York"
+          image: "mercenary9312/unofficial-devry-service-bot"
+          restart: "always"
+          volumes:
+            - ${PWD}/data/:/app/data
