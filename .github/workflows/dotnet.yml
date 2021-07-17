@@ -17,10 +17,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.102
-    - name: Add DSharpPlus Nuget Source
-      run: dotnet nuget add source https://nuget.emzi0767.com/api/v3/index.json --name DSharpPlus
     - name: Restore dependencies
-      run: dotnet restore DevryService
+      run: dotnet restore DevryBot
     - name: Build
       run: dotnet build --no-restore --configuration Release --no-restore
     - name: Login to Dockerhub
