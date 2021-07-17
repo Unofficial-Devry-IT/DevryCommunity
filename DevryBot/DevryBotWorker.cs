@@ -1,7 +1,10 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using DevryInfrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,17 +13,25 @@ namespace DevryBot
     public class DevryBotWorker : BackgroundService
     {
         private readonly ILogger<DevryBotWorker> _logger;
-
         private readonly Bot _bot;
         private readonly ApplicationDbContext _context;
+        private readonly IServiceScope _scope;
         
-        public DevryBotWorker(ILogger<DevryBotWorker> logger, IConfiguration configuration, ILogger<Bot> botLogger)// ApplicationDbContext context)
+        public DevryBotWorker(ILogger<DevryBotWorker> logger, IConfiguration configuration, ILogger<Bot> botLogger, IServiceProvider serviceProvider)
         {
+            _scope = serviceProvider.CreateScope();
+            _context = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            try
+            {
+                _context.Database.Migrate();
+            }
+            catch
+            {
+            }
+
             _logger = logger;
-
-            //_context = context;
-
-            _bot = new Bot(configuration, botLogger); //, context);
+            _bot = new Bot(configuration, botLogger, _context, serviceProvider);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

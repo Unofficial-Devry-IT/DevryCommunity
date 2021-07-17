@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using DevryApplication.Tasks.Scheduling;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevryApplication
 {
@@ -6,9 +7,7 @@ namespace DevryApplication
     {
         public static IServiceCollection AddDevryApplication(this IServiceCollection services)
         {
-            // This is where we will add whatever is necessary from this assembly marker
-            
-            
+            services.AddScheduler();
             return services;
         }
     }

@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using DevryCore.Common.Models;
-using DevryCore.Tasks.Scheduling;
 
 namespace DevryDomain.Models
 {

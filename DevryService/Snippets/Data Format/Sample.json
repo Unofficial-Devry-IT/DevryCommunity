@@ -1,7 +1,0 @@
-{
-  "Config": {
-    "Name": "Super awesome config name",
-    "SavePath": "C:\\users\\badger\\downloads",
-    "FileFilter": "*.csv"
-  }
-}

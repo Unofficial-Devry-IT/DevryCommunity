@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using DevryApplication.Common.Interfaces;
 using DevryInfrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ namespace DevryInfrastructure
         /// <typeparam name="TStartup">Used as a marker for where the Migrations folder is placed</typeparam>
         /// <returns></returns>
         public static IServiceCollection AddDevryInfrastructure<TStartup>(this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration) where TStartup : class
         {
             if (configuration.GetValue<bool>("Database:UseInMemoryDatabase"))
             {
@@ -32,20 +33,20 @@ namespace DevryInfrastructure
                 {
                     string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-                    if (baseDir.Contains("bin"))
-                    {
-                        int index = baseDir.IndexOf("bin");
-                        baseDir = baseDir.Substring(0, index);
-                    }
+                    string dataDirectory = Path.Join(baseDir, "Data");
 
-                    options.UseSqlite($"Data Source={baseDir}data\\DevryCommunity.db", 
+                    // We want to ensure our folder exists
+                    Directory.CreateDirectory(dataDirectory);
+                    string dbPath = Path.Join(dataDirectory, "DevryCommunity.db");
+                    
+                    options.UseSqlite($"Data Source={dbPath}", 
                             x=>x.MigrationsAssembly(typeof(TStartup).Namespace))
                         .EnableDetailedErrors();
                 });
             }
 
             services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
-
+            
             return services;
         }
     }

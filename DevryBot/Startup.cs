@@ -1,4 +1,7 @@
-﻿using DevryInfrastructure;
+﻿using DevryApplication;
+using DevryApplication.Tasks.Scheduling;
+using DevryBot.Services;
+using DevryInfrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -17,13 +20,15 @@ namespace DevryBot
 
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.AddDevryInfrastructure<Bot>(Configuration);
+            services.AddDevryInfrastructure<Bot>(Configuration);
+            services.AddHostedService<SchedulerBackgroundService>();
+            services.AddSingleton<ReminderBackgroundService>();
             services.AddHostedService<DevryBotWorker>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            
+
         }
     }
 }

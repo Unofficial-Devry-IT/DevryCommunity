@@ -13,7 +13,11 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using DevryApplication.Common.Interfaces;
 using DevryBot.Discord.Extensions;
+using DevryBot.Services;
+using DevryInfrastructure;
+using DevryInfrastructure.Persistence;
 using DSharpPlusNextGen.EventArgs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevryBot
 {
@@ -67,10 +71,10 @@ namespace DevryBot
         public ILogger<Bot> Logger { get; }
         public IApplicationDbContext Database { get; }
 
-        public Bot(IConfiguration config, ILogger<Bot> logger)//, IApplicationDbContext context)
+        public Bot(IConfiguration config, ILogger<Bot> logger, IApplicationDbContext context, IServiceProvider serviceProvider)
         {
             Instance = this;
-            //Database = context;
+            Database = context;
             Logger = logger;
             Prefix = config.GetValue<string>("Discord:Prefix");
             
@@ -85,7 +89,7 @@ namespace DevryBot
             {
                 Token = token,
                 TokenType = TokenType.Bot,
-                MinimumLogLevel = LogLevel.Debug,
+                MinimumLogLevel = LogLevel.Information,
                 AutoReconnect = true,
                 Intents =
                     DiscordIntents.GuildEmojisAndStickers |
@@ -129,11 +133,14 @@ namespace DevryBot
                     Stop = DiscordEmoji.FromName(Client, ":stop_button:", false)
                 }
             });
-                
-            // Register all slash commands
-            SlashCommandsExtension slashCommandsExtension = Client.UseSlashCommands();
-            slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
             
+            // Register all slash commands
+            SlashCommandsExtension slashCommandsExtension = Client.UseSlashCommands(new SlashCommandsConfiguration()
+            {
+                Services = serviceProvider
+            });
+            
+            slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
             Configuration = config;
         }
 
