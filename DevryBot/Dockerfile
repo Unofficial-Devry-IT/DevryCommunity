@@ -1,6 +1,10 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
 WORKDIR /app
 
+RUN mkdir -p /app/Data/Configs
+RUN chmod 777 /app/Data
+RUN chmod 777 /app/Data/Configs
+
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["DevryBot/DevryBot.csproj", "DevryBot/"]
