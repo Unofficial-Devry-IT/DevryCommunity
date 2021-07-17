@@ -17,10 +17,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.102
-    - name: Add DSharpPlus Nuget Source
-      run: dotnet nuget add source https://nuget.emzi0767.com/api/v3/index.json --name DSharpPlus
     - name: Restore dependencies
-      run: dotnet restore DevryService
+      run: dotnet restore DevryBot
     - name: Build
       run: dotnet build --no-restore --configuration Release --no-restore
     - name: Login to Dockerhub
@@ -29,7 +27,7 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     - name: Build Docker Image
-      run: export TOKEN=${{ secrets.DISCORD_TOKEN }} && docker build --build-arg TOKEN -f DevryService/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
+      run: export TOKEN=${{ secrets.DISCORD_TOKEN }} && docker build --build-arg TOKEN -f DevryBot/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
     - name: Push Docker Image
       run: docker push mercenary9312/unofficial-devry-service-bot
           
