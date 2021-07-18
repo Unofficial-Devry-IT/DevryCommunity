@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DSharpPlusNextGen;
@@ -13,11 +14,9 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using DevryApplication.Common.Interfaces;
 using DevryBot.Discord.Extensions;
+using DevryBot.Discord.Interactions;
 using DevryBot.Services;
-using DevryInfrastructure;
-using DevryInfrastructure.Persistence;
 using DSharpPlusNextGen.EventArgs;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DevryBot
 {
@@ -57,7 +56,7 @@ namespace DevryBot
                 if (mainGuild == null)
                 {
                     if (Client.Guilds.Any())
-                        mainGuild = Client.Guilds.Values.First(x => x.Name.ToLower().Contains("devry"));
+                        mainGuild = Client.Guilds[618254766396538901];
                 }
 
                 return mainGuild;
@@ -117,6 +116,7 @@ namespace DevryBot
             Commands.CommandErrored += CommandsOnCommandErrored;
             Client.MessageCreated += OnMessageCreated_RemoveDiscordLinks;
             Client.GuildMemberAdded += ClientOnGuildMemberAdded;
+            Client.ComponentInteractionCreated += ClientOnComponentInteractionCreated;
             
             Interactivity = Client.UseInteractivity(new InteractivityConfiguration
             {
@@ -144,9 +144,46 @@ namespace DevryBot
             Configuration = config;
         }
 
+        private async Task ClientOnComponentInteractionCreated(DiscordClient sender, ComponentInteractionCreateEventArgs e)
+        {
+            Logger.LogInformation($"Interaction ID: {e.Id} : {e.Message.Content} : {string.Join(", ", e.Values)}");
+            var member = await e.Guild.GetMemberAsync(e.User.Id);
+
+            // if a role based interaction was made on the welcome channel
+            if (e.Id.EndsWith("_role") && e.Channel.Id == 618254766396538903)
+            {
+
+                DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
+                    .WithTitle("Sorting Hat")
+                    .WithDescription("Role successfully applied. Please note the additional channels available to you.");
+
+                DiscordInteractionResponseBuilder interactionBuilder = new DiscordInteractionResponseBuilder()
+                {
+                    IsEphemeral = true
+                };
+                
+                interactionBuilder.AddEmbed(embedBuilder.Build());
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, interactionBuilder);
+                await WelcomeHandler.Instance.AddRoleToMember(member, e.Id);
+                return;
+            }
+
+            if (e.Id.Equals("lecture_invite"))
+            {
+                await LectureInviteInteraction.HandleLectureInvite(member, e.Channel, e.Interaction);
+                return;
+            }
+
+            if (e.Id.EndsWith("linvite"))
+            {
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate);
+                await LectureInviteInteraction.HandleLectureInviteSelection(member, e.Interaction, e.Values);
+            }
+        }
+
         private async Task ClientOnGuildMemberAdded(DiscordClient sender, GuildMemberAddEventArgs e)
         {
-            
+            WelcomeHandler.Instance.AddMember(e.Member);
         }
 
         private async Task OnMessageCreated_RemoveDiscordLinks(DiscordClient sender, MessageCreateEventArgs e)
@@ -175,7 +212,19 @@ namespace DevryBot
             messageBuilder.AddEmbed(embedBuilder.Build());
             
             await e.Message.RespondAsync(messageBuilder);
+
+            messageBuilder = new();
+            embedBuilder = new DiscordEmbedBuilder()
+                .WithTitle("Snitch")
+                .WithDescription($"{e.Author.Username} has attempted sharing a discord link\n\n" +
+                                 $"{e.Message.Content}")
+                .WithColor(DiscordColor.Gray)
+                .WithFooter("Creation Date: " + e.Message.CreationTimestamp.ToString("F"));
+            
             await e.Message.DeleteAsync("Contains a discord link -- only moderators are authorized to share such links");
+
+            messageBuilder.AddEmbed(embedBuilder.Build());
+            await e.Guild.Channels[851970581179662346].SendMessageAsync(messageBuilder);
         }
 
         private async Task CommandsOnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)

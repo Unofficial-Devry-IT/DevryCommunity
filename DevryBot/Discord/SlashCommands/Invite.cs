@@ -2,6 +2,7 @@
 using DevryBot.Discord.Extensions;
 using DSharpPlusNextGen;
 using DSharpPlusNextGen.Entities;
+using DSharpPlusNextGen.Enums;
 using DSharpPlusNextGen.SlashCommands;
 using Microsoft.Extensions.Configuration;
 
@@ -27,7 +28,12 @@ namespace DevryBot.Discord.SlashCommands
                 .WithImageUrl(Bot.Instance.Configuration.GetValue<string>("Discord:InviteImage"));
 
             responseBuilder.AddEmbed(embedBuilder.Build());
-            
+
+            DiscordButtonComponent yesButton = new DiscordButtonComponent(ButtonStyle.Primary,
+                "lecture_invite",
+                "Click here if this is for lecture");
+
+            responseBuilder.AddComponents(yesButton);
             await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, responseBuilder);
         }
     }
