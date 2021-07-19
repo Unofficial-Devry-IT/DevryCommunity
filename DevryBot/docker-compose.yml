@@ -2,13 +2,15 @@
 
 volumes:
      devrydata:
-          name: devry_devry-services
+          name: devry-devry-services
 
 services:
      devry-services:
+          container_name: DeVryBot
+          hostname: devrybot_host
           environment:
                TZ: "America/New_York"
           image: "mercenary9312/unofficial-devry-service-bot"
           restart: "always"
           volumes:
-               - devrydata:/app/Data:rw
+               - devrydata:/app/Data:rw 
