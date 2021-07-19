@@ -36,13 +36,10 @@ namespace DevryBot
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //await _context.Database.EnsureCreatedAsync(stoppingToken);
             await _bot.RunAsync();
             
             while (!stoppingToken.IsCancellationRequested)
-            {
                 await Task.Delay(1000, stoppingToken);
-            }
         }
     }
 }
