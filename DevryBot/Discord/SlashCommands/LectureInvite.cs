@@ -40,6 +40,18 @@ namespace DevryBot.Discord.SlashCommands
                     .Take(24)
                     .ToList();
 
+                if (roles.Count == 0)
+                {
+                    embedBuilder.Color = DiscordColor.Yellow;
+                    embedBuilder.ImageUrl = Bot.Instance.Configuration.WarningImage();
+                    embedBuilder.Description =
+                        "Sorry, this command assumes you have roles to choose from! Please use `/join` to join the class(es) you're in, along with your major.";
+
+                    responseBuilder.AddEmbed(embedBuilder.Build());
+                    await context.EditResponseAsync(responseBuilder);
+                    return;
+                }
+                
                 List<DiscordSelectComponentOption> options = new();
 
                 foreach (var role in roles)

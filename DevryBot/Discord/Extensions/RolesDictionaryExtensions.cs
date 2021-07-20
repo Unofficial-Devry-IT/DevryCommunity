@@ -56,7 +56,7 @@ namespace DevryBot.Discord.Extensions
             var list = blacklistedRoles.ToList();
             
             return roles
-                .Where(x => x != null && !list.Contains(x.Id) && !x.Name.StartsWith("^"))
+                .Where(x => x != null && !list.Contains(x.Id) && !x.Name.StartsWith("^") && !x.Name.ToLower().Contains("moderator"))
                 .ToList();
         }
 
