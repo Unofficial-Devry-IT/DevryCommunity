@@ -2,7 +2,7 @@
 
 volumes:
      devrydata:
-          name: devry-devry-services
+          name: devry-services-data
 
 services:
      devry-services:
