@@ -16,8 +16,8 @@
     "BlacklistedRoles": [
       "@everyone",
       "Admin",
-      "Senior Moderator",
-      "Junior Moderator",
+      "Senior Moderators",
+      "Junior Moderators",
       "Pollmaster",
       "Professor",
       "Database",

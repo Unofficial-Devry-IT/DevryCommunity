@@ -168,12 +168,6 @@ namespace DevryBot
                 return;
             }
 
-            if (e.Id.Equals("lecture_invite"))
-            {
-                await LectureInviteInteraction.HandleLectureInvite(member, e.Channel, e.Interaction);
-                return;
-            }
-
             if (e.Id.EndsWith("linvite"))
             {
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate);

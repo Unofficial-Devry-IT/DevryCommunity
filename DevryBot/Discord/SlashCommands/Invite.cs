@@ -29,11 +29,6 @@ namespace DevryBot.Discord.SlashCommands
 
             responseBuilder.AddEmbed(embedBuilder.Build());
 
-            DiscordButtonComponent yesButton = new DiscordButtonComponent(ButtonStyle.Primary,
-                "lecture_invite",
-                "Click here if this is for lecture");
-
-            responseBuilder.AddComponents(yesButton);
             await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, responseBuilder);
         }
     }
