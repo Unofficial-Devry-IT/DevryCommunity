@@ -40,19 +40,6 @@ namespace DevryBot.Discord.SlashCommands
                     .Take(24)
                     .ToList();
 
-                if (roles.Count == 0)
-                {
-                    embedBuilder.Color = DiscordColor.Yellow;
-                    embedBuilder.ImageUrl = Bot.Instance.Configuration.WarningImage();
-                    embedBuilder.Description =
-                        "Sorry, this command assumes you have roles to choose from! Please use `/join` to join the class(es) you're in, along with your major.";
-
-                    responseBuilder = new();
-                    responseBuilder.AddEmbed(embedBuilder.Build());
-                    await context.EditResponseAsync(responseBuilder);
-                    return;
-                }
-                
                 List<DiscordSelectComponentOption> options = new();
 
                 foreach (var role in roles)
@@ -90,17 +77,18 @@ namespace DevryBot.Discord.SlashCommands
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex, $"Error during lecture invite: {context.Member.DisplayName}");
+                Bot.Instance.Logger.LogError(ex, $"Error during lecture invite: {context.Member.DisplayName}. Roles:\n{string.Join("\n",context.Member.Roles.Select(x=>x.Name))}");
+               
                 DiscordFollowupMessageBuilder messageBuilder = new DiscordFollowupMessageBuilder()
                 {
                     IsEphemeral = true
                 };
 
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
-                    .WithTitle("Error")
-                    .WithDescription(ex.Message)
-                    .WithImageUrl(Bot.Instance.Configuration.ErrorImage())
-                    .WithColor(DiscordColor.Red);
+                    .WithTitle("Oops")
+                    .WithDescription("Sorry, this command assumes you have roles to choose from! Please use `/join` to join the class(es) you're in, along with your major.")
+                    .WithImageUrl(Bot.Instance.Configuration.WarningImage())
+                    .WithColor(DiscordColor.Yellow);
 
                 messageBuilder.AddEmbed(builder.Build());
 
