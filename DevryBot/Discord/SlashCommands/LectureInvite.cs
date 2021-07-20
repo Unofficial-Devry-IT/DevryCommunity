@@ -47,6 +47,7 @@ namespace DevryBot.Discord.SlashCommands
                     embedBuilder.Description =
                         "Sorry, this command assumes you have roles to choose from! Please use `/join` to join the class(es) you're in, along with your major.";
 
+                    responseBuilder = new();
                     responseBuilder.AddEmbed(embedBuilder.Build());
                     await context.EditResponseAsync(responseBuilder);
                     return;
