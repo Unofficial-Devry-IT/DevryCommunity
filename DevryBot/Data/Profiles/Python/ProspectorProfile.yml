@@ -1,0 +1,18 @@
+﻿output-format: json
+
+strictness: high
+test-warnings: true
+doc-warnings: false
+autodetect: false
+
+ignore-patterns:
+  - (^|/)skip(this)?(/|$)
+
+pylint:
+  run: true
+
+pep257:
+  run: false
+  
+pep8:  
+  full: false

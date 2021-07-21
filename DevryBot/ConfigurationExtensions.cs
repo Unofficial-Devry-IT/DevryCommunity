@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DevryCore.Extensions;
+using DevryDomain.Models;
 using DSharpPlusNextGen.Entities;
 using Microsoft.Extensions.Configuration;
 
@@ -8,6 +11,30 @@ namespace DevryBot
 {
     public static class ConfigurationExtensions
     {
+        /// <summary>
+        /// Retrieves the storage location of where snippets are hiding
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static string SnippetStorageLocation(this IConfiguration config) =>
+            Path.Join(AppDomain.CurrentDomain.BaseDirectory, "Data", config.GetValue<string>("Snippets:Storage"));
+
+        /// <summary>
+        /// Retrieves the colors to associate each language as
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static Dictionary<string, LanguageInfo> SnippetLanguageColors(this IConfiguration config)
+            => config.GetValue<Dictionary<string, LanguageInfo>>("Snippets:Languages");
+
+        /// <summary>
+        /// Retrieves the dictionary map of what file extension goes with what title
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> SnippetFileExtensions(this IConfiguration config)
+            => config.GetValue<Dictionary<string, string>>("Snippets:FileExtensions");
+        
         /// <summary>
         /// Retrieve blacklisted roles from configuration
         /// </summary>

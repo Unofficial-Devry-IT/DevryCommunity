@@ -43,10 +43,7 @@
     <ItemGroup>
       <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
       <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Data" />
+      <ProjectReference Include="..\SnippetAssistant\SnippetAssistant.csproj" />
     </ItemGroup>
 
     <ItemGroup>

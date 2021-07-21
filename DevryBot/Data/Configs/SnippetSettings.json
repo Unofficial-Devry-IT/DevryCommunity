@@ -1,0 +1,53 @@
+﻿{
+  "SnippetSettings": {
+    "Storage": "Snippets",
+    
+    "Languages": 
+    {
+      "sql": 
+      { 
+        "color":  "green", 
+        "extension": "sql",
+        "title": "SQL"
+      },
+      "c#": 
+      {
+        "color": "purple",
+        "extension": "cs",
+        "title": "C#"
+      },
+      "c++": 
+      {
+        "color": "gray",
+        "title": "C++",
+        "extension": "cpp|h"
+      },
+      "python": 
+      {
+        "color": "cyan",
+        "title": "Python",
+        "extension": "py"
+      },
+      "java": 
+      {
+        "color": "red",
+        "title": "Java",
+        "extension": "java"
+      },
+      "yml": 
+      {
+        "color": "pink",
+        "title": "YAML",
+        "extension": "yml"
+      }
+    },
+    
+    "FileExtensions": {
+      "cs": "C#",
+      "h": "C++",
+      "cpp": "C++",
+      "yml": "YAML",
+      "py": "Python"
+    }
+  }
+}
