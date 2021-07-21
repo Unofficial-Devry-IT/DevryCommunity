@@ -10,7 +10,7 @@ services:
           hostname: devrybot_host
           environment:
                TZ: "America/New_York"
-          image: "mercenary9312/unofficial-devry-service-bot"
+          image: "mercenary9312/unofficial-devry-service-bot:latest"
           restart: "always"
           volumes:
                - devrydata:/app/Data:rw 
