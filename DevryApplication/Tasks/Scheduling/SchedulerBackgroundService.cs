@@ -115,6 +115,7 @@ namespace DevryApplication.Tasks.Scheduling
                     var filesToRemove = FileRemoval.Where(x => referenceTime > x.Value);
                     foreach (var file in filesToRemove)
                     {
+                        _logger.LogInformation($"It is time to delete file: {file.Key}");
                         File.Delete(file.Key);
                         FileRemoval.Remove(file.Key);
                     }
