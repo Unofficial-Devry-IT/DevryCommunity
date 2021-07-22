@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using DevryApplication.Tasks.Scheduling;
 using DevryInfrastructure;
 using SnippetAssistant.Python;
 
@@ -75,15 +76,15 @@ namespace SnippetAssistant
         /// <summary>
         ///  Cleanup the files associated with this report
         /// </summary>
+        /// <param name="deleteAfterMinutes"></param>
         /// <param name="originalFile"></param>
         /// <param name="reportFile"></param>
-        public void Cleanup(string originalFile, string reportFile)
+        public void Cleanup(int deleteAfterMinutes, string originalFile, string reportFile)
         {
             if (File.Exists(originalFile))
                 File.Delete(originalFile);
-
-            if (File.Exists(reportFile))
-                File.Delete(reportFile);
+            
+            SchedulerBackgroundService.Instance.ScheduleFileDelete(reportFile, DateTime.Now.AddMinutes(deleteAfterMinutes));
         }
         
         /// <summary>

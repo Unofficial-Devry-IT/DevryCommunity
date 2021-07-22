@@ -44,6 +44,12 @@ enhanced user experience compared to vanilla discord.
    3. As people join they will be greeted by the bot. Selected role(s) will be attached as buttons to the welcome message -- allowing new members to click on them to join. Thus expediting the entire process. 
 
 ----
+#### /code-review
+
+**Work in progress feature**
+Currently supports Python files ( .py ) extension. The bot will prompt users for a single file. Once done it'll generate an HTML report. User will be given a button to go view the report.
+
+----
 
 #### /create-reminder
   

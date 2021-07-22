@@ -12,6 +12,25 @@ namespace DevryBot
     public static class ConfigurationExtensions
     {
         /// <summary>
+        /// Gets the base URL for the Devry Website
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static string DevryWebsite(this IConfiguration config)
+            => config.GetValue<string>("Discord:DevryWebsite");
+
+        /// <summary>
+        /// Get the reports URL based on <see cref="DevryWebsite"/>
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static string DevryWebsiteReports(this IConfiguration config)
+            => Path.Join(config.DevryWebsite(), "reports");
+        
+        public static int DeleteReportAfterDuration(this IConfiguration config)
+            => config.GetValue<int>("Discord:DeleteReportAfterDuration");
+        
+        /// <summary>
         /// Retrieves the storage location of where snippets are hiding
         /// </summary>
         /// <param name="config"></param>
