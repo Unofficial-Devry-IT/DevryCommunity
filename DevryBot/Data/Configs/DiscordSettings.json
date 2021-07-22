@@ -13,6 +13,8 @@
     "InviteMessage": "Spread the word, our trusted scout! Spread the word of our kingdom! Amass an army of knowledge seeking minions! Lay waste to the legions of doubt and uncertainty!!",
     "InviteLink": "https://discord.io/unofficial-DevryIT",
     "InviteFooter": "Minions of knowledge! Assembblleeee!",
+    "DeleteReportAfterDuration": 60,
+    "DevryWebsite": "https://unofficialdevrycom.dev",
     "BlacklistedRoles": [
       "@everyone",
       "Admin",
