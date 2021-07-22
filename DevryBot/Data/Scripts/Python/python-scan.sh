@@ -1,0 +1,1 @@
+﻿prospector --profile-path /app/Data/Profiles/Python --output-format json  "$1" > "$2.json"

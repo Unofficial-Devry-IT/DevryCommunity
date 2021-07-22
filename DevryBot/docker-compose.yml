@@ -3,6 +3,8 @@
 volumes:
      devrydata:
           name: devry-services-data
+     apachehtml:
+          name: apachehtml
 
 services:
      devry-services:
@@ -12,3 +14,4 @@ services:
           restart: "always"
           volumes:
                - devrydata:/app/Data:rw
+               - apachehtml:/app/web:z
