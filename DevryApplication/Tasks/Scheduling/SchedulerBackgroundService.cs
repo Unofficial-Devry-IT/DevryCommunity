@@ -70,6 +70,8 @@ namespace DevryApplication.Tasks.Scheduling
                 _logger.LogError($"File: {filePath} could not be scheduled for deletion because it doesn't exist...");
                 return;
             }
+            
+            _logger.LogInformation($"Scheduling {filePath} for deleation >= {deletionTime.ToString("F")}");
 
             if (FileRemoval.ContainsKey(filePath))
                 FileRemoval[filePath] = deletionTime;
