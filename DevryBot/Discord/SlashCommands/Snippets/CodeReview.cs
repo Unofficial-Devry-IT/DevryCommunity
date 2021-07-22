@@ -98,19 +98,24 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                     .WithFooter(context.User.Username)
                     .WithColor(DiscordColor.Purple);
 
-                messageBuilder.AddFile(File.OpenRead(reportFilePath), true);
-                messageBuilder.AddEmbed(embedBuilder.Build());
-
                 DiscordMessageBuilder builder = new DiscordMessageBuilder()
-                    .WithFile(reportFileName, File.OpenRead(reportFilePath))
+                    //.WithFile(reportFileName, File.OpenRead(reportFilePath))
                     .WithEmbed(embedBuilder.Build());
+
+                string reportUrl = Path.Join(Bot.Instance.Configuration.DevryWebsiteReports(), reportFileName);
                 
+                DiscordLinkButtonComponent reportLinkButton = new DiscordLinkButtonComponent(reportUrl, 
+                    "View", 
+                    false,
+                    new DiscordComponentEmoji(DiscordEmoji.FromName(Bot.Client,":desktop:")));
+                
+                builder.AddComponents(reportLinkButton);
                 await context.Channel.SendMessageAsync(builder);
                 
                 Bot.Instance.Logger.LogInformation($"Cleaning up user provided file from {context.User.Username} - {attachment.FileName}");
                 await inquiryResponse.Result.DeleteAsync();
                 
-                service.Cleanup(Bot.Instance.Configuration.DeleteReportAfterDuration(),reportFilePath, attachmentPath);
+                service.Cleanup(Bot.Instance.Configuration.DeleteReportAfterDuration(),attachmentPath, reportFilePath);
             }
             catch (Exception ex)
             {

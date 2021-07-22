@@ -76,6 +76,7 @@ namespace SnippetAssistant
         /// <summary>
         ///  Cleanup the files associated with this report
         /// </summary>
+        /// <param name="deleteAfterMinutes"></param>
         /// <param name="originalFile"></param>
         /// <param name="reportFile"></param>
         public void Cleanup(int deleteAfterMinutes, string originalFile, string reportFile)
