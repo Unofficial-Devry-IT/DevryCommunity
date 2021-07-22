@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryInfrastructure;
+using DSharpPlusNextGen;
 using DSharpPlusNextGen.Entities;
 using DSharpPlusNextGen.SlashCommands;
 using Microsoft.Extensions.Logging;
@@ -74,30 +75,41 @@ namespace DevryBot.Discord.SlashCommands.Snippets
             }
 
             CodeReviewService service = new();
+            
             try
             {
-                string attachmentPath = Path.Join(StorageHandler.TemporaryFileStorage, attachment.FileName);
+                string attachmentPath = Path.Join(StorageHandler.TemporaryFileStorage, string.Join("_", context.User.Username, attachment.FileName));
                 string language = CodeReviewService.SupportedLanguages[attachment.FileName.Split(".").Last()];
-                await service.DownloadFile(attachment.Url, attachmentPath);
-                var report = await service.AnalyzeResults(language, attachmentPath);
-
-                string reportFile = Path.Join(StorageHandler.TemporaryFileStorage,
-                    string.Join("_", context.User.Username, "report.html"));
-                await File.WriteAllTextAsync(reportFile, await report.GenerateReport());
                 
-                messageBuilder = new();
+                // Download the user's file
+                await service.DownloadFile(attachment.Url, attachmentPath);
+            
+                // Analyze the provided file
+                var report = await service.AnalyzeResults(language, attachmentPath);
+                
+                string reportFileName = $"{context.User.Username.Replace(" ", "")}_{attachment.FileName.Split(".").First()}_report.html";
+                string reportFilePath = Path.Join(StorageHandler.TemporaryFileStorage, reportFileName);
+                await File.WriteAllTextAsync(reportFilePath, await report.GenerateReport());
+
                 embedBuilder = new DiscordEmbedBuilder()
                     .WithTitle("Code Review")
-                    .WithDescription("Here are some suggestions on your code!")
+                    .WithDescription($"{context.User.Username}, based on {language} standards this is what I suggest. " +
+                                     $"Please download the attached HTML report and view it on your machine!")
+                    .WithFooter(context.User.Username)
                     .WithColor(DiscordColor.Purple);
 
-                using StreamReader reader = new StreamReader(reportFile);
-                FileInfo reportInfo = new FileInfo(reportFile);
-                messageBuilder.AddFile(reportInfo.Name, File.OpenRead(reportFile));
-
+                messageBuilder.AddFile(File.OpenRead(reportFilePath), true);
                 messageBuilder.AddEmbed(embedBuilder.Build());
 
-                await context.EditResponseAsync(messageBuilder);
+                DiscordMessageBuilder builder = new DiscordMessageBuilder()
+                    .WithFile(reportFileName, File.OpenRead(reportFilePath))
+                    .WithEmbed(embedBuilder.Build());
+                
+                await context.Channel.SendMessageAsync(builder);
+                
+                Bot.Instance.Logger.LogInformation($"Cleaning up user provided file from {context.User.Username} - {attachment.FileName}");
+                await inquiryResponse.Result.DeleteAsync();
+                service.Cleanup(reportFilePath, attachmentPath);
             }
             catch (Exception ex)
             {

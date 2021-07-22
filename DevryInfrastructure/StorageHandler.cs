@@ -5,7 +5,8 @@ namespace DevryInfrastructure
 {
     public static class StorageHandler
     {
-        public static string AppDataPath => Path.Join(AppDomain.CurrentDomain.BaseDirectory, "Data");
+        public static string AppDataPath => 
+            Path.Join(AppDomain.CurrentDomain.BaseDirectory, "Data");
         public static string ToolProfilesPath => Path.Join(AppDataPath, "Profiles");
         public static string ScriptsPath => Path.Join(AppDataPath, "Scripts");
         public static string ConfigsPath => Path.Join(AppDataPath, "Configs");

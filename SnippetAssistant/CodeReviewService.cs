@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using DevryInfrastructure;
@@ -23,7 +24,12 @@ namespace SnippetAssistant
             }
         }
 
-        public static Dictionary<string, string> SupportedLanguages => new Dictionary<string, string>()
+        /// <summary>
+        /// Languages that are currently supported
+        /// Key: file extension
+        /// Value: Language name
+        /// </summary>
+        public static Dictionary<string, string> SupportedLanguages => new()
         {
             {"py", "Python"}
         };
@@ -47,7 +53,7 @@ namespace SnippetAssistant
         /// <returns>HTML Report based on scan</returns>
         public async Task<ReportBase> AnalyzeResults(string language, string codeFilePath)
         {
-            string results = await ExecuteTool(language, codeFilePath);
+            string results = await ExecuteProspectorTool(language, codeFilePath);
             string originalCode = await File.ReadAllTextAsync(codeFilePath);
             
             ReportBase report = null;
@@ -65,6 +71,20 @@ namespace SnippetAssistant
 
             return report;
         }
+
+        /// <summary>
+        ///  Cleanup the files associated with this report
+        /// </summary>
+        /// <param name="originalFile"></param>
+        /// <param name="reportFile"></param>
+        public void Cleanup(string originalFile, string reportFile)
+        {
+            if (File.Exists(originalFile))
+                File.Delete(originalFile);
+
+            if (File.Exists(reportFile))
+                File.Delete(reportFile);
+        }
         
         /// <summary>
         /// Executes the appropriate script to scan a given path
@@ -72,32 +92,22 @@ namespace SnippetAssistant
         /// <param name="language"></param>
         /// <param name="codeFilePath"></param>
         /// <returns></returns>
-        private async Task<string> ExecuteTool(string language, string codeFilePath)
+        private async Task<string> ExecuteProspectorTool(string language, string codeFilePath)
         {
             Process toolProcess = new Process();
-
-            FileInfo fileInfo = new FileInfo(codeFilePath);
+            string profilePath = Path.Join(StorageHandler.ToolProfilesPath, language, "ProspectorProfile.yml");
             
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
-                CreateNoWindow = true,
-                FileName = "powershell.exe",
-                UseShellExecute = false,
+                FileName = "prospector",
+                Arguments = $"--profile-path \"{profilePath}\" --output-format json \"{codeFilePath}\"",
                 RedirectStandardOutput = true
             };
 
-            if (IsLinux)
-            {
-                startInfo.Arguments = $"./{language}-scan.sh \"{fileInfo.FullName}\" \"{fileInfo.Name}\"";
-                startInfo.FileName = "/bin/bash";
-            }
-            else
-                startInfo.Arguments = $"{language}-scan.ps1 \"{Path.Join(StorageHandler.ToolProfilesPath, language)}\" \"{fileInfo.FullName}\" {fileInfo.Name}";
-                        
+            toolProcess.StartInfo = startInfo;
             toolProcess.Start();
             await toolProcess.WaitForExitAsync();
-
-            return await File.ReadAllTextAsync($"{fileInfo.Name}.json");
+            return await toolProcess.StandardOutput.ReadToEndAsync();
         }
     }
 }

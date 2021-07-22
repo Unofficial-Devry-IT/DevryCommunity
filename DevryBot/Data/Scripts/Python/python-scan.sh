@@ -1,3 +1,1 @@
-﻿#!/bin/bash
-
-prospector --profile-path /app/Data/Profiles --output-format json  $1 > $2.json
+﻿prospector --profile-path /app/Data/Profiles/Python --output-format json  "$1" > "$2.json"
