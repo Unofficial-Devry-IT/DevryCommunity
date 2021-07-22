@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using DevryInfrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace DevryBot
@@ -24,9 +21,7 @@ namespace DevryBot
                 {
                     builder.ConfigureAppConfiguration((hostContext, context) =>
                     {
-                        string configDirectory = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "Data", "Configs");
-
-                        foreach (string file in Directory.GetFiles(configDirectory))
+                        foreach (string file in Directory.GetFiles(StorageHandler.ConfigsPath))
                         {
                             FileInfo info = new FileInfo(file);
                             if (info.Extension.Contains("json"))

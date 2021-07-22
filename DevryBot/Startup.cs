@@ -20,6 +20,8 @@ namespace DevryBot
 
         public void ConfigureServices(IServiceCollection services)
         {
+            StorageHandler.InitializeFolderStructure();
+            
             services.AddDevryInfrastructure<Bot>(Configuration);
             services.AddDevryApplication();
             services.AddSingleton<ReminderBackgroundService>();
