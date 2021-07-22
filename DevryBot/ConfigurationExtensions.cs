@@ -11,6 +11,9 @@ namespace DevryBot
 {
     public static class ConfigurationExtensions
     {
+        public static int DeleteReportAfterDuration(this IConfiguration config)
+            => config.GetValue<int>("Discord:DeleteReportAfterDuration");
+        
         /// <summary>
         /// Retrieves the storage location of where snippets are hiding
         /// </summary>

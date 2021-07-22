@@ -88,7 +88,7 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 var report = await service.AnalyzeResults(language, attachmentPath);
                 
                 string reportFileName = $"{context.User.Username.Replace(" ", "")}_{attachment.FileName.Split(".").First()}_report.html";
-                string reportFilePath = Path.Join(StorageHandler.TemporaryFileStorage, reportFileName);
+                string reportFilePath = Path.Join(StorageHandler.GeneratedReports, reportFileName);
                 await File.WriteAllTextAsync(reportFilePath, await report.GenerateReport());
 
                 embedBuilder = new DiscordEmbedBuilder()
@@ -109,7 +109,8 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 
                 Bot.Instance.Logger.LogInformation($"Cleaning up user provided file from {context.User.Username} - {attachment.FileName}");
                 await inquiryResponse.Result.DeleteAsync();
-                service.Cleanup(reportFilePath, attachmentPath);
+                
+                service.Cleanup(Bot.Instance.Configuration.DeleteReportAfterDuration(),reportFilePath, attachmentPath);
             }
             catch (Exception ex)
             {

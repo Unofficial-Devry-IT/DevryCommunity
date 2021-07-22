@@ -12,3 +12,4 @@ services:
           restart: "always"
           volumes:
                - devrydata:/app/Data:rw
+               - apachehtml:/app/web:z

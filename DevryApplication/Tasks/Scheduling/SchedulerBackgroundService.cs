@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.CompilerServices;
 using NCrontab;
 
 namespace DevryApplication.Tasks.Scheduling
@@ -25,12 +27,17 @@ namespace DevryApplication.Tasks.Scheduling
         /// </summary>
         protected readonly Dictionary<string, SchedulerTaskWrapper> ScheduledTasks = new();
         
+        /// <summary>
+        /// Files that are scheduled for deletion after a specified amount of time
+        /// </summary>
+        protected readonly Dictionary<string, DateTime> FileRemoval = new();
+        
         private readonly ILogger<SchedulerBackgroundService> _logger;
         private readonly IApplicationDbContext _context;
         private readonly IScheduledTaskExecutor _executor;
 
         public static SchedulerBackgroundService Instance;
-        
+
         public SchedulerBackgroundService(ILogger<SchedulerBackgroundService> logger, IServiceProvider serviceProvider)
         {
             Instance = this;
@@ -56,6 +63,20 @@ namespace DevryApplication.Tasks.Scheduling
             _executor = (IScheduledTaskExecutor) Activator.CreateInstance(type);
         }
 
+        public void ScheduleFileDelete(string filePath, DateTime deletionTime)
+        {
+            if (!File.Exists(filePath))
+            {
+                _logger.LogError($"File: {filePath} could not be scheduled for deletion because it doesn't exist...");
+                return;
+            }
+
+            if (FileRemoval.ContainsKey(filePath))
+                FileRemoval[filePath] = deletionTime;
+            else
+                FileRemoval.Add(filePath, deletionTime);
+        }
+        
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             TimeSpan waitPeriod = TimeSpan.FromSeconds(5);
@@ -84,6 +105,21 @@ namespace DevryApplication.Tasks.Scheduling
                     
                     foreach (var task in remove)
                         await RemoveTask(task.Task.Id.ToString());
+                }
+
+                // Cleanup the files that are scheduled for deletion
+                try
+                {
+                    var filesToRemove = FileRemoval.Where(x => referenceTime > x.Value);
+                    foreach (var file in filesToRemove)
+                    {
+                        File.Delete(file.Key);
+                        FileRemoval.Remove(file.Key);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error with routing removal of files - {ex.Message}: \n\t" + string.Join("\n\t", FileRemoval.Keys));
                 }
                     
                 // Get all the tasks that should run based on reference time
