@@ -1,10 +1,24 @@
 # Devry-Service-Bot
-[![Build & Push Image](https://github.com/JBraunsmaJr/Devry-Service-Bot/actions/workflows/dotnet.yml/badge.svg)](https://github.com/JBraunsmaJr/Devry-Service-Bot/actions/workflows/dotnet.yml)
 
 This bot is utilized in an academic setting for students and professors.
 
 It provides the Unofficial Devry Discord Community an 
 enhanced user experience compared to vanilla discord.
+
+#### Status
+[![Latest Build](https://github.com/Unofficial-Devry-IT/DevryCommunity/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Unofficial-Devry-IT/DevryCommunity/actions/workflows/dotnet.yml)
+
+#### Commit Activities
+![GitHub last commit](https://img.shields.io/github/last-commit/Unofficial-Devry-IT/DevryCommunity?label=Last%20Commit)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Unofficial-Devry-IT/DevryCommunity?label=Commit%20Activity)
+
+#### Stats
+![GitHub issues](https://img.shields.io/github/issues/Unofficial-Devry-IT/DevryCommunity?label=Issues)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/Unofficial-Devry-IT/DevryCommunity?label=PRs)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/Unofficial-Devry-IT/DevryCommunity?label=Size)
+![GitHub contributors](https://img.shields.io/github/contributors/Unofficial-Devry-IT/DevryCommunity)
+![GitHub Repo stars](https://img.shields.io/github/stars/Unofficial-Devry-IT/DevryCommunity?label=Stars)
+
 
 
 ## Slash Commands

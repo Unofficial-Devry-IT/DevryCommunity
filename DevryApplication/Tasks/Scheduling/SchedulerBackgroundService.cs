@@ -78,6 +78,40 @@ namespace DevryApplication.Tasks.Scheduling
             else
                 FileRemoval.Add(filePath, deletionTime);
         }
+
+        void ProcessFileRemoval(DateTime referenceTime)
+        {
+            // Cleanup the files that are scheduled for deletion
+            try
+            {
+                var filesToRemove = FileRemoval.Where(x => referenceTime > x.Value);
+                foreach (var file in filesToRemove)
+                {
+                    _logger.LogInformation($"It is time to delete file: {file.Key}");
+                    File.Delete(file.Key);
+                    FileRemoval.Remove(file.Key);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error with routing removal of files - {ex.Message}: \n\t" + string.Join("\n\t", FileRemoval.Keys));
+            }
+        }
+
+        async Task ProcessTaskRemoval(DateTime referenceTime)
+        {
+            // Remove all tasks that will never run again
+            var remove = ScheduledTasks.Values.Where(x => x.WillNeverRunAgain);
+
+            if (remove.Any())
+            {
+                _logger.LogInformation($"Removing the following tasks because they will never run again...\n\t" +
+                                       $"{string.Join("\n\t", remove.Select(x=>$"{x.Task.Name} | {CronExpressionDescriptor.ExpressionDescriptor.GetDescription(x.Task.Schedule)}"))}");
+                    
+                foreach (var task in remove)
+                    await RemoveTask(task.Task.Id.ToString());
+            }
+        }
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -97,34 +131,9 @@ namespace DevryApplication.Tasks.Scheduling
             {
                 var referenceTime = DateTime.Now;
 
-                // Remove all tasks that will never run again
-                var remove = ScheduledTasks.Values.Where(x => x.WillNeverRunAgain);
+                await ProcessTaskRemoval(referenceTime);
+                ProcessFileRemoval(referenceTime);
 
-                if (remove.Any())
-                {
-                    _logger.LogInformation($"Removing the following tasks because they will never run again...\n\t" +
-                                           $"{string.Join("\n\t", remove.Select(x=>$"{x.Task.Name} | {CronExpressionDescriptor.ExpressionDescriptor.GetDescription(x.Task.Schedule)}"))}");
-                    
-                    foreach (var task in remove)
-                        await RemoveTask(task.Task.Id.ToString());
-                }
-
-                // Cleanup the files that are scheduled for deletion
-                try
-                {
-                    var filesToRemove = FileRemoval.Where(x => referenceTime > x.Value);
-                    foreach (var file in filesToRemove)
-                    {
-                        _logger.LogInformation($"It is time to delete file: {file.Key}");
-                        File.Delete(file.Key);
-                        FileRemoval.Remove(file.Key);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error with routing removal of files - {ex.Message}: \n\t" + string.Join("\n\t", FileRemoval.Keys));
-                }
-                    
                 // Get all the tasks that should run based on reference time
                 var tasksThatShouldRun = ScheduledTasks.Values.Where(x => x.ShouldRun(referenceTime));
 

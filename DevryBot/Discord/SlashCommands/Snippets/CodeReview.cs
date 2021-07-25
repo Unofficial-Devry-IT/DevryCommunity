@@ -57,8 +57,10 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 await context.EditResponseAsync(messageBuilder);
                 return;
             }
-            
+
             DiscordAttachment attachment = inquiryResponse.Result.Attachments.First();
+            string attachmentPath = Path.Join(StorageHandler.TemporaryFileStorage, string.Join("_", context.User.Username, attachment.FileName));
+            string language = CodeReviewService.SupportedLanguages[attachment.FileName.Split(".").Last()];
 
             // Is the given attachment even supported by the snippet assistant yet?
             if (!CodeReviewService.SupportedLanguages.ContainsKey(attachment.FileName.Split(".").Last()))
@@ -78,12 +80,9 @@ namespace DevryBot.Discord.SlashCommands.Snippets
             
             try
             {
-                string attachmentPath = Path.Join(StorageHandler.TemporaryFileStorage, string.Join("_", context.User.Username, attachment.FileName));
-                string language = CodeReviewService.SupportedLanguages[attachment.FileName.Split(".").Last()];
-                
                 // Download the user's file
                 await service.DownloadFile(attachment.Url, attachmentPath);
-            
+                
                 // Analyze the provided file
                 var report = await service.AnalyzeResults(language, attachmentPath);
                 
@@ -93,13 +92,12 @@ namespace DevryBot.Discord.SlashCommands.Snippets
 
                 embedBuilder = new DiscordEmbedBuilder()
                     .WithTitle("Code Review")
-                    .WithDescription($"{context.User.Username}, based on {language} standards this is what I suggest. " +
-                                     $"Please download the attached HTML report and view it on your machine!")
+                    .WithDescription($"{context.User.Username}, based on {language} standards this is what I suggest.\n" +
+                                      "Please click the button below to view the report!")
                     .WithFooter(context.User.Username)
                     .WithColor(DiscordColor.Purple);
 
                 DiscordMessageBuilder builder = new DiscordMessageBuilder()
-                    //.WithFile(reportFileName, File.OpenRead(reportFilePath))
                     .WithEmbed(embedBuilder.Build());
 
                 string reportUrl = Path.Join(Bot.Instance.Configuration.DevryWebsiteReports(), reportFileName);

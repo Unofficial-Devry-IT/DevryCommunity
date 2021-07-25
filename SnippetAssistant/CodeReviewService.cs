@@ -35,6 +35,27 @@ namespace SnippetAssistant
             {"py", "Python"}
         };
 
+        public static string GetLanguage(string extension)
+        {
+            if (SupportedLanguages.ContainsKey(extension))
+                return SupportedLanguages[extension];
+
+            return extension;
+        }
+
+        /// <summary>
+        /// Get the extension based on <paramref name="language"/>
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns>Extension if applicable</returns>
+        public static string GetExtension(string language)
+        {
+            if (SupportedLanguages.ContainsValue(language))
+                return SupportedLanguages.First(x => x.Value == language).Key;
+
+            return language;
+        }
+        
         public Task DownloadFile(string url, string downloadDestination)
         {
             using WebClient client = new WebClient();
@@ -45,7 +66,7 @@ namespace SnippetAssistant
 
             return Task.CompletedTask;
         }
-
+        
         /// <summary>
         /// Analyze a given file for a particular language
         /// </summary>

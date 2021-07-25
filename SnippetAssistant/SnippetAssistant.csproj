@@ -24,4 +24,8 @@
       <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Models" />
+    </ItemGroup>
+
 </Project>
