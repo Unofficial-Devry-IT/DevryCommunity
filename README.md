@@ -5,6 +5,9 @@ This bot is utilized in an academic setting for students and professors.
 It provides the Unofficial Devry Discord Community an 
 enhanced user experience compared to vanilla discord.
 
+#### Discord Users 
+[![Discord](https://discord.com/api/guilds/618254766396538901/widget.png)](https://discord.io/unofficial-DevryIT)
+
 #### Status
 [![Latest Build](https://github.com/Unofficial-Devry-IT/DevryCommunity/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Unofficial-Devry-IT/DevryCommunity/actions/workflows/dotnet.yml)
 
