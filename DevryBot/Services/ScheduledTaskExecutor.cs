@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DevryApplication.Tasks.Scheduling;
 using DevryDomain.Models;
-using DSharpPlusNextGen.Entities;
+using DisCatSharp.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace DevryBot.Services

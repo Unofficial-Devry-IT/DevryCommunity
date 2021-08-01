@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
-using DSharpPlusNextGen;
+using DisCatSharp;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 
 namespace DevryBot.Discord.Extensions
 {

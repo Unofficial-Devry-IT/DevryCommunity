@@ -11,13 +11,17 @@ namespace DevryInfrastructure
         public static string ScriptsPath => Path.Join(AppDataPath, "Scripts");
         public static string ConfigsPath => Path.Join(AppDataPath, "Configs");
         public static string TemporaryFileStorage => Path.Join(AppDataPath, "Reviewing");
-        public static string TestData = Path.Join(AppDataPath, "Testing");
+        public static string TestData => Path.Join(AppDataPath, "Testing");
+        public static string Snippets => Path.Join(AppDataPath, "Snippets");
         public static string GeneratedReports => Path.Join(AppDomain.CurrentDomain.BaseDirectory, "web", "reports");
 
         public static void InitializeFolderStructure()
         {
+            if (!Directory.Exists(Snippets))
+                Directory.CreateDirectory(Snippets);
+            
             if (!Directory.Exists(GeneratedReports))
-                File.Create(GeneratedReports);
+                Directory.CreateDirectory(GeneratedReports);
             
             if (!Directory.Exists(ToolProfilesPath))
                 Directory.CreateDirectory(ToolProfilesPath);

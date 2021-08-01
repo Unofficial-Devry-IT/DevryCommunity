@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
-using DSharpPlusNextGen;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -200,7 +200,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 var message = await context.EditResponseAsync(messageBuilder);
 
                 var componentInteraction =
-                    await Bot.Interactivity.WaitForSelectAsync(message, menuName, null);
+                    await Bot.Interactivity.WaitForSelectAsync(message, menuName, timeoutOverride: null);
                 
                 Bot.Instance.Logger.LogInformation($"{context.User.Username} -- interacted with confirmation menu: {string.Join(",",componentInteraction.Result.Values)}");
 

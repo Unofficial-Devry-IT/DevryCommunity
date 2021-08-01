@@ -6,8 +6,8 @@ using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
 using DevryBot.Services;
 using DevryDomain.Models;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -74,7 +74,7 @@ namespace DevryBot.Discord.SlashCommands.Reminders
                 var message = await context.EditResponseAsync(responseBuilder);
 
                 var componentInteraction =
-                    await Bot.Interactivity.WaitForSelectAsync(message, menuName, null);
+                    await Bot.Interactivity.WaitForSelectAsync(message, menuName, timeoutOverride: null);
 
                 Bot.Instance
                     .Logger

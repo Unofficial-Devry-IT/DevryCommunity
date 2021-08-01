@@ -1,14 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using DSharpPlusNextGen;
-using DSharpPlusNextGen.CommandsNext;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.Interactivity;
-using DSharpPlusNextGen.Interactivity.Enums;
-using DSharpPlusNextGen.Interactivity.Extensions;
-using DSharpPlusNextGen.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Linq;
@@ -16,7 +8,14 @@ using DevryApplication.Common.Interfaces;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.Interactions;
 using DevryBot.Services;
-using DSharpPlusNextGen.EventArgs;
+using DisCatSharp;
+using DisCatSharp.CommandsNext;
+using DisCatSharp.Entities;
+using DisCatSharp.EventArgs;
+using DisCatSharp.Interactivity;
+using DisCatSharp.Interactivity.Enums;
+using DisCatSharp.Interactivity.Extensions;
+using DisCatSharp.SlashCommands;
 
 namespace DevryBot
 {
@@ -170,7 +169,7 @@ namespace DevryBot
 
             if (e.Id.EndsWith("linvite"))
             {
-                await e.Interaction.CreateResponseAsync(InteractionResponseType.DefferedMessageUpdate);
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
                 await LectureInviteInteraction.HandleLectureInviteSelection(member, e.Interaction, e.Values);
             }
         }

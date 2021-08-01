@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevryBot.Discord.SlashCommands.Reminders

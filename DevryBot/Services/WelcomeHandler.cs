@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.Enums;
+using DisCatSharp.Entities;
+using DisCatSharp.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace DevryBot.Services

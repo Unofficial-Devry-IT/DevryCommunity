@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
 using DevryCore.Extensions;
-using DSharpPlusNextGen;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 

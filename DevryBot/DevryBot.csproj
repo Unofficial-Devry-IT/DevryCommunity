@@ -20,12 +20,11 @@
     
     <ItemGroup>
         <PackageReference Include="CronExpressionDescriptor" Version="2.16.0" />
-        <PackageReference Include="DSharpPlusNextGen" Version="9.5.3" />
-        <PackageReference Include="DSharpPlusNextGen.CommandsNext" Version="9.5.3" />
-        <PackageReference Include="DSharpPlusNextGen.Common" Version="9.5.3" />
-        <PackageReference Include="DSharpPlusNextGen.Interactivity" Version="9.5.3" />
-        <PackageReference Include="DSharpPlusNextGen.SlashCommands" Version="9.5.3" />
-        <PackageReference Include="HSNXT.DSharpPlus.CommandsNext.Extended" Version="3.0.198" />
+        <PackageReference Include="DisCatSharp" Version="9.6.2" />
+        <PackageReference Include="DisCatSharp.CommandsNext" Version="9.6.2" />
+        <PackageReference Include="DisCatSharp.Common" Version="9.6.2" />
+        <PackageReference Include="DisCatSharp.Interactivity" Version="9.6.2" />
+        <PackageReference Include="DisCatSharp.SlashCommands" Version="9.6.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7">
           <PrivateAssets>all</PrivateAssets>

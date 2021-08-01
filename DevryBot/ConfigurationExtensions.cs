@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using DevryCore.Extensions;
 using DevryDomain.Models;
-using DSharpPlusNextGen.Entities;
+using DisCatSharp.Entities;
 using Microsoft.Extensions.Configuration;
 
 namespace DevryBot
