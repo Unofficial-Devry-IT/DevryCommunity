@@ -86,4 +86,3 @@ Currently supports Python files ( .py ) extension. The bot will prompt users for
 #### /archive
   
   Any class section that hasn't been used in a configurable amount of time will be deleted, along with the associated class-role.
-
