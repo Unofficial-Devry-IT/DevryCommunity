@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -108,7 +108,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 var message = await context.EditResponseAsync(messageBuilder);
                 
                 var componentInteraction = 
-                    await Bot.Interactivity.WaitForSelectAsync(message, userMenuName, null);
+                    await Bot.Interactivity.WaitForSelectAsync(message, userMenuName, timeoutOverride: null);
                 
                 Bot.Instance.Logger
                     .LogInformation($"The user interacted with the following: {string.Join(", ", componentInteraction.Result.Values.ToArray())}");

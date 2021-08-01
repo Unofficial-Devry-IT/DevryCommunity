@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using DevryBot.Services;
-using DSharpPlusNextGen.Entities;
+using DisCatSharp.Entities;
 
 namespace DevryBot.Discord.Interactions
 {

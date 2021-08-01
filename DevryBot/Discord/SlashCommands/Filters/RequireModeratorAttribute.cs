@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.SlashCommands;
 
 namespace DevryBot.Discord.SlashCommands.Filters
 {

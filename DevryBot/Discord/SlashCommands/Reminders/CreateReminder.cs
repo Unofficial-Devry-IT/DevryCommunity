@@ -7,8 +7,8 @@ using DevryBot.Discord.SlashCommands.Filters;
 using DevryBot.Services;
 using DevryCore.Extensions;
 using DevryDomain.Models;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

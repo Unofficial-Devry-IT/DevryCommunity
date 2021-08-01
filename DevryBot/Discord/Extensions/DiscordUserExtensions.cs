@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using DSharpPlusNextGen.Entities;
+using DisCatSharp.Entities;
 
 namespace DevryBot.Discord.Extensions
 {

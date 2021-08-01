@@ -1,5 +1,5 @@
-﻿using DSharpPlusNextGen.SlashCommands;
-using System.Linq;
+﻿using System.Linq;
+using DisCatSharp.SlashCommands;
 
 namespace DevryBot.Discord.Extensions
 {

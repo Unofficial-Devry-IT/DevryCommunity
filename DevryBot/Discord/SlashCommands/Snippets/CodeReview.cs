@@ -4,9 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryInfrastructure;
-using DSharpPlusNextGen;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Logging;
 using SnippetAssistant;
 

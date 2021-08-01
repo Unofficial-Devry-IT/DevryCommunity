@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Services;
-using DSharpPlusNextGen.Entities;
-using DSharpPlusNextGen.SlashCommands;
+using DisCatSharp.Entities;
+using DisCatSharp.EventArgs;
+using DisCatSharp.Interactivity;
+using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Logging;
 
 namespace DevryBot.Discord.SlashCommands
@@ -59,7 +61,7 @@ namespace DevryBot.Discord.SlashCommands
                     .WithFooter(Bot.Instance.Configuration.InviteFooter())
                     .WithColor(DiscordColor.Green);
 
-                var interaction = await Bot.Interactivity.WaitForSelectAsync(message, menuId);
+                InteractivityResult<ComponentInteractionCreateEventArgs> interaction = await Bot.Interactivity.WaitForSelectAsync(message, menuId, timeoutOverride: null);
                 responseBuilder = new();
                 responseBuilder.AddEmbed(embedBuilder.Build());
                 await context.EditResponseAsync(responseBuilder);
