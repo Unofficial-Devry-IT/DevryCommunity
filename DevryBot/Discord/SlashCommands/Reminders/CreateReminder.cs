@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
 using DevryBot.Services;
-using DevryCore.Extensions;
 using DevryDomain.Models;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using UnofficialDevryIT.Architecture.Extensions;
 
 namespace DevryBot.Discord.SlashCommands.Reminders
 {

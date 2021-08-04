@@ -5,9 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using DevryApplication.Tasks.Scheduling;
 using DevryInfrastructure;
 using SnippetAssistant.Python;
+using UnofficialDevryIT.Architecture.Services;
 
 namespace SnippetAssistant
 {
@@ -16,15 +16,6 @@ namespace SnippetAssistant
     /// </summary>
     public class CodeReviewService
     {
-        public static bool IsLinux
-        {
-            get
-            {
-                int p = (int) Environment.OSVersion.Platform;
-                return p is 4 or 6 or 128; 
-            }
-        }
-
         /// <summary>
         /// Languages that are currently supported
         /// Key: file extension
@@ -32,7 +23,7 @@ namespace SnippetAssistant
         /// </summary>
         public static Dictionary<string, string> SupportedLanguages => new()
         {
-            {"py", "Python"}
+            { "py", "Python" }
         };
 
         public static string GetLanguage(string extension)

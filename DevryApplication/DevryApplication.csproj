@@ -6,7 +6,8 @@
 
     <ItemGroup>
       <PackageReference Include="CronExpressionDescriptor" Version="2.16.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.8" />
+      <PackageReference Include="UnofficialDevryIT.Architecture" Version="1.0.2" />
     </ItemGroup>
 
     <ItemGroup>

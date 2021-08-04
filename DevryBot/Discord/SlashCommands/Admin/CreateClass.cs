@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
-using DevryCore.Extensions;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using UnofficialDevryIT.Architecture.Extensions;
 
 namespace DevryBot.Discord.SlashCommands.Admin
 {

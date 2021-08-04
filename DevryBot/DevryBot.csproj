@@ -52,8 +52,4 @@
       <_ContentIncludedByDefault Remove="Configs\DatabaseSettings.json" />
       <_ContentIncludedByDefault Remove="Configs\DiscordSettings.json" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Data\Testing" />
-    </ItemGroup>
 </Project>

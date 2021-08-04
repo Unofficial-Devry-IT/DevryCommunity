@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DevryCore.Extensions;
 using DevryDomain.Models;
 using DisCatSharp.Entities;
 using Microsoft.Extensions.Configuration;
+using UnofficialDevryIT.Architecture.Extensions;
 
 namespace DevryBot
 {

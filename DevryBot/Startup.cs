@@ -1,5 +1,4 @@
 ﻿using DevryApplication;
-using DevryApplication.Tasks.Scheduling;
 using DevryBot.Services;
 using DevryInfrastructure;
 using Microsoft.AspNetCore.Builder;
