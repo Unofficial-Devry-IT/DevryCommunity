@@ -25,7 +25,7 @@ namespace DevryBot.Discord.SlashCommands
                 .WithDescription("Spread the word, our trusted scout! Spread the word " +
                                  "of our kingdom! Amass an army of knowledge seeking minions! Lay waste " +
                                  "to the legions of doubt and uncertainty!!")
-                .AddField("Invite", "https://discord.io/unofficial-DevryIT")
+                .AddField("Invite", "https://www.unofficialdevrycom.dev/discord")
                 .WithFooter("Minions of knowledge! Assembblleeee!")
                 .WithImageUrl(DiscordOptions.Value.InviteImage);
 
