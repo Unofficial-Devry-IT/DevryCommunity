@@ -2,10 +2,8 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
 
 namespace ImageCreator.Utilities
 {
@@ -39,39 +37,6 @@ namespace ImageCreator.Utilities
             bitmap?.Dispose();
             
             return await Task.FromResult(path);
-        }
-
-        private static Random Random = new Random();
-        
-        /// <summary>
-        /// Return a random image from search result
-        /// </summary>
-        /// <param name="searchText">Category to search unsplash.com for</param>
-        /// <returns></returns>
-        public async Task<string> RandomImageURLFromSplashSearch(string searchText)
-        {
-            string searchUrl = string.Concat("https://unsplash.com/s/photos/", searchText);
-            string baseUrl = "https://unsplash.com";
-
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = await web.LoadFromWebAsync(searchUrl);
-            
-            // Grab all the links with the photo url
-            var images = doc.DocumentNode.SelectNodes("//a[@itemprop='contentUrl']")
-                .Where(x => x.Attributes["href"].Value.StartsWith("/photos"))
-                .ToList();
-
-            int index = Random.Next(0, images.Count);
-
-            string photoUrl = $"{baseUrl}{images[index].Attributes["href"].Value}";
-            HtmlDocument photoPage = await web.LoadFromWebAsync(photoUrl);
-
-            var items = photoPage.DocumentNode.SelectNodes("//img").ToList();
-
-            if (items.Count > 1)
-                return items[2].Attributes["src"].Value;
-
-            return null;
         }
 
         private static Bitmap CropToBanner(Image image, int bannerWidth = 1100, int bannerHeight = 450)
