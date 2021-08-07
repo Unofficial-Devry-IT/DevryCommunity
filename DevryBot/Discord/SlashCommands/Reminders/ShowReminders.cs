@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
+using DevryInfrastructure.Persistence;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +11,11 @@ namespace DevryBot.Discord.SlashCommands.Reminders
 {
     public class ShowReminders : SlashCommandModule
     {
+        public IApplicationDbContext Context { get; set; }
+
         [SlashCommand("show-reminders", "Show all events for the current channel")]
         [RequireModerator]
-        public static async Task Command(InteractionContext context)
+        public async Task Command(InteractionContext context)
         {
             if (!await context.ValidateGuild())
                 return;
@@ -24,7 +27,7 @@ namespace DevryBot.Discord.SlashCommands.Reminders
                 .WithTitle("Scheduler")
                 .WithFooter("Reminders for current channel");
 
-            var reminders = await Bot.Instance.Database.Reminders
+            var reminders = await Context.Reminders
                 .Where(x=>x.ChannelId == context.Channel.Id)
                 .ToListAsync();
 

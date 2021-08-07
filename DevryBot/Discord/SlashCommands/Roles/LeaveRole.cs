@@ -3,17 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
+using DevryBot.Services;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.SlashCommands.Roles
 {
     public class LeaveRole : SlashCommandModule
     {
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+        public IBot Bot { get; set; }
+        public IRoleService RoleService { get; set; }
+        public ILogger<LeaveRole> Logger { get; set; }
+
         [SlashCommand("leave", "Leave a class or two")]
-        public static async Task Command(InteractionContext context,
+        public async Task Command(InteractionContext context,
             [Option("Class", "Name of the class you want to leave")]
             string? name)
         {
@@ -42,14 +49,14 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 listAll
                     ? context.Member
                         .Roles
-                        .RemoveBlacklistedRoles(Bot.Instance.Configuration.BlacklistedRoles(Bot.Instance.MainGuild))
+                        .RemoveBlacklistedRoles(RoleService.GetBlacklistedRolesDict(Bot.MainGuild.Id).Keys)
                         .OrderBy(x => x.Name)
                         .Take(24)
                         .ToDictionary(x => x.Id, x => x)
                     : context.Member
                         .Roles
                         .FindRolesWithName(name)
-                        .RemoveBlacklistedRoles(Bot.Instance.Configuration.BlacklistedRoles(Bot.Instance.MainGuild))
+                        .RemoveBlacklistedRoles(RoleService.GetBlacklistedRolesDict(Bot.MainGuild.Id).Keys)
                         .OrderBy(x => x.Name)
                         .Take(24)
                         .ToDictionary(x => x.Id, x => x);
@@ -71,7 +78,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 }
                 catch (Exception ex)
                 {
-                    Bot.Instance.Logger.LogError(ex.Message);
+                    Logger.LogError(ex.Message);
                 }    
             }
 
@@ -88,7 +95,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 }
                 catch (Exception ex)
                 {
-                    Bot.Instance.Logger.LogError(ex.Message);
+                    Logger.LogError(ex.Message);
                 }
             }
 
@@ -100,7 +107,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                     role.Value.Id.ToString(),
                     "", false, null));
 
-            string menuName = $"{context.User.Id}_removeRole";
+            string menuName = $"{context.User.Id}_{InteractionConstants.LEAVE_ROLE}";
 
             DiscordSelectComponent menu = new(menuName, "Select the classes you want to remove",
                 options.ToArray(), 1, options.Count);
@@ -115,7 +122,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 var componentInteraction =
                     await Bot.Interactivity.WaitForSelectAsync(message, menuName, timeoutOverride: null);
 
-                Bot.Instance.Logger.LogInformation(
+                Logger.LogInformation(
                     $"The user is trying to remove the following: {string.Join(", ", componentInteraction.Result.Values)}");
 
                 List<DiscordRole> removeRoles = new();
@@ -125,11 +132,11 @@ namespace DevryBot.Discord.SlashCommands.Roles
                     if (ulong.TryParse(roleId, out ulong id))
                     {
                         removeRoles.Add(roles[id]);
-                        Bot.Instance.Logger.LogInformation($"Queing for removal {context.User.Username} - {roles[id].Name}");
+                        Logger.LogInformation($"Queing for removal {context.User.Username} - {roles[id].Name}");
                     }
                     else
                     {
-                        Bot.Instance.Logger.LogError($"Was unable to parse {roleId} for user {context.User.Username}");
+                        Logger.LogError($"Was unable to parse {roleId} for user {context.User.Username}");
                     }
                 }
 
@@ -140,7 +147,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                     .WithTitle("In Queue to Remove")
                     .WithDescription(roleText)
-                    .WithImageUrl(Bot.Instance.Configuration.GetValue<string>("Discord:QueueImage"));
+                    .WithImageUrl(DiscordOptions.Value.QueueImage);
                 
                 messageBuilder = new();
                 messageBuilder.AddEmbed(builder.Build());
@@ -155,14 +162,14 @@ namespace DevryBot.Discord.SlashCommands.Roles
 
                 messageBuilder = new();
                 builder.Title = "Following roles have been removed";
-                builder.ImageUrl = Bot.Instance.Configuration.GetValue<string>("Discord:CompletedImage");
+                builder.ImageUrl = DiscordOptions.Value.CompletedImage;
                 messageBuilder.AddEmbed(builder.Build());
                 
                 await context.EditResponseAsync(messageBuilder);
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex.Message);
+                Logger.LogError(ex.Message);
             }
         }
     }

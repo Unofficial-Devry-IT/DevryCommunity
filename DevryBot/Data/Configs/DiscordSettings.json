@@ -10,6 +10,7 @@
     "UhOhImage": "https://unofficialdevrycom.dev/images/istockphoto-464392649-170667a.jpg",
     "ClearCommands": false,
     "InviteLinkSearchCriteria": "discord",
+    "DeleteReportAfterDuration": 30,
     "InviteMessage": "Spread the word, our trusted scout! Spread the word of our kingdom! Amass an army of knowledge seeking minions! Lay waste to the legions of doubt and uncertainty!!",
     "InviteLink": "https://unofficialdevrycom.dev/discord",
     "InviteFooter": "Minions of knowledge! Assembblleeee!",
@@ -32,18 +33,6 @@
       "See-All-Channels",
       "Devry",
       "tutor"
-    ],
-    "ClassCreation": 
-    {
-      "VoiceChannels": 1,
-      "TextChannels": [
-        "general",
-        "i-need-help"
-      ],
-      "AdditionalRoles": [
-        "^See-All-Channels",
-        "Junior Moderators"
-      ]
-    }
+    ]
   }
 }

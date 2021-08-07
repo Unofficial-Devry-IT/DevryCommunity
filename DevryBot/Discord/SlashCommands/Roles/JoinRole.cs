@@ -3,17 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
+using DevryBot.Services;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.SlashCommands.Roles
 {
     public class JoinRole : SlashCommandModule
     {
+        public IBot Bot { get; set; }
+        public ILogger<JoinRole> Logger { get; set; }
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+        public IRoleService RoleService { get; set; }
+
         [SlashCommand("join", "Find the classes you want to join")]
-        public static async Task Command(InteractionContext context,
+        public async Task Command(InteractionContext context,
             [Option("Class", "Name of the class or category of class you want to join")] string name)
         {
             if (!await context.ValidateGuild())
@@ -29,10 +37,10 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 -- NOTE: Discord has a restriction of 25 maximum values
              */
             
-            var roles = Bot.Instance.MainGuild
+            var roles = Bot.MainGuild
                 .Roles
                 .FindRolesWithName(name)
-                .RemoveBlacklistedRoles(Bot.Instance.Configuration.BlacklistedRoles(Bot.Instance.MainGuild))
+                .RemoveBlacklistedRoles(RoleService.GetBlacklistedRolesDict(Bot.MainGuild.Id).Keys)
                 .OrderBy(x=>x.Name)
                 .Take(24)
                 .ToDictionary(x=>x.Id, x=>x);
@@ -53,7 +61,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 }
                 catch (Exception ex)
                 {
-                    Bot.Instance.Logger.LogError(ex.Message);
+                    Logger.LogError(ex.Message);
                 }
                 
                 return;
@@ -72,7 +80,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 }
                 catch (Exception ex)
                 {
-                    Bot.Instance.Logger.LogError(ex.Message);
+                    Logger.LogError(ex.Message);
                 }
                 
                 return;
@@ -95,7 +103,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                     null));
 
 
-            string userMenuName = $"{context.User.Id}_selectRole";
+            string userMenuName = $"{context.User.Id}_{InteractionConstants.SELECT_ROLE}";
             
             DiscordSelectComponent menu = new DiscordSelectComponent(userMenuName, "Select the classes you wish to join",
                 options.ToArray(), 1, options.Count);
@@ -110,7 +118,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 var componentInteraction = 
                     await Bot.Interactivity.WaitForSelectAsync(message, userMenuName, timeoutOverride: null);
                 
-                Bot.Instance.Logger
+                Logger
                     .LogInformation($"The user interacted with the following: {string.Join(", ", componentInteraction.Result.Values.ToArray())}");
                 
                 List<DiscordRole> addRoles = new List<DiscordRole>();
@@ -120,11 +128,11 @@ namespace DevryBot.Discord.SlashCommands.Roles
                     if (ulong.TryParse(roleId, out ulong id))
                     {
                         addRoles.Add(roles[id]);
-                        Bot.Instance.Logger.LogInformation($"Queing {context.User.Username} - {roles[id].Name}");
+                        Logger.LogInformation($"Queing {context.User.Username} - {roles[id].Name}");
                     }
                     else
                     {
-                        Bot.Instance.Logger.LogError($"Was unable to parse {roleId} for user {context.User.Username}");
+                        Logger.LogError($"Was unable to parse {roleId} for user {context.User.Username}");
                     }
                 }
 
@@ -135,7 +143,7 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                     .WithTitle("In Queue to Add")
                     .WithDescription(roleText)
-                    .WithImageUrl(Bot.Instance.Configuration.GetValue<string>("Discord:QueueImage"));
+                    .WithImageUrl(DiscordOptions.Value.QueueImage);
 
                 messageBuilder = new();
                 messageBuilder.AddEmbed(builder.Build());
@@ -150,14 +158,14 @@ namespace DevryBot.Discord.SlashCommands.Roles
                 
                 messageBuilder = new();
                 builder.Title = "Following roles have been added";
-                builder.ImageUrl = Bot.Instance.Configuration.GetValue<string>("Discord:CompletedImage");
+                builder.ImageUrl = DiscordOptions.Value.CompletedImage;
                 messageBuilder.AddEmbed(builder.Build());
                 
                 await context.EditResponseAsync(messageBuilder);
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex.Message);
+                Logger.LogError(ex.Message);
             }
         }
     }

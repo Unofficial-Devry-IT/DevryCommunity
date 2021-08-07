@@ -3,5 +3,13 @@
     "InviteWelcomeDuration": 3,
     "WelcomeMessageInterval": 30,
     "WelcomeMessage": "Welcome, [USERS], to the Unofficial DeVry IT Discord! A community built by students to help foster educational and professional growth; please introduce yourself in the #welcome-page channel and join our main discussions in the #main-hub-general .\n\nYou can find your fellow classmates 1 of 2 ways.\n1.) Utilize the `/join` command. It behaves almost like Google. Type in a class or course you're looking for and it'll display results via a dropdown menu\n2.) Inform a moderator which classes you're in.\n\nThanks, and welcome to the Unofficial DeVry IT Discord!",
+    "WelcomeImages": [
+      "https://images.unsplash.com/photo-1593642533144-3d62aa4783ec?ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+      "https://images.unsplash.com/photo-1579403124614-197f69d8187b?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1605379399642-870262d3d051?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1981&q=80",
+      "https://images.unsplash.com/photo-1542903660-eedba2cda473?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+      "https://images.unsplash.com/photo-1556075798-4825dfaaf498?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1955&q=80",
+      "https://images.unsplash.com/photo-1585079542156-2755d9c8a094?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1867&q=80"
+    ]
   }
 }

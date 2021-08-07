@@ -6,30 +6,25 @@
 
     <ItemGroup>
       <PackageReference Include="IdentityServer4.EntityFramework" Version="4.1.2" />
-      <PackageReference Include="Microsoft.AspNetCore.ApiAuthorization.IdentityServer" Version="5.0.7" />
+      <PackageReference Include="Microsoft.AspNetCore.ApiAuthorization.IdentityServer" Version="5.0.8" />
       <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.7" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.7" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.7">
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.8">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.7" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.7" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.7">
+      <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.8">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DevryApplication\DevryApplication.csproj" />
+      <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Services" />
-    </ItemGroup>
-
 </Project>

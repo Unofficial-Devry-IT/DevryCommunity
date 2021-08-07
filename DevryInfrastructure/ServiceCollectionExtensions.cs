@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
-using DevryApplication.Common.Interfaces;
 using DevryInfrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using UnofficialDevryIT.Architecture.Scheduler;
 
 namespace DevryInfrastructure
 {
@@ -25,7 +25,7 @@ namespace DevryInfrastructure
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
                     options.UseInMemoryDatabase("TestDatabase");
-                });
+                }, ServiceLifetime.Singleton);
             }
             else
             {
@@ -42,10 +42,11 @@ namespace DevryInfrastructure
                     options.UseSqlite($"Data Source={dbPath}", 
                             x=>x.MigrationsAssembly(typeof(TStartup).Namespace))
                         .EnableDetailedErrors();
-                });
+                }, ServiceLifetime.Singleton);
             }
 
-            services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+            services.AddSingleton<IApplicationDbContext>(x=>x.GetRequiredService<ApplicationDbContext>());
+            services.AddSingleton<IScheduleDbContext>(x=>x.GetRequiredService<ApplicationDbContext>());
             
             return services;
         }

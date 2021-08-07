@@ -14,13 +14,13 @@ namespace DevryBot.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.7");
+                .HasAnnotation("ProductVersion", "5.0.8");
 
             modelBuilder.Entity("DevryDomain.Models.Reminder", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
                     b.Property<ulong>("ChannelId")
                         .HasColumnType("INTEGER");
@@ -31,7 +31,7 @@ namespace DevryBot.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("NextRunTime")
+                    b.Property<DateTimeOffset>("NextRunTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Schedule")

@@ -3,19 +3,27 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
 using DevryInfrastructure;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SnippetAssistant;
 
 namespace DevryBot.Discord.SlashCommands.Snippets
 {
     public class CodeReview : SlashCommandModule
     {
+        public ILogger<CodeReview> Logger { get; set; }
+        public IBot Bot { get; set; }
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+        public IConfiguration Configuration { get; set; }
+
 
         [SlashCommand("code-review", "Automated review of code")]
-        public static async Task Command(InteractionContext context)
+        public async Task Command(InteractionContext context)
         {
             if (!await context.ValidateGuild())
                 return;
@@ -50,7 +58,7 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 messageBuilder = new();
                 embedBuilder.Description = "I'm sorry, either time ran out or you did not attach a file";
                 embedBuilder.Color = DiscordColor.Red;
-                embedBuilder.ImageUrl = Bot.Instance.Configuration.WarningImage();
+                embedBuilder.ImageUrl = DiscordOptions.Value.WarningImage;
                 messageBuilder.AddEmbed(embedBuilder.Build());
 
                 await context.EditResponseAsync(messageBuilder);
@@ -69,7 +77,7 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                     "I'm sorry but we do not support that file extension. Currently we support the following: \n\t" +
                     string.Join("\n\t", CodeReviewService.SupportedLanguages.Select(x => x.Key));
                 embedBuilder.Color = DiscordColor.Red;
-                embedBuilder.ImageUrl = Bot.Instance.Configuration.WarningImage();
+                embedBuilder.ImageUrl = DiscordOptions.Value.WarningImage;
                 messageBuilder.AddEmbed(embedBuilder.Build());
                 await context.EditResponseAsync(messageBuilder);
                 return;
@@ -99,7 +107,7 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 DiscordMessageBuilder builder = new DiscordMessageBuilder()
                     .WithEmbed(embedBuilder.Build());
 
-                string reportUrl = Path.Join(Bot.Instance.Configuration.DevryWebsiteReports(), reportFileName);
+                string reportUrl = Path.Join(Configuration.DevryWebsiteReports(), reportFileName);
                 
                 DiscordLinkButtonComponent reportLinkButton = new DiscordLinkButtonComponent(reportUrl, 
                     "View", 
@@ -109,14 +117,14 @@ namespace DevryBot.Discord.SlashCommands.Snippets
                 builder.AddComponents(reportLinkButton);
                 await context.Channel.SendMessageAsync(builder);
                 
-                Bot.Instance.Logger.LogInformation($"Cleaning up user provided file from {context.User.Username} - {attachment.FileName}");
+                Logger.LogInformation($"Cleaning up user provided file from {context.User.Username} - {attachment.FileName}");
                 await inquiryResponse.Result.DeleteAsync();
                 
-                service.Cleanup(Bot.Instance.Configuration.DeleteReportAfterDuration(),attachmentPath, reportFilePath);
+                service.Cleanup(Configuration.DeleteReportAfterDuration(),attachmentPath, reportFilePath);
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex, $"Something happened while processing {attachment.FileName}");
+                Logger.LogError(ex, $"Something happened while processing {attachment.FileName}");
             }
             
             #endregion

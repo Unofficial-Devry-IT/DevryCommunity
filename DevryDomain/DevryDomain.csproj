@@ -5,16 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Enums" />
-      <Folder Include="Services" />
-    </ItemGroup>
-
-    <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="UnofficialDevryIT.Architecture" Version="1.0.3" />
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\DevryCore\DevryCore.csproj" />
-    </ItemGroup>
-
 </Project>

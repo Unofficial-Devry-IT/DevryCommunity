@@ -4,21 +4,28 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
-using DevryBot.Services;
-using DevryCore.Extensions;
+using DevryBot.Options;
 using DevryDomain.Models;
+using DevryInfrastructure.Persistence;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using UnofficialDevryIT.Architecture.Extensions;
+using UnofficialDevryIT.Architecture.Scheduler;
 
 namespace DevryBot.Discord.SlashCommands.Reminders
 {
     public class CreateReminder : SlashCommandModule
     {
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+        public ILogger<CreateReminder> Logger { get; set; }
+        public IScheduledTaskService ScheduleService { get; set; }
+        public IApplicationDbContext Context { get; set; }
+
         [SlashCommand("create-reminder", "Create a reoccurring message")]
         [RequireModerator]
-        public static async Task Command(InteractionContext context,
+        public async Task Command(InteractionContext context,
             [Option("Title", "What is this reminder about?")]
             string title,
             [Option("DayOfWeek", "Cronjob syntax for selecting day of week (SUN - SAT).")]
@@ -42,9 +49,7 @@ namespace DevryBot.Discord.SlashCommands.Reminders
                 .WithTitle("Scheduler")
                 .WithFooter("Reminder Creation");
 
-            var reminderService = context.Services.GetService<ReminderBackgroundService>();
-
-            if (reminderService == null)
+            if (ScheduleService == null)
             {
                 embedBuilder.Description = "Reminder Background Service is unavailable";
                 embedBuilder.Color = DiscordColor.Red;
@@ -76,12 +81,12 @@ namespace DevryBot.Discord.SlashCommands.Reminders
             {
                 embedBuilder.Description =
                     "Please check out the following site to help create cron-strings: https://crontab.guru/";
-                embedBuilder.ImageUrl = Bot.Instance.Configuration.ErrorImage();
+                embedBuilder.ImageUrl = DiscordOptions.Value.ErrorImage;
                 embedBuilder.Color = DiscordColor.Red;
                 
                 foreach (var pair in errors)
                 {
-                    Bot.Instance.Logger.LogWarning(
+                    Logger.LogWarning(
                         $"{context.Member.Username} -- error with reminder {pair.Key} | {pair.Value}");
                     
                     embedBuilder.AddField(pair.Key, pair.Value);
@@ -104,22 +109,26 @@ namespace DevryBot.Discord.SlashCommands.Reminders
 
             try
             {
-                await reminderService.Add(reminder);
+                await ScheduleService.AddTask(reminder);
+                await Context.Reminders.AddAsync(reminder);
+                await Context.SaveChangesAsync(default);
+                
                 embedBuilder.Color = DiscordColor.Green;
                 embedBuilder.Description = "Successfully created reminder with the following schedule:\n" +
                                            CronExpressionDescriptor.ExpressionDescriptor.GetDescription(
                                                reminder.Schedule);
-                embedBuilder.ImageUrl = Bot.Instance.Configuration.CompletedImage();
+                embedBuilder.ImageUrl = DiscordOptions.Value.CompletedImage;
             }
             catch (Exception ex)
             {
                 embedBuilder.Color = DiscordColor.Red;
                 embedBuilder.Description = $"An error occurred while trying to save the reminder. {ex.Message}";
-                embedBuilder.ImageUrl = Bot.Instance.Configuration.ErrorImage();
+                embedBuilder.ImageUrl = DiscordOptions.Value.ErrorImage;
             }
 
             responseBuilder.AddEmbed(embedBuilder.Build());
             await context.EditResponseAsync(responseBuilder);
+
         }
     }
 }

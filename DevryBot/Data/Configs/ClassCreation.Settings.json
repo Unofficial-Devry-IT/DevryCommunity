@@ -1,0 +1,14 @@
+{
+  "ClassCreation":
+  {
+    "VoiceChannels": 1,
+    "TextChannels": [
+      "general",
+      "i-need-help"
+    ],
+    "AdditionalRoles": [
+      "^See-All-Channels",
+      "Junior Moderators"
+    ]
+  }
+}

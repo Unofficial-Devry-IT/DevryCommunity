@@ -3,19 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
 using DevryBot.Services;
 using DisCatSharp.Entities;
 using DisCatSharp.EventArgs;
 using DisCatSharp.Interactivity;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.SlashCommands
 {
     public class LectureInvite : SlashCommandModule
     {
+        public IRoleService RoleService { get; set; }
+        public ILogger<LectureInvite> Logger { get; set; }
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+        public IOptions<WelcomeOptions> WelcomeOptions { get; set; }
+        public IBot Bot { get; set; }
+        public IWelcomeHandler WelcomeHandler { get; set; }
+        
+
         [SlashCommand("lecture-invite", "Help your fellow classmates!")]
-        public static async Task Command(InteractionContext context)
+        public async Task Command(InteractionContext context)
         {
             try
             {
@@ -23,21 +33,21 @@ namespace DevryBot.Discord.SlashCommands
                     return;
 
                 await context.ImThinking();
+                var config = DiscordOptions.Value;
                 
                 DiscordWebhookBuilder responseBuilder = new();
                 DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
                     .WithTitle("Sorting Hat")
-                    .WithDescription(Bot.Instance.Configuration.InviteMessage())
-                    .WithFooter(Bot.Instance.Configuration.InviteFooter())
-                    .WithImageUrl(Bot.Instance.Configuration.InviteImage());
+                    .WithDescription(config.InviteMessage)
+                    .WithFooter(config.InviteFooter)
+                    .WithImageUrl(config.InviteImage);
 
                 responseBuilder.AddEmbed(embedBuilder.Build());
 
                 string menuId = $"{context.Member.Id}_linvite";
 
                 // Allow user to select from one of their roles -- removing anything that's blacklisted
-                var roles = context.Member.Roles.RemoveBlacklistedRoles(
-                        Bot.Instance.Configuration.BlacklistedRoles(context.Guild))
+                var roles = context.Member.Roles.RemoveBlacklistedRoles(RoleService.GetBlacklistedRolesDict(Bot.MainGuild.Id).Keys)
                     .OrderBy(x => x.Name)
                     .Take(24)
                     .ToList();
@@ -56,9 +66,9 @@ namespace DevryBot.Discord.SlashCommands
                 embedBuilder = new DiscordEmbedBuilder()
                     .WithTitle("Lecture Assistant")
                     .WithDescription("Anyone who joins within the next " +
-                                     $"{Bot.Instance.Configuration.InviteWelcomeDuration()} hours will be shown a button to quickly join your selected roles")
-                    .WithImageUrl(Bot.Instance.Configuration.InviteImage())
-                    .WithFooter(Bot.Instance.Configuration.InviteFooter())
+                                     $"{WelcomeOptions.Value.InviteWelcomeDuration} hours will be shown a button to quickly join your selected roles")
+                    .WithImageUrl(config.InviteImage)
+                    .WithFooter(config.InviteFooter)
                     .WithColor(DiscordColor.Green);
 
                 InteractivityResult<ComponentInteractionCreateEventArgs> interaction = await Bot.Interactivity.WaitForSelectAsync(message, menuId, timeoutOverride: null);
@@ -66,20 +76,20 @@ namespace DevryBot.Discord.SlashCommands
                 responseBuilder.AddEmbed(embedBuilder.Build());
                 await context.EditResponseAsync(responseBuilder);
 
-                DateTime expirationTime = DateTime.Now.AddHours(Bot.Instance.Configuration.InviteWelcomeDuration());
+                DateTime expirationTime = DateTime.Now.AddHours(WelcomeOptions.Value.InviteWelcomeDuration);
                 foreach (var entry in interaction.Result.Values)
-                    WelcomeHandler.Instance.AddClass(context.Guild.Roles[ulong.Parse(entry)], expirationTime);
+                    WelcomeHandler.AddClass(context.Guild.Roles[ulong.Parse(entry)], expirationTime);
                     
                 #if DEBUG
                 Random random = new Random();
                 int amount = random.Next(1, 10);
                 for(int i = 0; i < amount; i++)
-                    WelcomeHandler.Instance.AddMember(context.Member);
+                    WelcomeHandler.AddMember(context.Member);
                 #endif
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex, $"Error during lecture invite: {context.Member.DisplayName}. Roles:\n{string.Join("\n",context.Member.Roles.Select(x=>x.Name))}");
+                Logger.LogError(ex, $"Error during lecture invite: {context.Member.DisplayName}. Roles:\n{string.Join("\n",context.Member.Roles.Select(x=>x.Name))}");
                
                 DiscordFollowupMessageBuilder messageBuilder = new DiscordFollowupMessageBuilder()
                 {
@@ -89,7 +99,7 @@ namespace DevryBot.Discord.SlashCommands
                 DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                     .WithTitle("Oops")
                     .WithDescription("Sorry, this command assumes you have roles to choose from! Please use `/join` to join the class(es) you're in, along with your major.")
-                    .WithImageUrl(Bot.Instance.Configuration.WarningImage())
+                    .WithImageUrl(DiscordOptions.Value.WarningImage)
                     .WithColor(DiscordColor.Yellow);
 
                 messageBuilder.AddEmbed(builder.Build());
