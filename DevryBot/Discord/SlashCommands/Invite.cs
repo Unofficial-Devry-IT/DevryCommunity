@@ -1,16 +1,19 @@
 ﻿using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.SlashCommands
 {
     public class Invite : SlashCommandModule
     {
+        public IOptions<DiscordOptions> DiscordOptions { get; set; }
+
         [SlashCommand("invite", "Get the invite link to the server!")]
-        public static async Task Command(InteractionContext context)
+        public async Task Command(InteractionContext context)
         {
             if (!await context.ValidateGuild())
                 return;
@@ -24,7 +27,7 @@ namespace DevryBot.Discord.SlashCommands
                                  "to the legions of doubt and uncertainty!!")
                 .AddField("Invite", "https://discord.io/unofficial-DevryIT")
                 .WithFooter("Minions of knowledge! Assembblleeee!")
-                .WithImageUrl(Bot.Instance.Configuration.GetValue<string>("Discord:InviteImage"));
+                .WithImageUrl(DiscordOptions.Value.InviteImage);
 
             responseBuilder.AddEmbed(embedBuilder.Build());
 

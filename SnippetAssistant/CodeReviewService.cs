@@ -96,7 +96,7 @@ namespace SnippetAssistant
             if (File.Exists(originalFile))
                 File.Delete(originalFile);
             
-            SchedulerBackgroundService.Instance.ScheduleFileDelete(reportFile, DateTime.Now.AddMinutes(deleteAfterMinutes));
+            //SchedulerBackgroundService.Instance.ScheduleFileDelete(reportFile, DateTime.Now.AddMinutes(deleteAfterMinutes));
         }
         
         /// <summary>

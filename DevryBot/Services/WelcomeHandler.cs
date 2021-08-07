@@ -4,25 +4,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
 using DisCatSharp.Entities;
 using DisCatSharp.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Services
 {
-    public class WelcomeHandler
+    public class WelcomeHandler : IWelcomeHandler
     {
-        private static WelcomeHandler _instance;
-        public static WelcomeHandler Instance
-        {
-            get
-            {
-                if (_instance == null)
-                    _instance = new WelcomeHandler(Bot.Instance.Configuration.WelcomeMessageInterval(), default);
-                return _instance;
-            }
-        }
-
+        private readonly ILogger<WelcomeHandler> _logger;
+        private readonly IOptions<WelcomeOptions> _options;
+  
         /// <summary>
         /// Roles that we're expecting people to join for a given duration
         /// Perhaps a class lecture is happening right now
@@ -48,14 +42,13 @@ namespace DevryBot.Services
         private readonly DiscordChannel _welcomeChannel;
         private readonly ulong WELCOME_CHANNEL_ID = 618254766396538903;
         
-        public WelcomeHandler(int welcomeMessageInterval, CancellationToken token)
+        public WelcomeHandler(ILogger<WelcomeHandler> logger, IOptions<WelcomeOptions> options, IBot bot)
         {
-            if (_instance == null)
-                _instance = this;
-            
-            messageInterval = welcomeMessageInterval;
-            _cancellationToken = token;
-            _welcomeChannel = Bot.Instance.MainGuild.Channels[WELCOME_CHANNEL_ID];
+            messageInterval = options?.Value.WelcomeMessageInterval ?? 30;
+            _cancellationToken = default;
+            _logger = logger;
+            _options = options;
+            _welcomeChannel = bot.MainGuild.Channels[WELCOME_CHANNEL_ID];
             Task.Factory.StartNew(ProcessQueue);
         }
         
@@ -96,7 +89,7 @@ namespace DevryBot.Services
                 
                 if (remove.Any())
                 {
-                    Bot.Instance.Logger.LogInformation("The following classes exceeded their welcome-expiration-time:\n\t" +
+                    _logger.LogInformation("The following classes exceeded their welcome-expiration-time:\n\t" +
                                                        $"{string.Join("\n\t", remove.Select(x=>x.Name))}");
 
                     foreach (var role in remove)
@@ -113,11 +106,10 @@ namespace DevryBot.Services
 
                 try
                 {
-                    string message = Bot.Instance.Configuration
-                        .WelcomeMessage()
+                    string message = _options.Value.WelcomeMessage
                         .ToWelcomeMessage(welcomeQueue, _welcomeChannel);
 
-                    Bot.Instance.Logger.LogInformation($"Welcoming {string.Join(", ", welcomeQueue.Select(x=>x.DisplayName))}, " +
+                    _logger.LogInformation($"Welcoming {string.Join(", ", welcomeQueue.Select(x=>x.DisplayName))}, " +
                                                        $"following roles are appended to welcome message: \n\t" +
                                                        $"{string.Join("\n\t", ClassExpectations.Select(x=>x.Key.Name))}");
                     
@@ -152,7 +144,7 @@ namespace DevryBot.Services
                 }
                 catch (Exception ex)
                 {
-                    Bot.Instance.Logger.LogError(ex, "Error in WelcomeHandler while greeting users");
+                    _logger.LogError(ex, "Error in WelcomeHandler while greeting users");
                 }
             }
         }
@@ -199,8 +191,7 @@ namespace DevryBot.Services
             else
                 ClassExpectations.Add(role, expirationTime);
             
-            Bot.Instance.Logger
-                .LogInformation($"Expecting folks to be joining {role.Name} | {expirationTime.ToString("F")} | Appending Class Count {ClassExpectations.Count}");
+            _logger.LogInformation($"Expecting folks to be joining {role.Name} | {expirationTime.ToString("F")} | Appending Class Count {ClassExpectations.Count}");
         }
         
         /// <summary>
@@ -217,7 +208,7 @@ namespace DevryBot.Services
             int interval = (int) (messageInterval - (0.1 * welcomeQueue.Count * messageInterval));
             triggerTime = DateTime.Now.AddSeconds(interval);
 
-            Bot.Instance.Logger.LogInformation(
+            _logger.LogInformation(
                 $"Welcome train has: {welcomeQueue.Count} in queue for greeting. " +
                 $"Triggering at: {triggerTime.ToString("F")} | Now: {DateTime.Now.ToString("F")}");
         }

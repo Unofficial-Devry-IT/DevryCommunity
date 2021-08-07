@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DisCatSharp.SlashCommands;
 
@@ -11,7 +12,7 @@ namespace DevryBot.Discord.SlashCommands.Filters
     {
         public override async Task<bool> ExecuteChecksAsync(InteractionContext ctx)
         {
-            return await ctx.User.IsModerator();
+            return ctx.Member.Roles.Any(x => x.Name.ToLower().Contains("moderator"));
         }
     }
 }

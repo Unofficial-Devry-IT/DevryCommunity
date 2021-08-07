@@ -1,48 +1,40 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Linq;
-using DevryApplication.Common.Interfaces;
+using System.Reflection;
+using DevryBot.Discord;
+using DevryBot.Discord.Attributes;
 using DevryBot.Discord.Extensions;
-using DevryBot.Discord.Interactions;
 using DevryBot.Services;
 using DisCatSharp;
-using DisCatSharp.CommandsNext;
 using DisCatSharp.Entities;
 using DisCatSharp.EventArgs;
 using DisCatSharp.Interactivity;
 using DisCatSharp.Interactivity.Enums;
 using DisCatSharp.Interactivity.Extensions;
 using DisCatSharp.SlashCommands;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace DevryBot
 {
-    public class Bot : IDisposable
+    public class Bot : BackgroundService, IBot
     {
         #region Discord Functionality
-        public static DiscordClient Client { get; private set; }
-        public static CommandsNextExtension Commands { get; private set; }
-        public static InteractivityExtension Interactivity { get; private set; }
+
+        public DiscordClient Client { get; }
+        public InteractivityExtension Interactivity { get; }
+        public SlashCommandsExtension SlashCommands { get; }
+        public IServiceProvider ServiceProvider { get; }
+        private IWelcomeHandler _welcomeHandler;
+        
         #endregion
         
-        /// <summary>
-        /// Prefix to be utilized for invoking commands
-        /// </summary>
-        public static string Prefix = "!";
         
-        /// <summary>
-        /// If this cancellation source cancels --> shutdown bot
-        /// </summary>
-        public static CancellationTokenSource ShutdownRequest = new();
-        
-        /// <summary>
-        /// Only one instance of the bot should ever be running on the same process
-        /// -- Singleton approach
-        /// </summary>
-        public static Bot Instance;
-
         private DiscordGuild mainGuild;
         
         /// <summary>
@@ -61,24 +53,19 @@ namespace DevryBot
                 return mainGuild;
             }
         }
-        
+
         /// <summary>
         /// Bot configuration file(s) are accessible via here
         /// </summary>
-        public IConfiguration Configuration { get; }
-        public ILogger<Bot> Logger { get; }
-        public IApplicationDbContext Database { get; }
+        private readonly IConfiguration _configuration;
 
-        public Bot(IConfiguration config, ILogger<Bot> logger, IApplicationDbContext context, IServiceProvider serviceProvider)
+        private readonly ILogger<Bot> _logger;
+        private readonly Dictionary<string, IInteractionHandler> _interactionHandlers = new();
+
+        public Bot(ILogger<Bot> logger, IConfiguration config, IServiceProvider serviceProvider)
         {
-            Instance = this;
-            Database = context;
-            Logger = logger;
-            Prefix = config.GetValue<string>("Discord:Prefix");
-            
-            #if DEBUG
-                Prefix = "$";
-            #endif
+            _logger = logger;
+            ServiceProvider = serviceProvider;
             
             var bytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
             string token = System.Text.Encoding.UTF8.GetString(bytes).Replace("\n", "");
@@ -101,18 +88,6 @@ namespace DevryBot
             
             Client = new DiscordClient(discordConfig);
             
-            Commands = Client.UseCommandsNext(new CommandsNextConfiguration()
-            {
-                StringPrefixes = new string[] {Prefix},
-                EnableDms = true,
-                EnableDefaultHelp = true,
-                CaseSensitive = true,
-                EnableMentionPrefix = true,
-                IgnoreExtraArguments = true,
-                DefaultHelpChecks = null
-            });
-            
-            Commands.CommandErrored += CommandsOnCommandErrored;
             Client.MessageCreated += OnMessageCreated_RemoveDiscordLinks;
             Client.GuildMemberAdded += ClientOnGuildMemberAdded;
             Client.ComponentInteractionCreated += ClientOnComponentInteractionCreated;
@@ -140,16 +115,47 @@ namespace DevryBot
             });
             
             slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
-            Configuration = config;
+            _configuration = config;
+
+            //InitializeInteractionHandlers();
         }
 
+        /// <summary>
+        /// Cache all the interaction handlers within the assembly
+        /// </summary>
+        private void InitializeInteractionHandlers()
+        {
+            var types = Assembly.GetExecutingAssembly()
+                .DefinedTypes
+                .Where(x => x.IsAssignableTo(typeof(IInteractionHandler)) && !x.IsInterface && !x.IsAbstract)
+                .ToList();
+            
+            foreach (var type in types)
+            {
+                var instance = (IInteractionHandler)ActivatorUtilities.CreateInstance(ServiceProvider, type);
+
+                var attribute = type.GetCustomAttribute<InteractionNameAttribute>();
+
+                if (attribute == null)
+                {
+                    _logger.LogWarning($"Found an interaction handler {type.Name} -- but it doesn't have the {nameof(InteractionNameAttribute)} attribute");
+                    continue;
+                }
+
+                _interactionHandlers.Add(attribute.Name, instance);
+            }
+        }
+        
         private async Task ClientOnComponentInteractionCreated(DiscordClient sender, ComponentInteractionCreateEventArgs e)
         {
-            Logger.LogInformation($"Interaction ID: {e.Id} : {e.Message.Content} : {string.Join(", ", e.Values)}");
+            _logger.LogInformation($"Interaction ID: {e.Id} : {e.Message.Content} : {string.Join(", ", e.Values)}");
             var member = await e.Guild.GetMemberAsync(e.User.Id);
 
+            if (_welcomeHandler == null)
+                _welcomeHandler = ServiceProvider.GetRequiredService<IWelcomeHandler>();
+            
             // if a role based interaction was made on the welcome channel
-            if (e.Id.EndsWith("_role") && e.Channel.Id == 618254766396538903)
+            if (e.Id.EndsWith(InteractionConstants.LECTURE_JOIN_ROLE) && e.Channel.Id == 618254766396538903)
             {
 
                 DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
@@ -163,20 +169,24 @@ namespace DevryBot
                 
                 interactionBuilder.AddEmbed(embedBuilder.Build());
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, interactionBuilder);
-                await WelcomeHandler.Instance.AddRoleToMember(member, e.Id);
+                await _welcomeHandler.AddRoleToMember(member, e.Id);
                 return;
             }
 
-            if (e.Id.EndsWith("linvite"))
+            var interactionId = e.Id.Split("_").Last();
+
+            if (_interactionHandlers.ContainsKey(interactionId))
             {
+                _logger.LogInformation($"Handling interaction id: {interactionId}");
+                
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
-                await LectureInviteInteraction.HandleLectureInviteSelection(member, e.Interaction, e.Values);
+                await _interactionHandlers[interactionId].Handle(member, e.Interaction, e.Values);
             }
         }
 
         private async Task ClientOnGuildMemberAdded(DiscordClient sender, GuildMemberAddEventArgs e)
         {
-            WelcomeHandler.Instance.AddMember(e.Member);
+            _welcomeHandler.AddMember(e.Member);
         }
 
         private async Task OnMessageCreated_RemoveDiscordLinks(DiscordClient sender, MessageCreateEventArgs e)
@@ -185,21 +195,23 @@ namespace DevryBot
             if (e.Author.IsBot)
                 return;
 
+            var member = await MainGuild.GetMemberAsync(e.Author.Id);
+            
             // If it's a moderator -- also don't care
-            if (await e.Author.IsModerator())
+            if(member.Roles.Any(x=>x.Name.ToLower().Contains("moderator")))
                 return;
 
             string[] words = e.Message.Content.ToLower().Split(" ");
 
             
-            if (!words.Any(x => x.Contains(Configuration.GetInviteLinkSearchCriteria()) && x.Contains("http")))
+            if (!words.Any(x => x.Contains(_configuration.GetInviteLinkSearchCriteria()) && x.Contains("http")))
                 return;
 
             DiscordMessageBuilder messageBuilder = new();
             DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
                 .WithTitle("Oops")
                 .WithDescription("Sharing links to other discords is frowned upon here. Please check with a moderator")
-                .WithImageUrl(Configuration.UhOhImage())
+                .WithImageUrl(_configuration.UhOhImage())
                 .WithFooter(e.Author.Username);
 
             messageBuilder.AddEmbed(embedBuilder.Build());
@@ -220,52 +232,37 @@ namespace DevryBot
             await e.Guild.Channels[851970581179662346].SendMessageAsync(messageBuilder);
         }
 
-        private async Task CommandsOnCommandErrored(CommandsNextExtension sender, CommandErrorEventArgs e)
+        async Task ClearCommands()
         {
-            Logger.LogError($"Command Failed: {e.Exception.Message}");
-        }
-        public async Task RunAsync()
-        {
-            await Client.ConnectAsync();
+            await Task.Delay(TimeSpan.FromSeconds(20));
 
-            /*
-                Apparently there is a chance that slash-commands might end up duplicating...
-                To combat duplications --- Discord:ClearCommands was introduced. It will remove all associated slash commands
-                This may take a few minutes to fully process. Once completed the server can be restarted with this flag flipped to false
-             */
-            if (Configuration.GetValue<bool>("Discord:ClearCommands"))
+            var commands = await MainGuild.GetApplicationCommandsAsync();
+
+            foreach (var command in commands)
             {
-                await Task.Delay(TimeSpan.FromSeconds(10));
-
-                var commands = await MainGuild.GetApplicationCommandsAsync();
-                
-                foreach (var command in commands)
-                {
-                    Logger.LogInformation($"Command: {command.Name} - {command.Id}");
-                    await Client.DeleteGuildApplicationCommandAsync(MainGuild.Id, command.Id);
-                }
-
-                foreach (var command in await Client.GetGlobalApplicationCommandsAsync())
-                {
-                    Logger.LogInformation($"Command: {command.Name} - {command.Id}");
-                    await Client.DeleteGlobalApplicationCommandAsync(command.Id);
-                }
-                
-                Environment.Exit(0);
+                _logger.LogInformation($"Command: {command.Name} - {command.Id} - deleting");
+                await Client.DeleteGuildApplicationCommandAsync(mainGuild.Id, command.Id);
             }
-            
-            while (!ShutdownRequest.IsCancellationRequested)
-                await Task.Delay(2000);
 
-            await Task.Delay(2500);
-            Dispose();
+            foreach (var command in await Client.GetGlobalApplicationCommandsAsync())
+            {
+                _logger.LogInformation($"Command: {command.Name} - {command.Id} - deleting");
+                await Client.DeleteGlobalApplicationCommandAsync(command.Id);
+            }
+
+            Environment.Exit(0);
         }
         
-        public void Dispose()
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Interactivity = null;
-            Commands = null;
-            Client = null;
+            _logger.LogInformation("HERE");
+            await Client.ConnectAsync();
+
+            if (_configuration.GetValue<bool>("Discord:ClearCommands"))
+                await ClearCommands();
+            
+            while (!stoppingToken.IsCancellationRequested)
+                await Task.Delay(1000, stoppingToken);
         }
     }
 }

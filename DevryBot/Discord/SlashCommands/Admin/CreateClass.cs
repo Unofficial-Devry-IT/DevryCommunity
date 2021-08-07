@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
+using DevryBot.Options;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using UnofficialDevryIT.Architecture.Extensions;
 
 namespace DevryBot.Discord.SlashCommands.Admin
@@ -60,11 +62,15 @@ namespace DevryBot.Discord.SlashCommands.Admin
                              Permissions.SendTtsMessages |
                              Permissions.Speak |
                              Permissions.UseExternalEmojis |
-                             Permissions.UseVoiceDetection;       
-        
+                             Permissions.UseVoiceDetection;
+
+        public IBot Bot { get; set; }
+        public ILogger<CreateClass> Logger { get; set; }
+        public IOptions<ClassCreationOptions> ClassCreationOptions { get; set; }
+
         [SlashCommand("create-class", "Add a new class section")]
         [RequireModerator]
-        public static async Task Command(InteractionContext context,
+        public async Task Command(InteractionContext context,
             [Option("course-identifier", "Such as CEIS, CIS, NETW")]
             string courseIdentifier,
             [Option("course-number", "The unique number for the course such as 101, 170C, etc")]
@@ -98,7 +104,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 errors.Add("Course Identifier", "Must be at least 3 characters long");
 
             // Check for existing course name
-            var existing = Bot.Instance.MainGuild.Channels.Any(x =>
+            var existing = Bot.MainGuild.Channels.Any(x =>
                 x.Value.Name.Equals(fullTitle, StringComparison.InvariantCultureIgnoreCase));
             
             if(existing)
@@ -113,7 +119,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 foreach (var pair in errors)
                     embedBuilder = embedBuilder.AddField(pair.Key, pair.Value);
                 
-                Bot.Instance.Logger.LogWarning($"Creating class by {context.User.Username}\n" +
+                Logger.LogWarning($"Creating class by {context.User.Username}\n" +
                                                $"Errors: {string.Join(", ", errors.Select(x=>x.Value))}");
                 
                 responseBuilder.AddEmbed(embedBuilder.Build());
@@ -122,32 +128,29 @@ namespace DevryBot.Discord.SlashCommands.Admin
             }
             
             // need to create the category
-            var categoryChannel = await Bot.Instance.MainGuild.CreateChannelCategoryAsync(fullTitle);
-            var categoryRole = await Bot.Instance.MainGuild.CreateRoleAsync(roleName, ALLOWED);
+            var categoryChannel = await Bot.MainGuild.CreateChannelCategoryAsync(fullTitle);
+            var categoryRole = await Bot.MainGuild.CreateRoleAsync(roleName, ALLOWED);
             
             // apply the permissions to the category channel -- this applies to all child channels
             try
             {
                 await categoryChannel.AddOverwriteAsync(categoryRole, ALLOWED, Permissions.Administrator);
-                await categoryChannel.AddOverwriteAsync(Bot.Instance.MainGuild.EveryoneRole, Permissions.None, DENIED);
+                await categoryChannel.AddOverwriteAsync(Bot.MainGuild.EveryoneRole, Permissions.None, DENIED);
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex, $"Error while applying permissions: {ex.Message}");
+                Logger.LogError(ex, $"Error while applying permissions: {ex.Message}");
             }
 
             try
             {
-                var additionalRoles = Bot.Instance.Configuration
-                    .GetEnumerable("Discord:ClassCreation:AdditionalRoles").ToList();
+                var additionalRoles = ClassCreationOptions.Value.AdditionalRoles.ToList();
+                var requiredChannels = ClassCreationOptions.Value.TextChannels.ToList();
 
-                var requiredChannels = Bot.Instance.Configuration
-                    .GetEnumerable("Discord:ClassCreation:TextChannels").ToList();
-                
                 // Add the roles from the config to our new category
                 foreach (var item in additionalRoles)
                 {
-                    var role = Bot.Instance.MainGuild.Roles.FirstOrDefault(x =>
+                    var role = Bot.MainGuild.Roles.FirstOrDefault(x =>
                         x.Value.Name.Equals(item, StringComparison.InvariantCultureIgnoreCase));
 
                     if (role.Key > 0 && role.Value != null)
@@ -157,16 +160,16 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 // Based on config -- add the required channel names
                 foreach (var channelName in requiredChannels)
                 {
-                    await Bot.Instance.MainGuild.CreateTextChannelAsync($"{roleName}-{channelName}", categoryChannel);
+                    await Bot.MainGuild.CreateTextChannelAsync($"{roleName}-{channelName}", categoryChannel);
                     await Task.Delay(1000);
                 }
 
                 // Create the voice channels
                 for (int i = 0;
-                    i < Bot.Instance.Configuration.GetValue<int>("Discord:ClassCreation:VoiceChannels");
+                    i < ClassCreationOptions.Value.VoiceChannels;
                     i++)
                 {
-                    await Bot.Instance.MainGuild.CreateVoiceChannelAsync($"{roleName}-{i + 1}", categoryChannel);
+                    await Bot.MainGuild.CreateVoiceChannelAsync($"{roleName}-{i + 1}", categoryChannel);
                     await Task.Delay(1000);
                 }
 
@@ -185,7 +188,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex, ex.Message);
+                Logger.LogError(ex, ex.Message);
                 embedBuilder.Description = "Error while processing request...";
                 responseBuilder.AddEmbed(embedBuilder.Build());
 

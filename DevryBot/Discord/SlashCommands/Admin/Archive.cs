@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Extensions;
 using DevryBot.Discord.SlashCommands.Filters;
+using DevryBot.Options;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.SlashCommands.Admin
 {
@@ -41,10 +43,15 @@ namespace DevryBot.Discord.SlashCommands.Admin
             public DiscordChannel Channel { get; set; }
             public ArchiveReason Reason { get; set; }
         }
-        
+
+        public IBot Bot { get; set; }
+        public IOptions<ArchiveOptions> ArchiveSettings { get; set; }
+        public ILogger<Archive> Logger { get; set; }
+
+
         [SlashCommand("archive", "Archive classes that have been inactive")]
         [RequireModerator]
-        public static async Task Command(InteractionContext context)
+        public async Task Command(InteractionContext context)
         {
             if (!await context.ValidateGuild())
                 return;
@@ -54,13 +61,12 @@ namespace DevryBot.Discord.SlashCommands.Admin
             await context.ImThinking();
 
             // we want to avoid certain classes noted in appsettings.json
-            var archiveSection = Bot.Instance.Configuration.GetSection("ArchiveSettings:IgnoreArchive");
-            var ignoreArchive = archiveSection.Get<string[]>()
+            var ignoreArchive = ArchiveSettings.Value.IgnoreArchive
                 .Select(x=>x.ToLower())
                 .ToList();
             
             // Find all categories -- ignore anything marked under Discord:IgnoreArchive
-            var categories = Bot.Instance.MainGuild.Channels
+            var categories = Bot.MainGuild.Channels
                                                 .Where(x => x.Value.Type == ChannelType.Category && !ignoreArchive.Contains(x.Value.Name.ToLower()))
                                                 .Select(x => x.Value)
                                                 .OrderBy(x=>x.Name)
@@ -68,7 +74,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
             
             List<ArchiveItem> archive = new();
             List<DiscordRole> rolesToRemove = new();
-            DateTimeOffset referenceTime = DateTimeOffset.Now.AddDays(Bot.Instance.Configuration.GetValue<int>("ArchiveSettings:ArchiveOverDays"));
+            DateTimeOffset referenceTime = DateTimeOffset.Now.AddDays(ArchiveSettings.Value.ArchiveOverDays);
             Dictionary<DiscordChannel, ArchiveReason> reasons = new();
 
             foreach (var category in categories)
@@ -95,14 +101,14 @@ namespace DevryBot.Discord.SlashCommands.Admin
                     {
                         inactiveChannels++;
                         reasons.Add(channel, ArchiveReason.NO_ACTIVITY);
-                        Bot.Instance.Logger.LogInformation($"{channel.Name} -- no activity");
+                        Logger.LogInformation($"{channel.Name} -- no activity");
                         continue;
                     }
 
                     // yes, this channel is inactive -- increment                    
                     if (recentMessages.First().CreationTimestamp <= referenceTime)
                     {
-                        Bot.Instance.Logger.LogInformation($"{channel.Name} -- messages are older than 3 months");
+                        Logger.LogInformation($"{channel.Name} -- messages are older than 3 months");
                         inactiveChannels++;
                         reasons.Add(channel, ArchiveReason.NO_ACTIVITY_OVER_TIME);
                     }
@@ -151,7 +157,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 }
             }
 
-            Bot.Instance.Logger.LogInformation($"Total of {archive.Count} channels should be removed");
+            Logger.LogInformation($"Total of {archive.Count} channels should be removed");
 
             var noActivity = archive.Where(x => x.Reason == ArchiveReason.NO_ACTIVITY);
             var noActivityOverTime = archive.Where(x => x.Reason == ArchiveReason.NO_ACTIVITY_OVER_TIME);
@@ -159,15 +165,15 @@ namespace DevryBot.Discord.SlashCommands.Admin
             var parents = archive.Where(x => x.Channel.IsCategory);
             
             // Log the items that should be archived
-            Bot.Instance.Logger.LogInformation($"Categories to remove: {parents.Count()}\n" +
+            Logger.LogInformation($"Categories to remove: {parents.Count()}\n" +
                                                $"\t{string.Join("\n\t", parents.OrderBy(x=>x.Channel.Name).Select(x=>x.Channel.Name))}");
-            Bot.Instance.Logger.LogInformation($"No Activity: {noActivity.Count()}\n" +
+            Logger.LogInformation($"No Activity: {noActivity.Count()}\n" +
                                                $"\t{string.Join("\n\t", noActivity.OrderBy(x=>x.Channel.Name).Select(x=>x.Channel.Name))}");
-            Bot.Instance.Logger.LogInformation($"No Activity Over Time: {noActivityOverTime.Count()}\n" +
+            Logger.LogInformation($"No Activity Over Time: {noActivityOverTime.Count()}\n" +
                                                $"\t{string.Join("\n\t", noActivityOverTime.OrderBy(x=>x.Channel.Name).Select(x=>x.Channel.Name))}");
-            Bot.Instance.Logger.LogInformation($"Along for the Ride: {alongForRide.Count()}\n" +
+            Logger.LogInformation($"Along for the Ride: {alongForRide.Count()}\n" +
                                                $"\t{string.Join("\n\t", alongForRide.OrderBy(x=>x.Channel.Name).Select(x=>x.Channel.Name))}");
-            Bot.Instance.Logger.LogInformation($"Roles to remove: {rolesToRemove.Count}\n" +
+            Logger.LogInformation($"Roles to remove: {rolesToRemove.Count}\n" +
                                                $"\t{string.Join("\n\t", rolesToRemove.OrderBy(x=>x.Name).Select(x=>x.Name))}");
             // craft our response
             DiscordWebhookBuilder messageBuilder = new();
@@ -202,7 +208,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 var componentInteraction =
                     await Bot.Interactivity.WaitForSelectAsync(message, menuName, timeoutOverride: null);
                 
-                Bot.Instance.Logger.LogInformation($"{context.User.Username} -- interacted with confirmation menu: {string.Join(",",componentInteraction.Result.Values)}");
+                Logger.LogInformation($"{context.User.Username} -- interacted with confirmation menu: {string.Join(",",componentInteraction.Result.Values)}");
 
                 if (!componentInteraction.Result.Values.Any())
                 {
@@ -233,14 +239,14 @@ namespace DevryBot.Discord.SlashCommands.Admin
                 // time to start deleting
                 foreach (var item in archive)
                 {
-                    Bot.Instance.Logger.LogWarning($"Deleting {item.Channel.Name} - {item.Reason}");
+                    Logger.LogWarning($"Deleting {item.Channel.Name} - {item.Reason}");
                     await item.Channel.DeleteAsync();
                     await Task.Delay(1000);
                 }
 
                 foreach (var role in rolesToRemove)
                 {
-                    Bot.Instance.Logger.LogWarning($"Deleting {role.Name}");
+                    Logger.LogWarning($"Deleting {role.Name}");
                     await role.DeleteAsync();
                     await Task.Delay(1000);
                 }
@@ -258,7 +264,7 @@ namespace DevryBot.Discord.SlashCommands.Admin
             }
             catch (Exception ex)
             {
-                Bot.Instance.Logger.LogError(ex.Message);
+                Logger.LogError(ex.Message);
             }
         }   
     }

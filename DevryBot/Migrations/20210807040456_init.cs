@@ -89,12 +89,13 @@ namespace DevryBot.Migrations
                 name: "Reminders",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Id = table.Column<ulong>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     ChannelId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     Schedule = table.Column<string>(type: "TEXT", nullable: true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     Contents = table.Column<string>(type: "TEXT", nullable: true),
-                    NextRunTime = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    NextRunTime = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
