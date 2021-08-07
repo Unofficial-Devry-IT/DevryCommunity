@@ -1,6 +1,4 @@
 ﻿using ChallengeAssistant;
-using ChallengeAssistant.Interfaces;
-using ChallengeAssistant.Services;
 using DevryBot.Options;
 using DevryBot.Services;
 using DevryInfrastructure;
