@@ -1,4 +1,7 @@
-﻿using DevryBot.Options;
+﻿using ChallengeAssistant;
+using ChallengeAssistant.Interfaces;
+using ChallengeAssistant.Services;
+using DevryBot.Options;
 using DevryBot.Services;
 using DevryInfrastructure;
 using ImageCreator.Services;
@@ -38,11 +41,17 @@ namespace DevryBot
             services.AddSingleton<IScheduledTaskExecutor, ScheduledTaskExecutor>();
             services.AddSingleton<IScheduledTaskService, SchedulerBackgroundService>();
             services.AddSingleton<IImageService, UnsplashImageService>();
-            
+
+            services.AddChallengeApis();
+
+            services.AddSingleton<IGamificationService, GamificationService>();
+
+
             // This is done to ensure the SAME bot is utilized from above
             services.AddHostedService(x=>(Bot)x.GetRequiredService<IBot>());
             services.AddHostedService(x => (SchedulerBackgroundService)x.GetRequiredService<IScheduledTaskService>());
-            
+            services.AddHostedService(x => (GamificationService)x.GetRequiredService<IGamificationService>());
+
             services.AddSingleton<IRoleService, RoleService>();
         }
 

@@ -1,0 +1,6 @@
+{
+  "ChallengeApis": {
+    "QuizApiToken": "S0JuclFSWHdpeHZOa2pKUzdRTm1TVENrRlN5OGtWTUpMakRCT1pMZA==",
+    "QuizApiUrl": " https://quizapi.io/api/v1/questions?apiKey={0}&limit=20"
+  }
+}
