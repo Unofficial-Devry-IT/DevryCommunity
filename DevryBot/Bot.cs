@@ -271,16 +271,6 @@ namespace DevryBot
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            try
-            {
-                var database = ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                await database.Database.EnsureCreatedAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message, ex);
-            }
-            
             await Client.ConnectAsync();
 
             if (_configuration.GetValue<bool>("Discord:ClearCommands"))

@@ -20,6 +20,20 @@ namespace DevryInfrastructure.Persistence
             
         }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            try
+            {
+                Database.EnsureCreated();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message, ex);
+            }
+        }
+
         public DbSet<Reminder> Reminders { get; set; }
         
         #region Gamification Related
