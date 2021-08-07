@@ -21,8 +21,14 @@ namespace DevryInfrastructure.Persistence
         }
 
         public DbSet<Reminder> Reminders { get; set; }
-
-
+        
+        #region Gamification Related
+        public DbSet<Challenge> Challenges { get; set; }
+        public DbSet<ChallengeResponse> ChallengeResponses { get; set; }
+        public DbSet<GamificationCategory> GamificationCategories { get; set; }
+        public DbSet<GamificationEntry> GamificationEntries { get; set; }
+        #endregion
+        
         public async Task<TSchedule> AddSchedule<TSchedule>(TSchedule task) where TSchedule : class, IScheduledTask
         {
             await Set<TSchedule>().AddAsync(task);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using DevryBot.Discord.Attributes;
 using DevryBot.Options;
 using DevryBot.Services;
 using DisCatSharp.Entities;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.Interactions
 {
+    [InteractionName(InteractionConstants.LECTURE_JOIN_ROLE)]
     public class LectureInviteInteraction : IInteractionHandler
     {
         private readonly DiscordOptions _options;
@@ -22,7 +24,7 @@ namespace DevryBot.Discord.Interactions
             _bot = bot;
         }
 
-        public async Task Handle(DiscordMember member, DiscordInteraction interaction, string[] values)
+        public async Task Handle(DiscordMember member, DiscordInteraction interaction, string[] values, string interactionId)
         {
             DiscordFollowupMessageBuilder responseBuilder = new DiscordFollowupMessageBuilder()
             {

@@ -121,8 +121,6 @@ namespace DevryBot
             
             slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
             _configuration = config;
-
-            //InitializeInteractionHandlers();
         }
 
         /// <summary>
@@ -139,15 +137,16 @@ namespace DevryBot
             {
                 var instance = (IInteractionHandler)ActivatorUtilities.CreateInstance(ServiceProvider, type);
 
-                var attribute = type.GetCustomAttribute<InteractionNameAttribute>();
+                var attributes = type.GetCustomAttributes<InteractionNameAttribute>();
 
-                if (attribute == null)
+                if (!attributes.Any())
                 {
                     _logger.LogWarning($"Found an interaction handler {type.Name} -- but it doesn't have the {nameof(InteractionNameAttribute)} attribute");
                     continue;
                 }
 
-                _interactionHandlers.Add(attribute.Name, instance);
+                foreach(var attribute in attributes)
+                    _interactionHandlers.Add(attribute.Name, instance);
             }
         }
         
@@ -155,6 +154,9 @@ namespace DevryBot
         {
             _logger.LogInformation($"Interaction ID: {e.Id} : {e.Message.Content} : {string.Join(", ", e.Values)}");
             var member = await e.Guild.GetMemberAsync(e.User.Id);
+        
+            if(_interactionHandlers.Count == 0)
+                InitializeInteractionHandlers();
 
             if (_welcomeHandler == null)
                 _welcomeHandler = ServiceProvider.GetRequiredService<IWelcomeHandler>();
@@ -185,7 +187,15 @@ namespace DevryBot
                 _logger.LogInformation($"Handling interaction id: {interactionId}");
                 
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
-                await _interactionHandlers[interactionId].Handle(member, e.Interaction, e.Values);
+                await _interactionHandlers[interactionId].Handle(member, e.Interaction, e.Values, interactionId);
+            }
+
+            if (_interactionHandlers.ContainsKey(e.Id))
+            {
+                _logger.LogInformation($"Handling interaction id: {e.Id}");
+                
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+                await _interactionHandlers[e.Id].Handle(member, e.Interaction, e.Values, e.Id);
             }
         }
 
