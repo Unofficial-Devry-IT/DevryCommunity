@@ -2,6 +2,7 @@
 using DevryBot.Options;
 using DevryBot.Services;
 using DevryInfrastructure;
+using DevryInfrastructure.Persistence;
 using ImageCreator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -55,7 +56,15 @@ namespace DevryBot
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
+            // NOTE: this must go at the end of Configure
+            var serviceScopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
+            
+            using (var serviceScope = serviceScopeFactory.CreateScope())
+            {
+                var dbContext = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
+                if (dbContext != null) 
+                    dbContext.Database.EnsureCreated();
+            }
         }
     }
 }
