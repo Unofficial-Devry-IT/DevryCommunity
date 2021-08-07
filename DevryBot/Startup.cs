@@ -1,4 +1,5 @@
-﻿using ChallengeAssistant;
+﻿using System;
+using ChallengeAssistant;
 using DevryBot.Options;
 using DevryBot.Services;
 using DevryInfrastructure;
@@ -6,6 +7,7 @@ using DevryInfrastructure.Persistence;
 using ImageCreator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UnofficialDevryIT.Architecture.Scheduler;
@@ -57,16 +59,15 @@ namespace DevryBot
             }
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext context)
         {
-            // NOTE: this must go at the end of Configure
-            var serviceScopeFactory = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>();
-            
-            using (var serviceScope = serviceScopeFactory.CreateScope())
+            try
             {
-                var dbContext = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
-                if (dbContext != null) 
-                    dbContext.Database.EnsureCreated();
+                context.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message, ex);
             }
         }
     }
