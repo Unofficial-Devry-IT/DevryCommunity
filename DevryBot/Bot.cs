@@ -11,6 +11,7 @@ using DevryBot.Discord.Attributes;
 using DevryBot.Discord.Extensions;
 using DevryBot.Options;
 using DevryBot.Services;
+using DevryInfrastructure.Persistence;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.EventArgs;
@@ -18,6 +19,7 @@ using DisCatSharp.Interactivity;
 using DisCatSharp.Interactivity.Enums;
 using DisCatSharp.Interactivity.Extensions;
 using DisCatSharp.SlashCommands;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -69,7 +71,6 @@ namespace DevryBot
         {
             _logger = logger;
             ServiceProvider = serviceProvider;
-
             _options = discordOptions.Value;
             
             var bytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
@@ -270,7 +271,16 @@ namespace DevryBot
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("HERE");
+            try
+            {
+                var database = ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                await database.Database.MigrateAsync(stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+            }
+            
             await Client.ConnectAsync();
 
             if (_configuration.GetValue<bool>("Discord:ClearCommands"))
