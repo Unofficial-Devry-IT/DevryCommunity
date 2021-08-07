@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevryInfrastructure", "Devr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnippetAssistant", "SnippetAssistant\SnippetAssistant.csproj", "{396D976F-8CE7-45EF-8A1C-AA633B554F5C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageCreator", "ImageCreator\ImageCreator.csproj", "{900B3F30-2D25-425C-9D90-62253B647320}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{396D976F-8CE7-45EF-8A1C-AA633B554F5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{396D976F-8CE7-45EF-8A1C-AA633B554F5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{396D976F-8CE7-45EF-8A1C-AA633B554F5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{900B3F30-2D25-425C-9D90-62253B647320}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{900B3F30-2D25-425C-9D90-62253B647320}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{900B3F30-2D25-425C-9D90-62253B647320}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{900B3F30-2D25-425C-9D90-62253B647320}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -47,5 +53,6 @@ Global
 		{20FEACC3-FE20-4059-8412-6190E94B6F62} = {8E7683E2-8A33-4424-934C-C24F66546885}
 		{34AB0E58-693B-4E90-AC39-3374F2E74DF3} = {8E7683E2-8A33-4424-934C-C24F66546885}
 		{396D976F-8CE7-45EF-8A1C-AA633B554F5C} = {8E7683E2-8A33-4424-934C-C24F66546885}
+		{900B3F30-2D25-425C-9D90-62253B647320} = {8E7683E2-8A33-4424-934C-C24F66546885}
 	EndGlobalSection
 EndGlobal

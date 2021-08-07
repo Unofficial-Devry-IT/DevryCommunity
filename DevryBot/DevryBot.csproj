@@ -45,6 +45,7 @@
     <ItemGroup>
       <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
       <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
+      <ProjectReference Include="..\ImageCreator\ImageCreator.csproj" />
       <ProjectReference Include="..\SnippetAssistant\SnippetAssistant.csproj" />
     </ItemGroup>
 

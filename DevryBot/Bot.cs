@@ -9,6 +9,7 @@ using System.Reflection;
 using DevryBot.Discord;
 using DevryBot.Discord.Attributes;
 using DevryBot.Discord.Extensions;
+using DevryBot.Options;
 using DevryBot.Services;
 using DisCatSharp;
 using DisCatSharp.Entities;
@@ -19,6 +20,7 @@ using DisCatSharp.Interactivity.Extensions;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace DevryBot
 {
@@ -61,11 +63,14 @@ namespace DevryBot
 
         private readonly ILogger<Bot> _logger;
         private readonly Dictionary<string, IInteractionHandler> _interactionHandlers = new();
-
-        public Bot(ILogger<Bot> logger, IConfiguration config, IServiceProvider serviceProvider)
+        private readonly DiscordOptions _options;
+        
+        public Bot(ILogger<Bot> logger, IConfiguration config, IServiceProvider serviceProvider, IOptions<DiscordOptions> discordOptions)
         {
             _logger = logger;
             ServiceProvider = serviceProvider;
+
+            _options = discordOptions.Value;
             
             var bytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
             string token = System.Text.Encoding.UTF8.GetString(bytes).Replace("\n", "");
@@ -211,7 +216,7 @@ namespace DevryBot
             DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder()
                 .WithTitle("Oops")
                 .WithDescription("Sharing links to other discords is frowned upon here. Please check with a moderator")
-                .WithImageUrl(_configuration.UhOhImage())
+                .WithImageUrl(_options.UhOhImage)
                 .WithFooter(e.Author.Username);
 
             messageBuilder.AddEmbed(embedBuilder.Build());

@@ -1,6 +1,7 @@
 ﻿using DevryBot.Options;
 using DevryBot.Services;
 using DevryInfrastructure;
+using ImageCreator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,7 @@ namespace DevryBot
             services.Configure<WelcomeOptions>(Configuration.GetSection("WelcomeSettings"));
             services.Configure<ArchiveOptions>(Configuration.GetSection("ArchiveSettings"));
             services.Configure<ClassCreationOptions>(Configuration.GetSection("ClassCreation"));
+            services.Configure<ChallengeOptions>(Configuration.GetSection("ChallengeSettings"));
             
             StorageHandler.InitializeFolderStructure();
             
@@ -35,7 +37,7 @@ namespace DevryBot
             services.AddSingleton<IWelcomeHandler, WelcomeHandler>();
             services.AddSingleton<IScheduledTaskExecutor, ScheduledTaskExecutor>();
             services.AddSingleton<IScheduledTaskService, SchedulerBackgroundService>();
-            
+            services.AddSingleton<IImageService, UnsplashImageService>();
             
             // This is done to ensure the SAME bot is utilized from above
             services.AddHostedService(x=>(Bot)x.GetRequiredService<IBot>());
