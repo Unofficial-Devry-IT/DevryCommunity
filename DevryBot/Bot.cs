@@ -274,7 +274,7 @@ namespace DevryBot
             try
             {
                 var database = ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                await database.Database.MigrateAsync(stoppingToken);
+                await database.Database.EnsureCreatedAsync(stoppingToken);
             }
             catch (Exception ex)
             {
