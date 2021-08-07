@@ -34,24 +34,27 @@ namespace DevryBot
             StorageHandler.InitializeFolderStructure();
             
             services.AddDevryInfrastructure<Bot>(Configuration);
-            
-            services.AddSingleton<IBot, Bot>();
-            services.AddSingleton<IWelcomeHandler, WelcomeHandler>();
-            services.AddSingleton<IScheduledTaskExecutor, ScheduledTaskExecutor>();
-            services.AddSingleton<IScheduledTaskService, SchedulerBackgroundService>();
-            services.AddSingleton<IImageService, UnsplashImageService>();
 
-            services.AddChallengeApis();
+            if (!Configuration.GetValue<bool>("Database:UpdateDatabase"))
+            {
+                services.AddSingleton<IBot, Bot>();
+                services.AddSingleton<IWelcomeHandler, WelcomeHandler>();
+                services.AddSingleton<IScheduledTaskExecutor, ScheduledTaskExecutor>();
+                services.AddSingleton<IScheduledTaskService, SchedulerBackgroundService>();
+                services.AddSingleton<IImageService, UnsplashImageService>();
 
-            services.AddSingleton<IGamificationService, GamificationService>();
+                services.AddChallengeApis();
+
+                services.AddSingleton<IGamificationService, GamificationService>();
 
 
-            // This is done to ensure the SAME bot is utilized from above
-            services.AddHostedService(x=>(Bot)x.GetRequiredService<IBot>());
-            services.AddHostedService(x => (SchedulerBackgroundService)x.GetRequiredService<IScheduledTaskService>());
-            services.AddHostedService(x => (GamificationService)x.GetRequiredService<IGamificationService>());
+                // This is done to ensure the SAME bot is utilized from above
+                services.AddHostedService(x=>(Bot)x.GetRequiredService<IBot>());
+                services.AddHostedService(x => (SchedulerBackgroundService)x.GetRequiredService<IScheduledTaskService>());
+                services.AddHostedService(x => (GamificationService)x.GetRequiredService<IGamificationService>());
 
-            services.AddSingleton<IRoleService, RoleService>();
+                services.AddSingleton<IRoleService, RoleService>();    
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
