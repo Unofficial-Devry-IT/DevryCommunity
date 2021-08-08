@@ -2,6 +2,6 @@
   "Database":
   {
     "UseInMemoryDatabase": false,
-    "UpdateDatabase": true
+    "UpdateDatabase": false
   }
 }
