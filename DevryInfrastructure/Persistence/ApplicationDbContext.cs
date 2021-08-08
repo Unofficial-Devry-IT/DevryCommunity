@@ -19,7 +19,6 @@ namespace DevryInfrastructure.Persistence
         {
             
         }
-
         public DbSet<Reminder> Reminders { get; set; }
         
         #region Gamification Related

@@ -1,6 +1,7 @@
 ﻿{
   "Database":
   {
-    "UseInMemoryDatabase": false
+    "UseInMemoryDatabase": false,
+    "UpdateDatabase": false
   }
 }
