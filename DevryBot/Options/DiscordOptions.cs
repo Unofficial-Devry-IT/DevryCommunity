@@ -8,7 +8,7 @@ namespace DevryBot.Options
         public string ErrorImage { get; set; }
         public string InviteImage { get; set; }
         public string UhOhImage { get; set; }
-        
+
         /// <summary>
         /// Clear the cache of slash commands
         /// </summary>

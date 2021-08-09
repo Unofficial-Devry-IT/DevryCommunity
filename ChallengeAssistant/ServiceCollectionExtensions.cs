@@ -9,7 +9,8 @@ namespace ChallengeAssistant
         public static IServiceCollection AddChallengeApis(this IServiceCollection services)
         {
             services.AddSingleton<IChallengeApi, QuizApiService>();
-
+            services.AddSingleton<IChallengeParser, ChallengeParserService>();
+            
             return services;
         }
     }

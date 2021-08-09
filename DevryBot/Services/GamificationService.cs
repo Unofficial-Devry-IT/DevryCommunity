@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -102,11 +103,21 @@ namespace DevryBot.Services
             foreach (var response in responses)
                 _context.ChallengeResponses.Remove(response);
 
-            var challenge = await _context.Challenges.FirstOrDefaultAsync(x => x.Id == id);
+            var challenge = await _context.Challenges
+                .Include(x=>x.Responses)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (challenge != null)
-                _context.Challenges.Remove(challenge);
+            if (challenge == null)
+                return;
+            
+            _logger.LogInformation($"---------------------------------\n" +
+                                   $"Deleting challenge with id: {id}\n\n{challenge}\n" +
+                                   $"---------------------------------");
 
+            foreach (var response in challenge.Responses)
+                _context.ChallengeResponses.Remove(response);
+            
+            _context.Challenges.Remove(challenge);
             await _context.SaveChangesAsync();
         }
 
@@ -321,7 +332,7 @@ namespace DevryBot.Services
             // Now delete the challenge since we no longer need it
             foreach (var response in challenge.Responses)
                 _context.ChallengeResponses.Remove(response);
-
+            
             _context.Challenges.Remove(challenge);
             await _context.SaveChangesAsync();
             await message.DeleteAllReactionsAsync();
