@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ChallengeAssistant.Models;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
@@ -11,9 +12,9 @@ namespace ChallengeAssistant
 {
     public class Program
     {
-        static void DeserializeTest()
+        static void DeserializeTest(string value)
         {
-            var input = new StringReader(File.ReadAllText(@"C:\users\jonbr\desktop\daily-challenge.yml"));
+            var input = new StringReader(File.ReadAllText(value));
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(PascalCaseNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
@@ -36,7 +37,11 @@ namespace ChallengeAssistant
         
         public static void Main(string[] args)
         {
-            DeserializeTest();
+            if (args == null || args.Length < 1)
+                return;
+            
+            if(File.Exists(args.First()))
+                DeserializeTest(args.First());
         }
     }
 }
