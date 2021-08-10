@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using DevryDomain.Models;
 using UnofficialDevryIT.Architecture.Models;
@@ -15,7 +16,7 @@ namespace DevryBot.Services
         /// <param name="responses"></param>
         /// <returns></returns>
         Task<ResultObject> CreateChallenge(Challenge challenge, string category, List<ChallengeResponse> responses);
-        
+
         /// <summary>
         /// Delete a challenge given its primary key
         /// </summary>

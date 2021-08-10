@@ -1,7 +1,9 @@
+using System.Linq;
 using System.Threading.Tasks;
 using DevryBot.Discord.Attributes;
 using DevryBot.Services;
 using DisCatSharp.Entities;
+using DisCatSharp.EventArgs;
 
 namespace DevryBot.Discord.Interactions
 {
@@ -16,9 +18,9 @@ namespace DevryBot.Discord.Interactions
             _service = service;
         }
         
-        public async Task Handle(DiscordMember member, DiscordInteraction interaction, string[] values, string interactionId)
+        public async Task Handle(DiscordMember member, ComponentInteractionCreateEventArgs args)
         {
-            switch (interactionId)
+            switch (args.Id.Split("_").Last())
             {
                 case InteractionConstants.NEW_CHALLENGE:
                     await _service.PostChallenge();

@@ -6,7 +6,7 @@ using DisCatSharp.Entities;
 using DisCatSharp.Enums;
 using DisCatSharp.SlashCommands;
 
-namespace DevryBot.Discord.SlashCommands.Admin
+namespace DevryBot.Discord.SlashCommands.Challenges
 {
     public class CreateChallengeActionBar : SlashCommandModule
     {

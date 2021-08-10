@@ -4,6 +4,7 @@ using DevryBot.Discord.Attributes;
 using DevryBot.Options;
 using DevryBot.Services;
 using DisCatSharp.Entities;
+using DisCatSharp.EventArgs;
 using Microsoft.Extensions.Options;
 
 namespace DevryBot.Discord.Interactions
@@ -24,13 +25,14 @@ namespace DevryBot.Discord.Interactions
             _bot = bot;
         }
 
-        public async Task Handle(DiscordMember member, DiscordInteraction interaction, string[] values, string interactionId)
+        public async Task Handle(DiscordMember member, ComponentInteractionCreateEventArgs args)
         {
-            DiscordFollowupMessageBuilder responseBuilder = new DiscordFollowupMessageBuilder()
+            DiscordFollowupMessageBuilder responseBuilder = new DiscordFollowupMessageBuilder
             {
                 IsEphemeral = true
             };
             
+            var interaction = args.Interaction;
             var embedBuilder = new DiscordEmbedBuilder()
                 .WithTitle("Lecture Assistant")
                 .WithDescription("Anyone who joins within the next " +
@@ -43,7 +45,7 @@ namespace DevryBot.Discord.Interactions
             await interaction.CreateFollowupMessageAsync(responseBuilder);
             await interaction.DeleteOriginalResponseAsync();
             DateTime expirationTime = DateTime.Now.AddHours(_welcomeOptions.InviteWelcomeDuration);
-            foreach (var entry in values)
+            foreach (var entry in args.Values)
                 _welcomeHandler.AddClass(_bot.MainGuild.Roles[ulong.Parse(entry)], expirationTime);
         }
     }

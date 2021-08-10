@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using ChallengeAssistant.Interfaces;
 using DevryBot.Discord;
 using DevryBot.Discord.Attributes;
 using DevryBot.Discord.Extensions;
 using DevryBot.Options;
 using DevryBot.Services;
-using DevryInfrastructure.Persistence;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.EventArgs;
@@ -19,7 +21,6 @@ using DisCatSharp.Interactivity;
 using DisCatSharp.Interactivity.Enums;
 using DisCatSharp.Interactivity.Extensions;
 using DisCatSharp.SlashCommands;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -62,15 +63,18 @@ namespace DevryBot
         /// Bot configuration file(s) are accessible via here
         /// </summary>
         private readonly IConfiguration _configuration;
-
         private readonly ILogger<Bot> _logger;
         private readonly Dictionary<string, IInteractionHandler> _interactionHandlers = new();
         private readonly DiscordOptions _options;
+        private readonly ChallengeOptions _challengeOptions;
+        private readonly IChallengeParser _parser;
         
-        public Bot(ILogger<Bot> logger, IConfiguration config, IServiceProvider serviceProvider, IOptions<DiscordOptions> discordOptions)
+        public Bot(ILogger<Bot> logger, IConfiguration config, IServiceProvider serviceProvider, IOptions<DiscordOptions> discordOptions, IChallengeParser parser, IOptions<ChallengeOptions> challengeOptions)
         {
             _logger = logger;
             ServiceProvider = serviceProvider;
+            _parser = parser;
+            _challengeOptions = challengeOptions.Value;
             _options = discordOptions.Value;
             
             var bytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
@@ -95,6 +99,7 @@ namespace DevryBot
             Client = new DiscordClient(discordConfig);
             
             Client.MessageCreated += OnMessageCreated_RemoveDiscordLinks;
+            Client.MessageCreated += CheckChallengeConfigUpload;
             Client.GuildMemberAdded += ClientOnGuildMemberAdded;
             Client.ComponentInteractionCreated += ClientOnComponentInteractionCreated;
             
@@ -122,6 +127,69 @@ namespace DevryBot
             
             slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
             _configuration = config;
+        }
+
+        private async Task CheckChallengeConfigUpload(DiscordClient sender, MessageCreateEventArgs e)
+        {
+            if (e.Author.IsBot || e.Message.Author.IsBot)
+                return;
+            
+            if (e.Channel.Id != _challengeOptions.AddChallengeChannelId)
+                return;
+
+            if (e.Message.Attachments.Count < 1)
+            {
+                var response = await e.Message.RespondAsync(embed: new DiscordEmbedBuilder()
+                    .WithDescription("I only want files... stop talking")
+                    .WithTitle("Hall Monitor")
+                    .WithColor(DiscordColor.Red));
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                await e.Message.DeleteAsync();
+                return;
+            }
+            
+            WebClient client = new();
+            List<string> responses = new();
+            bool allValid = true;
+            
+            foreach (var file in e.Message.Attachments)
+            {
+                byte[] data;
+                data = await client.DownloadDataTaskAsync(new Uri(file.Url));
+                await using MemoryStream stream = new MemoryStream(data);
+                try
+                {
+                    var result = await _parser.ParseFileAsync(stream, file.FileName.Split(".").Last());
+                    if (result.Succeeded)
+                        responses.Add($"{file.FileName} successfully parsed");
+                    else
+                    {
+                        responses.Add($"{file.FileName} failed.\n\t{string.Join("\n", result.Errors)}");
+                        allValid = false;
+                    }
+                }
+                catch (NotSupportedException ex)
+                {
+                    var temp = new DiscordEmbedBuilder()
+                        .WithTitle("Unsupported file type")
+                        .WithDescription(ex.Message)
+                        .WithColor(DiscordColor.Red);
+
+                    await e.Channel.SendMessageAsync(temp.Build());
+                    return;
+                }
+            }
+
+            client?.Dispose();
+
+            var embed = new DiscordEmbedBuilder()
+                .WithTitle("Parse Result")
+                .WithColor(allValid ? DiscordColor.Green : DiscordColor.Red)
+                .WithDescription(string.Join("\n", responses));
+        
+            await e.Channel.SendMessageAsync(embed.Build());
+            await Task.Delay(500);
+            await e.Message.DeleteAsync();
         }
 
         /// <summary>
@@ -188,7 +256,7 @@ namespace DevryBot
                 _logger.LogInformation($"Handling interaction id: {interactionId}");
                 
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
-                await _interactionHandlers[interactionId].Handle(member, e.Interaction, e.Values, interactionId);
+                await _interactionHandlers[interactionId].Handle(member, e);
             }
 
             if (_interactionHandlers.ContainsKey(e.Id))
@@ -196,7 +264,7 @@ namespace DevryBot
                 _logger.LogInformation($"Handling interaction id: {e.Id}");
                 
                 await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
-                await _interactionHandlers[e.Id].Handle(member, e.Interaction, e.Values, e.Id);
+                await _interactionHandlers[e.Id].Handle(member, e);
             }
         }
 
