@@ -25,7 +25,7 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
     - name: Build Docker Image
-      run: docker build --build-arg CONFIGURATION_TYPE=Release -f DevryBot/Dockerfile -t mercenary9312/unofficial-devry-service-bot .
+      run: docker build -f DevryBot/Dockerfile -t mercenary9312/unofficial-devry-service-bot --build-arg CONFIGURATION_TYPE=Release .
     - name: Push Docker Image
       run: docker push mercenary9312/unofficial-devry-service-bot
           
