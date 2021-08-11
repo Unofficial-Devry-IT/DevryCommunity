@@ -378,6 +378,8 @@ namespace DevryBot.Services
             
             foreach (var member in reactions)
                 await AddReward(member.Id, categoryId, rewardAmount);
+
+            await _context.SaveChangesAsync();
         }
 
         async Task AddReward(ulong memberId, ulong categoryId, double amount)
