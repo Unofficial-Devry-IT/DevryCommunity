@@ -20,10 +20,10 @@ RUN dotnet restore "DevryBot/DevryBot.csproj"
 COPY . .
 
 WORKDIR "/src/DevryBot"
-RUN dotnet build "DevryBot.csproj" -c ${CONFIGURATION_TYPE} -o /app/build
+RUN dotnet build "DevryBot.csproj" -c $CONFIGURATION_TYPE -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "DevryBot.csproj" -c ${CONFIGURATION_TYPE} -o /app/publish
+RUN dotnet publish "DevryBot.csproj" -c $CONFIGURATION_TYPE -o /app/publish
 
 FROM base AS final
 WORKDIR /app
