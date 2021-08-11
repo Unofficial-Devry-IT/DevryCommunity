@@ -1,0 +1,38 @@
+﻿{
+  "Discord": {
+    "Token": "T0RjeU16RXlNVEV4T0RBMk56QTFOamcwLllRb0I5Zy5na2JOQVpoLXBPMURHeVRSU3VMNDkxUHpKV0U=",
+    "Prefix": "!",
+    "QueueImage": "https://unofficialdevrycom.dev/images/queue-clipart-13.jpg",
+    "CompletedImage": "https://unofficialdevrycom.dev/images/completed-icon-6.png",
+    "WarningImage": "https://unofficialdevrycom.dev/images/shutterstock_121160620.jpg",
+    "ErrorImage": "https://unofficialdevrycom.dev/images/ONGIDR93EFsuVUt-K.jpg",
+    "InviteImage": "https://unofficialdevrycom.dev/images/Stein-Hogwarts-1200.jpg",
+    "UhOhImage": "https://unofficialdevrycom.dev/images/istockphoto-464392649-170667a.jpg",
+    "ClearCommands": false,
+    "InviteLinkSearchCriteria": "discord",
+    "DeleteReportAfterDuration": 30,
+    "InviteMessage": "Spread the word, our trusted scout! Spread the word of our kingdom! Amass an army of knowledge seeking minions! Lay waste to the legions of doubt and uncertainty!!",
+    "InviteLink": "https://unofficialdevrycom.dev/discord",
+    "InviteFooter": "Minions of knowledge! Assembblleeee!",
+    "BlacklistedRoles": [
+      "@everyone",
+      "Admin",
+      "Senior Moderators",
+      "Junior Moderators",
+      "Pollmaster",
+      "Professor",
+      "Database",
+      "Programmer",
+      "Motivator",
+      "Server Booster",
+      "DeVry-SortingHat",
+      "Devry-Service-Bot",
+      "Devry-Challenge-Bot",
+      "Devry-Test-Bot",
+      "MathBot",
+      "See-All-Channels",
+      "Devry",
+      "tutor"
+    ]
+  }
+}

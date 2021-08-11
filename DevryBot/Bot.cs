@@ -41,6 +41,14 @@ namespace DevryBot
         
         
         private DiscordGuild mainGuild;
+
+        private const ulong GUILD_ID =
+                #if DEBUG
+                    642161335089627156
+                #else
+                    618254766396538901
+                #endif
+            ;
         
         /// <summary>
         /// The primary guild should be Devry. This is cached for easier access later on
@@ -52,7 +60,7 @@ namespace DevryBot
                 if (mainGuild == null)
                 {
                     if (Client.Guilds.Any())
-                        mainGuild = Client.Guilds[618254766396538901];
+                        mainGuild = Client.Guilds[GUILD_ID];
                 }
 
                 return mainGuild;
@@ -76,9 +84,9 @@ namespace DevryBot
             _parser = parser;
             _challengeOptions = challengeOptions.Value;
             _options = discordOptions.Value;
-            
-            var bytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
-            string token = System.Text.Encoding.UTF8.GetString(bytes).Replace("\n", "");
+
+            byte[] tokenBytes = Convert.FromBase64String(config.GetValue<string>("Discord:Token"));
+            string token = System.Text.Encoding.UTF8.GetString(tokenBytes).Replace("\n", "");
 
             var discordConfig = new DiscordConfiguration()
             {
@@ -86,14 +94,18 @@ namespace DevryBot
                 TokenType = TokenType.Bot,
                 MinimumLogLevel = LogLevel.Information,
                 AutoReconnect = true,
-                Intents =
-                    DiscordIntents.GuildEmojisAndStickers |
-                    DiscordIntents.GuildMembers |
-                    DiscordIntents.GuildInvites |
-                    DiscordIntents.GuildMessageReactions |
-                    DiscordIntents.GuildMessages |
-                    DiscordIntents.GuildMessageTyping |
-                    DiscordIntents.Guilds
+                Intents = 
+                    # if DEBUG
+                        DiscordIntents.All
+                    #else
+                        DiscordIntents.GuildEmojisAndStickers |
+                        DiscordIntents.GuildMembers |
+                        DiscordIntents.GuildInvites |
+                        DiscordIntents.GuildMessageReactions |
+                        DiscordIntents.GuildMessages |
+                        DiscordIntents.GuildMessageTyping |
+                        DiscordIntents.Guilds
+                    #endif
             };
             
             Client = new DiscordClient(discordConfig);
@@ -125,7 +137,7 @@ namespace DevryBot
                 Services = serviceProvider
             });
             
-            slashCommandsExtension.RegisterCommandsFromAssembly<Bot>();
+            slashCommandsExtension.RegisterCommandsFromAssembly<Bot>(GUILD_ID);
             _configuration = config;
         }
 

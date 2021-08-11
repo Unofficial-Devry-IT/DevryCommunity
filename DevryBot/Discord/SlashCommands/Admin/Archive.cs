@@ -8,7 +8,6 @@ using DevryBot.Options;
 using DisCatSharp;
 using DisCatSharp.Entities;
 using DisCatSharp.SlashCommands;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
