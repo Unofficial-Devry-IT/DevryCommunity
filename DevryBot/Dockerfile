@@ -1,4 +1,5 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+ARG CONFIGURATION_TYPE
 WORKDIR /app
 
 # the following folder must exist because it is part of the configuration
@@ -19,10 +20,10 @@ RUN dotnet restore "DevryBot/DevryBot.csproj"
 COPY . .
 
 WORKDIR "/src/DevryBot"
-RUN dotnet build "DevryBot.csproj" -c Release -o /app/build
+RUN dotnet build "DevryBot.csproj" -c ${CONFIGURATION_TYPE} -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "DevryBot.csproj" -c Release -o /app/publish
+RUN dotnet publish "DevryBot.csproj" -c ${CONFIGURATION_TYPE} -o /app/publish
 
 FROM base AS final
 WORKDIR /app
