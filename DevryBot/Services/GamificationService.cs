@@ -338,6 +338,50 @@ namespace DevryBot.Services
             await message.DeleteAllReactionsAsync();
         }
 
+        public async Task ManualReward(ulong discordMessageId, string title, string correctReactionWas, double rewardAmount, ulong categoryId = 2)
+        {
+            var discordMessage = await _bot.MainGuild
+                .Channels[_options.Channel]
+                .GetMessageAsync(discordMessageId);
+
+            if (discordMessage == null)
+                return;
+
+            var reactions = await discordMessage
+                .GetReactionsAsync(DiscordEmoji.FromName(_bot.Client, correctReactionWas));
+            
+            string url = await _imageService.RandomImageUrl("fireworks") ??
+                         _options.Images[Random.Next(0, _options.Images.Length)];
+
+            StringBuilder builder = new();
+            builder.AppendLine("Congratulations, " + string.Join(", ", reactions
+                .Where(x=>!x.IsBot)
+                .Select(x => x.Mention)));
+
+            bool multiple = reactions.Count(x => !x.IsBot) > 1;
+
+            if (multiple)
+                builder.AppendLine("You have all answered correctly!");
+            else
+                builder.AppendLine("You have answered correctly!");
+
+            DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
+                .WithAuthor("Daily Challenge")
+                .WithTitle(title)
+                .WithDescription(builder.ToString())
+                .AddField("Reward", rewardAmount.ToString())
+                .WithTimestamp(DateTime.Now)
+                .WithImageUrl(url)
+                .WithColor(DiscordColor.Blue);
+                
+            await _bot.MainGuild.Channels[_options.CongratsChannel].SendMessageAsync(embed.Build());
+            
+            foreach (var member in reactions)
+                await AddReward(member.Id, categoryId, rewardAmount);
+
+            await _context.SaveChangesAsync();
+        }
+
         async Task AddReward(ulong memberId, ulong categoryId, double amount)
         {
             GamificationEntry entry =
