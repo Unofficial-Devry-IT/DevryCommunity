@@ -15,18 +15,18 @@ namespace DevryBot.Discord.SlashCommands.Gamification
         [SlashCommand("manual-reward", "Reward users (mod only)")]
         [RequireModerator]
         public async Task Command(InteractionContext context,
-            [Option("MessageId", "Message Id")] ulong messageId,
+            [Option("MessageId", "Message Id")] string messageId,
             [Option("Title","Question text")] string question,
             [Option("CorrectAnswer", "emoji")] string correctAnswer,
             [Option("Reward", "Score to add")] double reward,
-            [Option("CategoryId", "number in database")]  ulong categoryId
+            [Option("CategoryId", "number in database")]  string categoryId
         )
         {
             try
             {
                 Logger.LogInformation(
                     $"Manually Rewarding for question {question} - for {reward} points. Correct answer should have been {correctAnswer}");
-                await Game.ManualReward(messageId, question, correctAnswer, reward, categoryId);
+                await Game.ManualReward(ulong.Parse(messageId), question, correctAnswer, reward, ulong.Parse(categoryId));
             }
             catch (Exception ex)
             {
