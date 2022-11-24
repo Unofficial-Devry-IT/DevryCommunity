@@ -8,7 +8,7 @@ RUN chmod --recursive +x /app/Data
 
 # Python Snippet Scanner Requires the following items to be installed
 RUN apt-get update
-RUN apt-get install -y python3.0  
+RUN apt-get install -y python3.10  
 RUN apt install -y python3-pip
 RUN pip3 install prospector[with_everything]
 
