@@ -14,7 +14,7 @@ RUN pip3 install prospector[with_everything]
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["DevryBot/DevryBot.csproj", "DevryBot/"]
+COPY ["DevryBot/DevryBot.csproj"]
 RUN dotnet restore "DevryBot/DevryBot.csproj"
 COPY . .
 
