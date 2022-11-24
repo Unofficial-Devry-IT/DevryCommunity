@@ -24,41 +24,44 @@ namespace DevryBot.Discord.SlashCommands.Gamification
             await context.ImThinking();
 
             // Get all the entries for the current user
-            var entries = await Context.GamificationEntries
-                .Where(x => x.UserId == context.Member.Id)
-                .ToListAsync();
-
-            DiscordWebhookBuilder responseBuilder = new();
-            
-            if (!entries.Any())
+            if (Context != null)
             {
-                responseBuilder.AddEmbed(new DiscordEmbedBuilder()
+                var entries = await Context.GamificationEntries
+                    .Where(x => x.UserId == context.Member.Id)
+                    .ToListAsync();
+
+                DiscordWebhookBuilder responseBuilder = new();
+            
+                if (!entries.Any())
+                {
+                    responseBuilder.AddEmbed(new DiscordEmbedBuilder()
+                        .WithTitle($"{context.Member.DisplayName} Stats")
+                        .WithDescription(
+                            "You don't have any points right now. Please try participating in the community a bit more!")
+                        .WithColor(DiscordColor.HotPink));
+
+                    await context.EditResponseAsync(responseBuilder);
+                    return;
+                }
+
+                double total = entries.Sum(x => x.Value);
+                DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
                     .WithTitle($"{context.Member.DisplayName} Stats")
-                    .WithDescription(
-                        "You don't have any points right now. Please try participating in the community a bit more!")
-                    .WithColor(DiscordColor.HotPink));
+                    .WithColor(DiscordColor.HotPink)
+                    .WithDescription($"You currently have a total of {total} points");
+
+                foreach (var entry in entries)
+                {
+                    var category = await Context.GamificationCategories.FindAsync(entry.GamificationCategoryId);
+                    if (string.IsNullOrEmpty(category.Name))
+                        category.Name = "Uncategorized";
+                    embed.AddField(category.Name, entry.Value.ToString());
+                }
+
+                responseBuilder.AddEmbed(embed.Build());
 
                 await context.EditResponseAsync(responseBuilder);
-                return;
             }
-
-            double total = entries.Sum(x => x.Value);
-            DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
-                .WithTitle($"{context.Member.DisplayName} Stats")
-                .WithColor(DiscordColor.HotPink)
-                .WithDescription($"You currently have a total of {total} points");
-
-            foreach (var entry in entries)
-            {
-                var category = await Context.GamificationCategories.FindAsync(entry.GamificationCategoryId);
-                if (string.IsNullOrEmpty(category.Name))
-                    category.Name = "Uncategorized";
-                embed.AddField(category.Name, entry.Value.ToString());
-            }
-
-            responseBuilder.AddEmbed(embed.Build());
-
-            await context.EditResponseAsync(responseBuilder);
         }
     }
 }

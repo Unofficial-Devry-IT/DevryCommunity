@@ -7,6 +7,7 @@ using DevryBot.Discord.SlashCommands.Filters;
 using DevryBot.Options;
 using DisCatSharp;
 using DisCatSharp.Entities;
+using DisCatSharp.Enums;
 using DisCatSharp.SlashCommands;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

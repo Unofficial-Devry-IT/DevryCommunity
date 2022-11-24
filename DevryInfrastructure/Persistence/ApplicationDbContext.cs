@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using UnofficialDevryIT.Architecture.Scheduler;
 using System.Linq;
+using OperationalStoreOptions = Duende.IdentityServer.EntityFramework.Options.OperationalStoreOptions;
 
 namespace DevryInfrastructure.Persistence
 {

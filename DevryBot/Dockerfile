@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+﻿FROM docker pull mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 
 # the following folder must exist because it is part of the configuration
@@ -8,11 +8,11 @@ RUN chmod --recursive +x /app/Data
 
 # Python Snippet Scanner Requires the following items to be installed
 RUN apt-get update
-RUN apt-get install -y python3.7
+RUN apt-get install -y python3.11
 RUN apt install -y python3-pip
 RUN pip3 install prospector[with_everything]
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["DevryBot/DevryBot.csproj", "DevryBot/"]
 RUN dotnet restore "DevryBot/DevryBot.csproj"
