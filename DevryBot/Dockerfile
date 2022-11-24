@@ -1,4 +1,4 @@
-﻿FROM docker pull mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+﻿FROM docker pull mcr.microsoft.com/dotnet/aspnet:6.0 AS 'base'
 WORKDIR /app
 
 # the following folder must exist because it is part of the configuration
