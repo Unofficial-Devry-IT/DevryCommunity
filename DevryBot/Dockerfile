@@ -18,12 +18,12 @@ RUN apt-get update
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY --from=/DevryBot/DevryBot.csproj .
-RUN dotnet restore "DevryBot/DevryBot.csproj"
+COPY /DevryBot.csproj ./
+RUN dotnet restore "DevryBot.csproj"
 COPY . .
 
 WORKDIR "/src/DevryBot"
-RUN dotnet build "DevryBot/DevryBot.csproj" -c Release -o /app/build
+RUN dotnet build "DevryBot.csproj" -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish "DevryBot/DevryBot.csproj" -c Release -o /app/publish
