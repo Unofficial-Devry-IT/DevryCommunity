@@ -6,17 +6,6 @@ RUN mkdir -p /app/Data/Configs
 RUN chmod --recursive 777 /app/Data
 RUN chmod --recursive +x /app/Data
 
-#image updates
-
-RUN apt-get update
-RUN apt-get upgrade -y
-RUN apt-get autoremove -y
-RUN apt-get purge -y
-
-# Python Snippet Scanner Requires the following items to be installed
-RUN apt-get install -y python3-pip
-RUN pip3 install prospector[with_everything]
-
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["DevryBot/DevryBot.csproj", "DevryBot.csproj"]
