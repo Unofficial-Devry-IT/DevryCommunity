@@ -1,5 +1,5 @@
 ﻿<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="DevryBot/Dockerfile build" type="docker-deploy" factoryName="dockerfile" server-name="Docker-vm">
+  <configuration default="false" name="DevryBot/Dockerfile build" type="docker-deploy" factoryName="dockerfile">
     <deployment type="dockerfile">
       <settings>
         <option name="imageTag" value="devrybot" />

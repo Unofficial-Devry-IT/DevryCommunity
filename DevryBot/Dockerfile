@@ -8,8 +8,9 @@ RUN chmod --recursive +x /app/Data
 
 # Python Snippet Scanner Requires the following items to be installed
 RUN apt-get update
-RUN apt-get install -y python3.7  
-RUN apt install -y python3-pip
+RUN apt-get upgrade -y
+RUN apt-get install -y python3 python3-pip software-properties-common 
+RUN apt-get install -y python3-pip
 RUN pip3 install prospector[with_everything]
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
