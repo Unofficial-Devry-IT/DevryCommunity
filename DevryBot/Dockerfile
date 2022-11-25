@@ -7,7 +7,7 @@ RUN chmod --recursive 777 /app/Data
 RUN chmod --recursive +x /app/Data
 
 #image updates
-RUN add-apt-repository universe
+
 RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get autoremove -y
