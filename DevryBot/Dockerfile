@@ -6,10 +6,14 @@ RUN mkdir -p /app/Data/Configs
 RUN chmod --recursive 777 /app/Data
 RUN chmod --recursive +x /app/Data
 
-# Python Snippet Scanner Requires the following items to be installed
+#image updates
+RUN add-apt-repository universe
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y python3 python3-pip software-properties-common 
+RUN apt-get autoremove -y
+RUN apt-get purge -y
+
+# Python Snippet Scanner Requires the following items to be installed
 RUN apt-get install -y python3-pip
 RUN pip3 install prospector[with_everything]
 
