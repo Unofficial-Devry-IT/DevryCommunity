@@ -26,7 +26,7 @@
         <PackageReference Include="DisCatSharp.Interactivity" Version="10.3.2" />
         <PackageReference Include="DisCatSharp.SlashCommands" Version="9.6.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -43,11 +43,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ChallengeAssistant\ChallengeAssistant.csproj" />
-      <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
-      <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
-      <ProjectReference Include="..\ImageCreator\ImageCreator.csproj" />
-      <ProjectReference Include="..\SnippetAssistant\SnippetAssistant.csproj" />
+      <ProjectReference Include=".\ChallengeAssistant\ChallengeAssistant.csproj" />
+      <ProjectReference Include=".\DevryDomain\DevryDomain.csproj" />
+      <ProjectReference Include=".\DevryInfrastructure\DevryInfrastructure.csproj" />
+      <ProjectReference Include=".\ImageCreator\ImageCreator.csproj" />
+      <ProjectReference Include=".\SnippetAssistant\SnippetAssistant.csproj" />
     </ItemGroup>
 
     <ItemGroup>

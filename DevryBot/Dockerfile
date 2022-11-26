@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 
 # the following folder must exist because it is part of the configuration
@@ -16,10 +16,10 @@ RUN apt-get update
 #RUN apt-get install -y python3-pip
 #RUN pip3 install prospector[with_everything]
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY /DevryBot.csproj ./
 COPY . .
+COPY DevryBot/DevryBot.csproj .
 RUN dotnet restore "DevryBot.csproj"
 
 WORKDIR "/src/DevryBot"
