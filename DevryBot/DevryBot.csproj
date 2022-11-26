@@ -43,8 +43,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="./ChallengeAssistant/ChallengeAssistant.csproj" />
-        
       <ProjectReference Include="..\ChallengeAssistant\ChallengeAssistant.csproj" />
       <ProjectReference Include="..\DevryDomain\DevryDomain.csproj" />
       <ProjectReference Include="..\DevryInfrastructure\DevryInfrastructure.csproj" />
