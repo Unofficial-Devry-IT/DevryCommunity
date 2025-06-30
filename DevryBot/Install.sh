@@ -15,13 +15,13 @@ docker stop $DEVRY_CONTAINER_ID
 # G E T    L A T E S T   D O C K E R   I M A G E           #
 ############################################################
 echo "Getting the latest bot image..."
-docker pull mercenary9312/unofficial-devry-service-bot
+docker pull ghcr.io/unofficial-devry-it/devrycommunity:latest
 
 ############################################################
 # S T A R T   T E M P O R A R Y    I M A G E 
 ############################################################
 echo "Starting temporary container..."
-docker run --rm -d --name devry-service-bot mercenary9312/unofficial-devry-service-bot:latest
+docker run --rm -d --name devry-service-bot ghcr.io/unofficial-devry-it/devrycommunity:latest
 
 ############################################################
 # C R E A T I N G   T E M P   D I R 
